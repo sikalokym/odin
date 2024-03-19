@@ -10,6 +10,7 @@
 <script>
 import NavBar from './components/NavBar.vue'
 import { usePNOStore } from './stores/pno.js'
+import { useEntitiesStore } from './stores/entities.js'
 
 export default {
   name: 'App',
@@ -19,6 +20,7 @@ export default {
   async created() {
     
     const pnoStore = usePNOStore()
+    const entitiesStore = useEntitiesStore()
 
     await pnoStore.fetchSupportedCountries().then(() => {
       console.log('Supported countries fetched')
@@ -30,6 +32,27 @@ export default {
       console.log('Available model years fetched')
     }).catch((error) => {
       console.error('Error fetching available model years', error)
+    })
+
+    await entitiesStore.fetchModels().then(() => {
+      console.log('Model text fetched')
+    }).catch((error) => {
+      console.error('Error fetching model text', error)
+    }),
+    await entitiesStore.fetchEngines().then(() => {
+      console.log('Engine text fetched')
+    }).catch((error) => {
+      console.error('Error fetching engine text', error)
+    }),
+    await entitiesStore.fetchSalesversions().then(() => {
+      console.log('Salesversion text fetched')
+    }).catch((error) => {
+      console.error('Error fetching salesversion text', error)
+    }),
+    await entitiesStore.fetchGearboxes().then(() => {
+      console.log('Gearboxes text fetched')
+    }).catch((error) => {
+      console.error('Error fetching gearboxes text', error)
     })
   },
 };

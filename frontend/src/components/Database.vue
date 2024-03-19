@@ -1,6 +1,6 @@
 <template>
     <aside class="sidebar">
-      <font size="6">PNO</font><br><br>
+      <span style="font-size: 32px;">PNO</span><br><br>
 
       <label class="modelyear" style="width: 180px;">Model Year</label><br>
     <select name="model_year" id="model_year" v-model="model_year" @change="refreshModelyear" style="display:block;width:180px; height:30px; position: absolute; left: 50%; transform: translate(-50%);">
@@ -10,39 +10,40 @@
 
     <br><br>
       <label class="model" style="width: 180px;">Model</label><br>
-    <select name="model" id="model" v-model="model" style="display:block;width:180px; height:30px; position: absolute; left: 50%; transform: translate(-50%);">
+    <select name="model" id="model" v-model="model" @change="fetchPnoSpecifics" style="display:block;width:180px; height:30px; position: absolute; left: 50%; transform: translate(-50%);">
       <option value="">All</option>
       <option v-for="model in models" :key="model" :value="model">{{ model }}</option>
     </select>
 
     <br><br>
       <label class="engine" style="width: 180px;">Engine</label><br>
-    <select name="engine" id="engine" v-model="engine" style="display:block;width:180px; height:30px; position: absolute; left: 50%; transform: translate(-50%);">
+    <select name="engine" id="engine" v-model="engine" @change="fetchPnoSpecifics" style="display:block;width:180px; height:30px; position: absolute; left: 50%; transform: translate(-50%);">
       <option value="">All</option>
       <option v-for="engine in engines" :key="engine" :value="engine">{{ engine }}</option>
     </select>
 
     <br><br>
       <label class="salesversion" style="width: 180px;">Sales Version</label><br>
-    <select name="salesversion" id="salesversion" v-model="salesversion" style="display:block;width:180px; height:30px; position: absolute; left: 50%; transform: translate(-50%);">
+    <select name="salesversion" id="salesversion" v-model="salesversion" @change="fetchPnoSpecifics" style="display:block;width:180px; height:30px; position: absolute; left: 50%; transform: translate(-50%);">
       <option value="">All</option>
       <option v-for="salesversion in salesversions" :key="salesversion" :value="salesversion">{{ salesversion }}</option>
     </select>
 
     <br><br>
       <label class="gearbox" style="width: 180px;">Gearbox</label><br>
-    <select name="gearbox" id="gearbox" v-model="gearbox" style="display:block;width:180px; height:30px; position: absolute; left: 50%; transform: translate(-50%);">
+    <select name="gearbox" id="gearbox" v-model="gearbox" @change="fetchPnoSpecifics" style="display:block;width:180px; height:30px; position: absolute; left: 50%; transform: translate(-50%);">
       <option value="">All</option>
       <option v-for="gearbox in gearboxes" :key="gearbox" :value="gearbox">{{ gearbox }}</option>
     </select>
 
     <br><br>
       <label class="displaytable" style="width: 180px;">Display Table</label><br>
-      <select name="displaytable" v-model="displaytable" id="displaytable" style="display:block;width:180px; height:30px; position: absolute; left: 50%; transform: translate(-50%);" :disabled="this.pnoStore.model_year === '0'" @change="fetchPnosSpecifics($event.target.value)">
+      <select name="displaytable" v-model="displaytable" id="displaytable" @change="fetchPnoSpecifics" style="display:block;width:180px; height:30px; position: absolute; left: 50%; transform: translate(-50%);" :disabled="this.pnoStore.model_year === '0'">
         <option disabled value="">Please Select...</option>
         <option value="Model">Model</option>       
         <option value="Engine">Engine</option>
         <option value="SalesVersion">Sales Version</option> 
+        <option value="Gearbox">Gearbox</option>
         <option value="Features">Features</option>
         <option value="Colors">Colors</option>
         <option value="Options">Options</option>
@@ -54,12 +55,23 @@
     <br><br>
     <hr class ="divider">
 
-    <font size="5">Manage Sources</font><br><br>
+    <span style="font-size: 32px;">Manage Sources</span><br><br>
 
     <button style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translate(-50%);" onclick="document.getElementById('getFile').click()">Upload VISA file</button>
     <input type='file' class="visaupload" id="getFile" ref="file" style="display:none" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" v-on:change="uploadVisa">
     <br><br><br>
     <button style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translate(-50%);" @click="refreshCPAM">Refresh CPAM data</button>
+
+    <br><br><br>
+    <div class="country">
+      <label for="country">Change Country: </label>
+      <select v-model="selectedCountry" @change="changeCountry(selectedCountry)">
+        <option disabled value="">Germany</option>
+        <option v-for="country in countries" :key="country" :value="country">
+          {{ country }}
+        </option>
+      </select>
+    </div>
 
     </aside>
     <main class="main-content">
@@ -74,15 +86,13 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="pno in tableModels" :key="pno.id" :class="{ 'editing': pno.edited }">
-        <td style="background-color: #f4f4f4;">{{ pno.Model }}</td>
-        <td class="CPAMColumn" style="background-color: #f4f4f4;">{{ pno.CPAMText }}</td>
-        <td>
-          <input type="MarketText" v-model="pno.MarketText" @input="pno.edited = true" @click="startEditing(pno)" />
+      <tr v-for="pno in listModels" :key="pno.id" :class="{ 'editing': pno.edited }">
+        <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
+        <td class="CPAMColumn" style="background-color: #f4f4f4;">
+          {{ pno.MarketText }}
         </td>
         <td>
-          <button  class="action-button" v-if="pno.edited" @click="pushUpdateModel(pno)">Update</button>
-          <button  class="action-button" v-if="pno.edited" @click="revert(pno)">Revert</button>
+          <input type="MarketText" v-model="pno.CountryText" @input="pno.edited = true" @change="pushUpdateModel(pno)" />
         </td>
       </tr>
     </tbody>
@@ -98,15 +108,13 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="pno in tableSalesversions" :key="pno.id" :class="{ 'editing': pno.edited }">
-        <td style="background-color: #f4f4f4;">{{ pno.SalesVersion }}</td>
-        <td class="CPAMColumn" style="background-color: #f4f4f4;">{{ pno.CPAMText }}</td>
-        <td>
-          <input type="MarketText" v-model="pno.MarketText" @input="pno.edited = true" @click="startEditing(pno)" />
+      <tr v-for="pno in listSalesversions" :key="pno.id" :class="{ 'editing': pno.edited }">
+        <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
+        <td class="CPAMColumn" style="background-color: #f4f4f4;">
+          {{ pno.MarketText }}
         </td>
         <td>
-          <button  class="action-button" v-if="pno.edited" @click="pushUpdateSV(pno)">Update</button>
-          <button  class="action-button" v-if="pno.edited" @click="revert(pno)">Revert</button>
+          <input type="MarketText" v-model="pno.CountryText" @input="pno.edited = true" @change="pushUpdateSV(pno)" />
         </td>
       </tr>
     </tbody>
@@ -119,31 +127,51 @@
         <th>CPAM Text</th>
         <th>Market Text</th>
         <th>Category</th>
-        <th>Sub-Category</th>
+        <th>Type</th>
         <th>Performance in kW (PS)</th>
         <th></th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="pno in tableEngines" :key="pno.id" :class="{ 'editing': pno.edited }">
-        <td style="background-color: #f4f4f4;">{{ pno.Engine }}</td>
-        <td class="CPAMColumn" style="background-color: #f4f4f4;">{{ pno.CPAMText }}</td>
-        <td>
-          <input type="MarketText" v-model="pno.MarketText" @input="pno.edited = true" @click="startEditing(pno)" />
+      <tr v-for="pno in listEngines" :key="pno.id" :class="{ 'editing': pno.edited }">
+        <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
+        <td class="CPAMColumn" style="background-color: #f4f4f4;">
+          {{ pno.MarketText }}
         </td>
         <td>
-          <input type="text" v-model="pno.Category" @input="pno.edited = true" @click="startEditing(pno)" />
+          <input type="MarketText" v-model="pno.CountryText" @input="pno.edited = true" @change="pushUpdateEngine(pno)" />
         </td>
         <td>
-          <input type="text" v-model="pno.Subcategory" @input="pno.edited = true" @click="startEditing(pno)" />
+          <input type="EngineCategory" v-model="pno.EngineCategory" @input="pno.edited = true" @change="pushUpdateEngine(pno)" />
         </td>
         <td>
-          <input type="Performance" v-model="pno.Performance" @input="pno.edited = true" @click="startEditing(pno)" />
+          <input type="SubCategory" v-model="pno.EngineType" @input="pno.edited = true" @change="pushUpdateEngine(pno)" />
         </td>
-        <td style="min-width: 140px;">
-        <button class="action-button" v-show="pno.edited" @click="pushUpdateEngine(pno)">Update</button>
-        <button class="action-button" v-show="pno.edited" @click="revert(pno)">Revert</button>
-      </td>
+        <td>
+          <input type="Performance" v-model="pno.Performance" @input="pno.edited = true" @change="pushUpdateEngine(pno)" />
+        </td>
+      </tr>
+    </tbody>
+  </table>
+     <!-- Gearbox Table -->
+     <table v-if="displaytable === 'Gearbox'">
+    <thead>
+      <tr>
+        <th>Engine</th>
+        <th>CPAM Text</th>
+        <th>Market Text</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="pno in listGearboxes" :key="pno.id" :class="{ 'editing': pno.edited }">
+        <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
+        <td class="CPAMColumn" style="background-color: #f4f4f4;">
+          {{ pno.MarketText }}
+        </td>
+        <td>
+          <input type="MarketText" v-model="pno.CountryText" @input="pno.edited = true" @change="pushUpdateGearbox(pno)" />
+        </td>
       </tr>
     </tbody>
   </table>
@@ -152,37 +180,77 @@
     <thead>
       <tr>
         <th>Feature</th>
-        <th v-if="model === ''">Model</th>
-        <th v-if="engine === ''">Engine</th>
-        <th v-if="salesversion === ''">Sales Version</th>
-        <th v-if="gearbox === ''">Gearbox</th>
         <th>CPAM Text</th>
         <th>Market Text</th>
         <th></th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="pno in PnosSpecifics" :key="pno.id" :class="{ 'editing': pno.edited }">
-        <td v-if="model === ''" style="background-color: #f4f4f4;">{{ pno.Model }}</td>
-        <td v-if="engine === ''" style="background-color: #f4f4f4;">{{ pno.Engine }}</td>
-        <td v-if="salesversion === ''" style="background-color: #f4f4f4;">{{ pno.SalesVersion }}</td>
-        <td v-if="gearbox === ''" style="background-color: #f4f4f4;">{{ pno.Gearbox }}</td>
-        <td class="CPAMColumn" style="background-color: #f4f4f4;">{{ pno.CPAMText }}</td>
+      <tr v-for="pno in tableFeatures" :key="pno.id" :class="{ 'editing': pno.edited }">
+        <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
+        <td class="CPAMColumn" style="background-color: #f4f4f4;">{{ pno.MarketText }}</td>
         <td>
-          <input type="MarketText" v-model="pno.MarketText" @input="pno.edited = true" @click="startEditing(pno)" />
+          <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true" @click="startEditing(pno)" />
         </td>
+      </tr>
+    </tbody>
+  </table>
+    <!-- Colors Table -->
+    <table v-if="displaytable === 'Colors'">
+    <thead>
+      <tr>
+        <th>Color</th>
+        <th>CPAM Text</th>
+        <th>Market Text</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="pno in tableColors" :key="pno.id" :class="{ 'editing': pno.edited }">
+        <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
+        <td class="CPAMColumn" style="background-color: #f4f4f4;">{{ pno.MarketText }}</td>
         <td>
-          <input type="text" v-model="pno.Category" @input="pno.edited = true" @click="startEditing(pno)" />
+          <input type="MarketText" v-model="pno.CountryText" @input="pno.edited = true" @click="startEditing(pno)" />
         </td>
+      </tr>
+    </tbody>
+  </table>
+      <!-- Options Table -->
+      <table v-if="displaytable === 'Options'">
+    <thead>
+      <tr>
+        <th>Option</th>
+        <th>CPAM Text</th>
+        <th>Market Text</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="pno in tableOptions" :key="pno.id" :class="{ 'editing': pno.edited }">
+        <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
+        <td class="CPAMColumn" style="background-color: #f4f4f4;">{{ pno.MarketText }}</td>
         <td>
-          <input type="text" v-model="pno.Subcategory" @input="pno.edited = true" @click="startEditing(pno)" />
+          <input type="MarketText" v-model="pno.CountryText" @input="pno.edited = true" @click="startEditing(pno)" />
         </td>
+      </tr>
+    </tbody>
+  </table>
+      <!-- Upholstery Table -->
+      <table v-if="displaytable === 'Upholstery'">
+    <thead>
+      <tr>
+        <th>Upholstery</th>
+        <th>CPAM Text</th>
+        <th>Market Text</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="pno in tableUpholstery" :key="pno.id" :class="{ 'editing': pno.edited }">
+        <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
+        <td class="CPAMColumn" style="background-color: #f4f4f4;">{{ pno.MarketText }}</td>
         <td>
-          <input type="Performance" v-model="pno.Performance" @input="pno.edited = true" @click="startEditing(pno)" />
-        </td>
-        <td style="min-width: 140px;">
-          <button class="action-button" v-show="pno.edited" @click="pushUpdateEngine(pno)">Update</button>
-          <button class="action-button" v-show="pno.edited" @click="revert(pno)">Revert</button>
+          <input type="MarketText" v-model="pno.CountryText" @input="pno.edited = true" @click="startEditing(pno)" />
         </td>
       </tr>
     </tbody>
@@ -193,6 +261,7 @@
 
   <script>
   import { usePNOStore } from '../stores/pno.js'
+  import { useEntitiesStore } from '../stores/entities.js'
   import index from '../api/index.js'
 
   export default {
@@ -206,10 +275,26 @@
         gearbox: '',
         displaytable: '',
         pnoStore: usePNOStore(),
+        entitiesStore: useEntitiesStore(),
+        countries: [],
+        selectedCountry: '',
       }
     },
     async created() {
       this.pnoStore.model_year = '0';
+      this.entitiesStore.model_year = '0';
+
+      await this.pnoStore.fetchSupportedCountries().then(() => {
+        console.log('Supported countries fetched')
+      }).catch((error) => {
+        console.error('Error fetching countries', error)
+      })
+
+      await this.pnoStore.fetchAvailableModelYears().then(() => {
+        console.log('Available model years fetched')
+      }).catch((error) => {
+        console.error('Error fetching available model years', error)
+      })
     },
     computed: {
       filteredPnos() {
@@ -230,52 +315,58 @@
       model_years() {
         return this.pnoStore.available_model_years
       },
-
+      model_text() {
+        return this.entitiesStore.models
+      },
+      engines_text() {
+        return this.entitiesStore.engines
+      },
+      salesversion_text() {
+        return this.entitiesStore.salesversions
+      },
+      gearboxes_text() {
+        return this.entitiesStore.gearboxes
+      },
       // Unique values for tables
-      tableModels() {
-        const unique = {};
-        return this.tableFilteredPnos().filter(pno => {
-          if (unique[pno.Model]) {
-            return false;
-          }
-          unique[pno.Model] = true;
-          return true;
+      listModels() {
+        let models = this.entitiesStore.models;
+        let filteredModels = models.filter(models => {
+          return this.tableFilteredPnos().some(pno => pno.Model === models.Code);
         });
+        return filteredModels;
       },
-      tableSalesversions() {
-        const unique = {};
-        return this.tableFilteredPnos().filter(pno => {
-          if (unique[pno.SalesVersion]) {
-            return false;
-          }
-          unique[pno.SalesVersion] = true;
-          return true;
+      listEngines() {
+        let en = this.entitiesStore.engines;
+        let filteredEn = en.filter(en => {
+          return this.tableFilteredPnos().some(pno => pno.Engine === en.Code);
         });
+        return filteredEn;
       },
-      tableEngines() {
-        const unique = {};
-        return this.tableFilteredPnos().filter(pno => {
-          if (unique[pno.Engine]) {
-            return false;
-          }
-          unique[pno.Engine] = true;
-          return true;
+      listSalesversions() {
+        let sv = this.entitiesStore.salesversions;
+        let filteredSv = sv.filter(sv => {
+          return this.tableFilteredPnos().some(pno => pno.SalesVersion === sv.Code);
         });
+        return filteredSv;
       },
-      PnosSpecifics() {
-        switch (this.type) {
-          case 'Features':
-            return this.pnoStore.pnosFeatures;
-          case 'Color':
-            return this.pnoStore.pnosColors;
-          case 'Options':
-            return this.pnoStore.pnosOptions;
-          case 'Upholstery':
-            return this.pnoStore.pnosUpholstery;
-          default:
-            console.log('Invalid type');
-            return [];
-        }
+      listGearboxes() {
+        let gearboxes = this.entitiesStore.gearboxes;
+        let filteredGearboxes = gearboxes.filter(gearboxes => {
+          return this.tableFilteredPnos().some(pno => pno.Gearbox === gearboxes.Code);
+        });
+        return filteredGearboxes;
+      },
+      tableFeatures() {
+        return this.pnoStore.pnosFeatures
+      },
+      tableColors() {
+        return this.pnoStore.pnosColors
+      },
+      tableUpholstery() {
+        return this.pnoStore.pnosUpholstery
+      },
+      tableOptions() {
+        return this.pnoStore.pnosOptions
       },
     },
   methods: {
@@ -284,16 +375,10 @@
         return this.pnoStore.filteredPnos(this.model, this.engine, this.salesversion, this.gearbox)
       },
 
-    async fetchPnosSpecifics(type) {
-      if (type === "Model" || type === "Engine" || type === "SalesVersion") {
-        console.log(type + "Nope");
-        return;
-      } 
-      await this.pnoStore.fetchPnosSpecifics(type, this.model, this.engine, this.salesversion, this.engine);
-    },
-
     refreshModelyear() {
       this.pnoStore.model_year = this.model_year
+      this.entitiesStore.model_year = this.model_year
+      console.log(this.model_year)
       console.log('Model year refreshed')
 
       this.model = '';
@@ -304,9 +389,53 @@
 
       this.pnoStore.fetchPnos().then(() => {
       console.log('PNOs fetched')
-    }).catch((error) => {
-      console.error('Error fetching PNOs', error)
-    })
+      }).catch((error) => {
+        console.error('Error fetching PNOs', error)
+      })
+
+      this.fetchEntities();
+
+    },
+
+    async fetchEntities() {
+      try {
+        await this.pnoStore.fetchPnos();
+        console.log('PNOs fetched');
+        await this.entitiesStore.fetchModels();
+        console.log('Model text fetched');
+        await this.entitiesStore.fetchEngines();
+        console.log('Engine text fetched');
+        await this.entitiesStore.fetchSalesversions();
+        console.log('Salesversion text fetched');
+        await this.entitiesStore.fetchGearboxes();
+        console.log('Gearboxes text fetched');
+      } catch (error) {
+        console.error('Error fetching data', error);
+      }
+    },
+
+    async fetchPnoSpecifics() {
+      delete this.originalData;
+      try {
+        if (this.displaytable === 'Features') {
+          await this.pnoStore.fetchPnosFeatures(this.model, this.engine, this.salesversion, this.gearbox);
+          console.log('PNO Features fetched');
+        }
+        if (this.displaytable === 'Colors') {
+          await this.pnoStore.fetchPnosColors(this.model, this.engine, this.salesversion, this.gearbox);
+          console.log('PNO Colors fetched');
+        }
+        if (this.displaytable === 'Options') {
+          await this.pnoStore.fetchPnosOptions(this.model, this.engine, this.salesversion, this.gearbox);
+          console.log('PNO Options fetched');
+        }
+        if (this.displaytable === 'Upholstery') {
+          await this.pnoStore.fetchPnosUpholstery(this.model, this.engine, this.salesversion, this.gearbox);
+          console.log('PNO Upholstery fetched');
+        }
+      } catch (error) {
+        console.error('Error fetching data', error);
+      }
     },
 
     reset() {
@@ -326,35 +455,35 @@
     },
     // Non-PNO-specific updates
     pushUpdateModel(pno) {
-      this.pnoStore.pushUpdateModel(pno.Model, pno.MarketText)
+      this.entitiesStore.pushUpdateModel(pno.Code, pno.MarketText)
       pno.edited = false
     },
     pushUpdateEngine(pno) {
-      this.pnoStore.pushUpdateEngine(pno.Engine, pno.Category, pno.Subcategory, pno.Performance, pno.MarketText)
+      console.log(pno);
+      this.entitiesStore.pushUpdateEngine(pno.Code, pno.CountryText, pno.EngineCategory, pno.EngineType, pno.Performance)
       pno.edited = false
     },
     pushUpdateSV(pno) {
-      this.pnoStore.pushUpdateSV(pno.SalesVersion, pno.MarketText)
+      this.entitiesStore.pushUpdateSV(pno.Code, pno.MarketText)
       pno.edited = false
     },
-    revert(pno) {
-      if (pno.originalMarketText) {
-        pno.MarketText = pno.originalMarketText;
-      }
-      pno.edited = false;
-    },
-    startEditing(pno) {
-      pno.originalMarketText = pno.MarketText;
+    pushUpdateGearbox(pno) {
+      this.entitiesStore.pushUpdateGearbox(pno.Code, pno.MarketText)
+      pno.edited = false
     },
     uploadVisa() {
       const file = this.$refs.file.files[0];
       console.log(file)
       const formData = new FormData();
       formData.append('visa', file);
-      index.post('/ingest/visa/upload', formData);
+      index.post(`/${this.pnoStore.country}/ingest/visa/upload`, formData);
     },
     refreshCPAM() {
       index.get('/ingest/cpam');
+    },
+    changeCountry(newCountry) {
+      this.pnoStore.setCountry(newCountry);
+      this.entitiesStore.setCountry(newCountry);
     },
   }
   };
@@ -380,13 +509,9 @@
     border-right: 1px solid #c8c9c7;
   }
 
-  th {
-  width: 180px;
+  td {
+  width: 200px;
 
-  }
-
-  .CPAMColumn {
-  width: 200px; /* adjust as needed */
   }
 
   .editing {
@@ -407,6 +532,15 @@
   margin-top: 50px;
   border-top: 1px solid #c8c9c7;
   }
+
+  /* .country {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    color: black;
+    font-size: 0.8em;
+    margin-left: 1rem;
+  } */
 
   /* @media (max-width: 1024px) {
     .sidebar {

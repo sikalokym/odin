@@ -97,29 +97,40 @@ export const usePNOStore = defineStore({
         console.log(error)
       })
     },
-    async fetchPnosSpecifics(type, model, engine, salesversion, gearbox) {
-      let path = `/db/${this.country}/${this.model_year}/pnosfeatures?type=${type}&model=${model}&engine=${engine}&salesversion=${salesversion}&gearbox=${gearbox}`
+    // PNO specific
+    async fetchPnosFeatures(model, engine, salesversion, gearbox) {
+      let path = `/db/${this.country}/${this.model_year}/features?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
       return await index.get(path).then((response) => {
-        switch (type) {
-          case 'Features':
-            this.pnosFeatures = response.data;
-            break;
-          case 'Color':
-            this.pnosColors = response.data;
-            break;
-          case 'Options':
-            this.pnosOptions = response.data;
-            break;
-          case 'Upholstery':
-            this.pnosUpholstery = response.data;
-            break;
-          default:
-            console.log('Invalid type');
-        }
+        this.pnosFeatures = response.data
       }).catch((error) => {
         console.log(error)
       })
     },
+    async fetchPnosOptions(model, engine, salesversion, gearbox) {
+      let path = `/db/${this.country}/${this.model_year}/options?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
+      return await index.get(path).then((response) => {
+        this.pnosOptions = response.data
+      }).catch((error) => {
+        console.log(error)
+      })
+    },
+    async fetchPnosColors(model, engine, salesversion, gearbox) {
+      let path = `/db/${this.country}/${this.model_year}/colors?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
+      return await index.get(path).then((response) => {
+        this.pnosColors = response.data
+      }).catch((error) => {
+        console.log(error)
+      })
+    },
+    async fetchPnosUpholstery(model, engine, salesversion, gearbox) {
+      let path = `/db/${this.country}/${this.model_year}/upholstery?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
+      return await index.get(path).then((response) => {
+        this.pnosUpholstery = response.data
+      }).catch((error) => {
+        console.log(error)
+      })
+    },
+    // General Setup
     setCountry(newCountry) {
       if (newCountry === 'Germany') {
         this.country = '231';
@@ -130,7 +141,7 @@ export const usePNOStore = defineStore({
       this.model_year = newModelYear;
     },
     async exportVariantBinder(validity_year, validity_week, model, engine) {
-      let path = `/${this.country}/export/variant_binder?yyyyuu=${validity_year}${validity_week}&model=${model}&engines_category=${engine}`;
+      let path = `/${this.country}/export/variant_binder?date=${validity_year}${validity_week}&model=${model}&engines_category=${engine}`;
       return await index.get(path, {responseType: 'blob'})
         .then((response) => {
           console.log(response);
@@ -139,36 +150,6 @@ export const usePNOStore = defineStore({
         .catch((error) => {
           console.log(error);
         });
-    },
-    async pushUpdateModel(model, translation) {
-      const now = new Date();
-      const year = now.getFullYear();
-      const start = new Date(now.getFullYear(), 0, 1);
-      const week = Math.ceil((((now - start) / 86400000) + start.getDay() + 1) / 7);
-      const weekStr = week < 10 ? '0' + week : '' + week;
-      const date = year + weekStr;
-      let path = `/db/${this.country}/date=${date}&model=${model}&translation=${translation}`
-      return index.post(path);
-    },
-    async pushUpdateEngine(engine, enginecategory, enginesubcategory, performance, translation) {
-      const now = new Date();
-      const year = now.getFullYear();
-      const start = new Date(now.getFullYear(), 0, 1);
-      const week = Math.ceil((((now - start) / 86400000) + start.getDay() + 1) / 7);
-      const weekStr = week < 10 ? '0' + week : '' + week;
-      const date = year + weekStr;
-      let path = `/db/${this.country}/date=${date}&engine=${engine}&enginecategory=${enginecategory}&enginesubcategory=${enginesubcategory}&performance=${performance}&translation=${translation}`
-      return index.post(path);
-    },
-    async pushUpdateSV(salesversion, translation) {
-      const now = new Date();
-      const year = now.getFullYear();
-      const start = new Date(now.getFullYear(), 0, 1);
-      const week = Math.ceil((((now - start) / 86400000) + start.getDay() + 1) / 7);
-      const weekStr = week < 10 ? '0' + week : '' + week;
-      const date = year + weekStr;
-      let path = `/db/${this.country}/date=${date}&salesversion=${salesversion}&translation=${translation}`
-      return index.post(path);
     },
   },
 })

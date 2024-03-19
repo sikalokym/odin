@@ -9,40 +9,17 @@
     </div>
     <div class="linkcountry">   
     <ul class="nav-links">
-    <router-link to="/">Home</router-link>
-    <router-link to="/database">View Database</router-link>
-    <router-link to="/documents">Export Documents</router-link>
+      <router-link to="/" active-class="active-link">Home</router-link>
+      <router-link to="/database" active-class="active-link">View Database</router-link>
+      <router-link to="/documents" active-class="active-link">Export Documents</router-link>
     </ul>
-    <div class="country">
-    <label for="country">Country</label>
-    <select v-model="selectedCountry" @change="changeCountry(selectedCountry)">
-      <option disabled value="">Germany</option>
-      <option v-for="country in countries" :key="country" :value="country">
-        {{ country }}
-      </option>
-    </select>
-  </div>
 </div>
   </nav>
 </template>
 
 <script>
-  import { usePNOStore } from '../stores/pno.js'
-
 export default {
   name: 'NavBar',
-  data() {
-    return {
-      selectedCountry: '',
-      countries: [] // Add your countries here
-    };
-  },
-  methods: {
-    changeCountry(newCountry) {
-      const pnoStore = usePNOStore();
-      pnoStore.setCountry(newCountry);
-    },
-  }
 };
 </script>
 
@@ -107,15 +84,10 @@ export default {
   justify-content: center;
 }
 
-.country {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  color: black;
-  font-size: 0.8em;
-  margin-left: 1rem;
+.nav-links a.active-link {
+  text-decoration: underline;
 }
-    
+
 @media (max-width: 1100px) {
   .brand-logo img {
   display: none;

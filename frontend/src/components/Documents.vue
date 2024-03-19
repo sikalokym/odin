@@ -17,6 +17,7 @@
       <label class="engine" style="width: 180px;">Engine Category</label><br>
     <select name="engine" id="engine" v-model="engine" style="display:block;width:180px; height:30px; position: absolute; left: 50%; transform: translate(-50%);">
       <option disabled value="">Please Select Engine...</option>
+      <option value="">All</option>
       <option v-for="engine in engine_cats" :key="engine" :value="engine">{{ engine }}</option>
     </select>
     <br><br>
@@ -37,7 +38,17 @@
     <button style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translate(-50%);" @click="exportVariantBinder" :disabled="this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === ''">Export Variant Binder</button>
     <br><br><br>
     <button style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translate(-50%); " :disabled="this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === ''">Export Changelog</button>
-    <br><br>
+
+    <br><br><br>
+    <div class="country">
+      <label for="country">Change Country: </label>
+      <select v-model="selectedCountry" @change="changeCountry(selectedCountry)">
+        <option disabled value="">Germany</option>
+        <option v-for="country in countries" :key="country" :value="country">
+          {{ country }}
+        </option>
+      </select>
+    </div>
     </aside>
     <main class="main-content">
 
@@ -46,6 +57,7 @@
   
   <script>
   import { usePNOStore } from '../stores/pno.js'
+  import { useEntitiesStore } from '../stores/entities.js'
 
   export default {
     name: 'DocumentsView',
@@ -56,11 +68,28 @@
         validity_year: '',
         validity_week: '',
         engine: '',
-        pnoStore: usePNOStore()
+        pnoStore: usePNOStore(),
+        entitiesStore: useEntitiesStore(),
+        countries: [],
+        selectedCountry: '',
       }
     },
     async created() {
       this.pnoStore.model_year = '0';
+      this.entitiesStore.model_year = '0';
+
+      await this.pnoStore.fetchSupportedCountries().then(() => {
+        console.log('Supported countries fetched')
+      }).catch((error) => {
+        console.error('Error fetching countries', error)
+      })
+
+      await this.pnoStore.fetchAvailableModelYears().then(() => {
+        console.log('Available model years fetched')
+      }).catch((error) => {
+        console.error('Error fetching available model years', error)
+      }) 
+      
     },
     computed: {
       filteredPnos() {
@@ -112,6 +141,10 @@
           document.body.appendChild(link);
           link.click();
           console.log(response.headers)
+      },
+      changeCountry(newCountry) {
+        this.pnoStore.setCountry(newCountry);
+        this.entitiesStore.setCountry(newCountry);
       },
   
   }
