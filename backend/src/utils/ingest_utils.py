@@ -1,0 +1,58 @@
+import pandas as pd
+from src.database.services import get_engine_cats
+from src.ingest.cpam.api import get_car_types, get_model_years
+
+def is_valid_year(year, spec_market):
+    """Check if year is valid.
+
+    Args:
+        year (str): Year to check
+        years (list): List of valid years
+
+    Returns:
+        bool: True if year is valid, False otherwise
+    """
+    return year in get_model_years(spec_market)['Years']
+
+def is_valid_car_type(car_type, year, country_code):
+    """Check if car type is valid.
+
+    Args:
+        car_type (str): Car type to check
+        year (str): Model year
+
+    Returns:
+        bool: True if car type is valid, False otherwise
+    """
+    car_types = [car['Type'] for car in get_car_types(year, country_code)['DataRows']]
+    return car_type in car_types
+
+def is_valid_engine_category(engine_category, year, country_code, model):
+    """Check if engine category is valid.
+
+    Args:
+        engine_category (str): Engine category to check
+        year (str): Model year
+        country_code (str): Country code
+
+    Returns:
+        bool: True if engine category is valid, False otherwise
+    """
+    return engine_category in get_engine_cats(country_code, year, model)
+
+def excel_files_to_df(files):
+    """Convert excel files to dataframes.
+
+    Args:
+        files (list): List of excel files
+
+    Returns:
+        list: List of dataframes
+    """    # Read the Excel files into a pandas DataFrame
+    df = pd.concat([pd.read_excel(file, dtype=str) for file in files])
+
+    # Select the desired columns
+    df = df[['Car Type', 'Engine', 'Sales Version', 'Body', 'Gearbox', 'Steering', 'Market Code', 'Color', 'Option', 'Upholstery', 'Package', 'MSRP', 'Price Before Tax', 'Date From', 'Date To']]
+
+    # Return the modified DataFrame
+    return df
