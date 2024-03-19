@@ -35,7 +35,8 @@ def get_pnos(country, model_year):
 def get_models(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Model', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
-    conditions = [f'CountryCode = {country}']
-    df_models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), columns=['Code', 'MarketText'], conditions=conditions)
-    df_res = df_pnos.join(df_models, left_on='Model', right_on='Code', how='left')
+    
+    df_models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), columns=['Code', 'MarketText'], conditions=[f'CountryCode = {country}'])
+    df_models = df_models[df_models['Code'].isin(df_pnos['Model'])]
+
     return df_models.to_json(orient='records')

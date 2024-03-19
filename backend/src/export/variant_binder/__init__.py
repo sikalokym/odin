@@ -12,10 +12,14 @@ def extract_variant_binder(country, model, engines_types, time):
     default_sheet = wb.active
     wb.remove(default_sheet)
 
-    valid_engines = get_valid_engines(country, engines_types, time)
-    valid_pnos = get_valid_pnos(country, model, time, valid_engines)
-    sales_versions = get_sales_versions(country, valid_pnos, time)
-    title = get_model_name(model, time)
+    try:
+        valid_engines = get_valid_engines(country, engines_types, time)
+        valid_pnos = get_valid_pnos(country, model, time, valid_engines)
+        sales_versions = get_sales_versions(country, valid_pnos, time)
+        title = get_model_name(model, time)
+    except Exception as e:
+        DBOperations.instance.logger.error(f"Error getting VB Data: {e}")
+        return str(e), 500
 
     if valid_pnos.empty or sales_versions.empty or valid_engines.empty:
         DBOperations.instance.logger.info(f"No data found for model {model} and engine category {engines_types} at time {time}")
@@ -48,6 +52,8 @@ def get_model_name(country, model, time):
 def get_sales_versions(country, pnos, time):
     df_sv = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), conditions=[f'CountryCode = {country}'])
     df_pno_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'PNO_Custom'))
+    if df_pno_price.empty:
+        raise Exception("No price data found")
     df_sv = filter_df_by_timestamp(df_sv, time)
     df_sv.rename(columns={'Code': 'TmpCode'}, inplace=True)
 
@@ -91,6 +97,7 @@ def get_valid_pnos(country, model, time, engines_types):
     df_pnos = filter_df_by_timestamp(df_all_pnos, time)
     if df_pnos.empty:
         DBOperations.instance.logger.info(f"No PNOs found for model {model}")
+        raise Exception(f"No PNOs found for model {model}")
 
     # engines_types is a df. engines_types.Code is a list of engines for each row
     allowed_patrol_engines = engines_types.explode('Code')['Code'].unique()

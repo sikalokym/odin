@@ -334,6 +334,8 @@ def filter_df_by_model_year(df, model_year):
         pandas.DataFrame: The filtered DataFrame.
 
     """
+    if isinstance(model_year, str):
+        model_year = int(model_year)
     return df[(df['StartDate'].apply(get_model_year_from_date) == model_year) | (df['EndDate'].apply(get_model_year_from_date) == model_year)]
 
 def get_model_year_from_date(date):
