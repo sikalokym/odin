@@ -5,17 +5,17 @@ from src.database.services import get_engine_cats
 from src.utils.db_utils import filter_df_by_model_year
 
 
-bp_db_manager = Blueprint('db_manager', __name__, url_prefix='/api/db/<country>/<model_year>')
+bp_db_reader = Blueprint('db_reader', __name__, url_prefix='/api/db/<country>/<model_year>')
 
 
-@bp_db_manager.route('/engine_cats', methods=['GET'])
+@bp_db_reader.route('/engine_cats', methods=['GET'])
 def retrieve_engine_cats(country, model_year):
     model = request.args.get('model')
     engine_cats = get_engine_cats(country, model_year, model)
     
     return jsonify(engine_cats)
 
-@bp_db_manager.route('/pnos', methods=['GET'])
+@bp_db_reader.route('/pnos', methods=['GET'])
 def get_pnos(country, model_year):
     columns = request.args.get('columns')
     if columns:
@@ -31,7 +31,7 @@ def get_pnos(country, model_year):
     
     return df_pnos.to_json(orient='records')
 
-@bp_db_manager.route('/models', methods=['GET'])
+@bp_db_reader.route('/models', methods=['GET'])
 def get_models(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Model', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
@@ -41,7 +41,7 @@ def get_models(country, model_year):
     df_models = df_models[df_models['Code'].isin(df_pnos['Model'])]
     return df_models.to_json(orient='records')
 
-@bp_db_manager.route('/sales_versions', methods=['GET'])
+@bp_db_reader.route('/sales_versions', methods=['GET'])
 def get_sales_versions(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['SalesVersion', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
@@ -51,7 +51,7 @@ def get_sales_versions(country, model_year):
     df_sales_versions = df_sales_versions[df_sales_versions['Code'].isin(df_pnos['SalesVersion'])]
     return df_sales_versions.to_json(orient='records')
 
-@bp_db_manager.route('/engines', methods=['GET'])
+@bp_db_reader.route('/engines', methods=['GET'])
 def get_engines(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Engine', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
@@ -61,7 +61,7 @@ def get_engines(country, model_year):
     df_engines = df_engines[df_engines['Code'].isin(df_pnos['Engine'])]
     return df_engines.to_json(orient='records') 
 
-@bp_db_manager.route('/gearboxes', methods=['GET'])
+@bp_db_reader.route('/gearboxes', methods=['GET'])
 def get_gearboxes(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Gearbox', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
@@ -71,7 +71,7 @@ def get_gearboxes(country, model_year):
     df_gearboxes = df_gearboxes[df_gearboxes['Code'].isin(df_pnos['Gearbox'])]
     return df_gearboxes.to_json(orient='records')
 
-@bp_db_manager.route('/options', methods=['GET'])
+@bp_db_reader.route('/options', methods=['GET'])
 def get_options(country, model_year):
     model = request.args.get('model')
     engine = request.args.get('engine')
@@ -110,7 +110,7 @@ def get_options(country, model_year):
 
     return df_pno_options.to_json(orient='records')
 
-@bp_db_manager.route('/colors', methods=['GET'])
+@bp_db_reader.route('/colors', methods=['GET'])
 def get_colors(country, model_year):
     model = request.args.get('model')
     engine = request.args.get('engine')
@@ -150,7 +150,7 @@ def get_colors(country, model_year):
 
     return df_pno_colors.to_json(orient='records')
 
-@bp_db_manager.route('/upholstery', methods=['GET'])
+@bp_db_reader.route('/upholstery', methods=['GET'])
 def get_upholstery(country, model_year):
     model = request.args.get('model')
     engine = request.args.get('engine')
@@ -190,7 +190,7 @@ def get_upholstery(country, model_year):
 
     return df_pno_upholstery.to_json(orient='records')
 
-@bp_db_manager.route('/features', methods=['GET'])
+@bp_db_reader.route('/features', methods=['GET'])
 def get_features(country, model_year):
     model = request.args.get('model')
     engine = request.args.get('engine')

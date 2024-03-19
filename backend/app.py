@@ -5,7 +5,8 @@ from flask import Flask, render_template_string
 from flask_cors import CORS
 from src.database.db_operations import DBOperations
 from src.routes.ingest_routes import bp_ingest
-from src.routes.db_routes import bp_db_manager
+from src.routes.db_reader_routes import bp_db_reader
+from src.routes.db_writer_routes import bp_db_writer
 from src.routes.exporter_routes import bp_exporter
 from src.routes.settings_routes import bp_settings
 
@@ -21,7 +22,8 @@ app.logger.setLevel(logging.INFO)
 
 app.register_blueprint(bp_settings)
 app.register_blueprint(bp_ingest)
-app.register_blueprint(bp_db_manager)
+app.register_blueprint(bp_db_reader)
+app.register_blueprint(bp_db_writer)
 app.register_blueprint(bp_exporter)
 
 DBOperations.create_instance()
