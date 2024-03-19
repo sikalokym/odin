@@ -29,6 +29,7 @@ def get_pnos(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), columns, conditions=[f'CountryCode = {country}'])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     
+    df_pnos.drop_duplicates(inplace=True)
     return df_pnos.to_json(orient='records')
 
 @bp_db_reader.route('/models', methods=['GET'])
@@ -39,6 +40,7 @@ def get_models(country, model_year):
     df_models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), columns=['Code', 'CountryText', 'MarketText'], conditions=[f'CountryCode = {country}'])
 
     df_models = df_models[df_models['Code'].isin(df_pnos['Model'])]
+    df_models.drop_duplicates(inplace=True)
     return df_models.to_json(orient='records')
 
 @bp_db_reader.route('/sales_versions', methods=['GET'])
@@ -49,6 +51,7 @@ def get_sales_versions(country, model_year):
     df_sales_versions = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), columns=['Code', 'CountryText', 'MarketText'], conditions=[f'CountryCode = {country}'])
 
     df_sales_versions = df_sales_versions[df_sales_versions['Code'].isin(df_pnos['SalesVersion'])]
+    df_sales_versions.drop_duplicates(inplace=True)
     return df_sales_versions.to_json(orient='records')
 
 @bp_db_reader.route('/engines', methods=['GET'])
@@ -59,6 +62,7 @@ def get_engines(country, model_year):
     df_engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), columns=['Code', 'MarketText', 'CountryText', 'Performance', 'EngineCategory', 'EngineType'], conditions=[f'CountryCode = {country}'])
 
     df_engines = df_engines[df_engines['Code'].isin(df_pnos['Engine'])]
+    df_engines.drop_duplicates(inplace=True)
     return df_engines.to_json(orient='records') 
 
 @bp_db_reader.route('/gearboxes', methods=['GET'])
@@ -69,6 +73,7 @@ def get_gearboxes(country, model_year):
     df_gearboxes = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'G'), columns=['Code', 'CountryText', 'MarketText'], conditions=[f'CountryCode = {country}'])
 
     df_gearboxes = df_gearboxes[df_gearboxes['Code'].isin(df_pnos['Gearbox'])]
+    df_gearboxes.drop_duplicates(inplace=True)
     return df_gearboxes.to_json(orient='records')
 
 @bp_db_reader.route('/options', methods=['GET'])
@@ -108,6 +113,7 @@ def get_options(country, model_year):
     df_pno_options['MarketText'] = df_pno_options['Code'].map(df_options.set_index('Code')['MarketText'])
     df_pno_options.drop(columns=['ID'], inplace=True)
 
+    df_pno_options.drop_duplicates(inplace=True)
     return df_pno_options.to_json(orient='records')
 
 @bp_db_reader.route('/colors', methods=['GET'])
@@ -148,6 +154,7 @@ def get_colors(country, model_year):
     df_pno_colors['MarketText'] = df_pno_colors['Code'].map(df_colors.set_index('Code')['MarketText'])
     df_pno_colors.drop(columns=['ID'], inplace=True)
 
+    df_pno_colors.drop_duplicates(inplace=True)
     return df_pno_colors.to_json(orient='records')
 
 @bp_db_reader.route('/upholstery', methods=['GET'])
@@ -188,6 +195,7 @@ def get_upholstery(country, model_year):
     df_pno_upholstery['MarketText'] = df_pno_upholstery['Code'].map(df_upholstery.set_index('Code')['MarketText'])
     df_pno_upholstery.drop(columns=['ID'], inplace=True)
 
+    df_pno_upholstery.drop_duplicates(inplace=True)
     return df_pno_upholstery.to_json(orient='records')
 
 @bp_db_reader.route('/features', methods=['GET'])
@@ -222,4 +230,5 @@ def get_features(country, model_year):
     df_pno_features.drop_duplicates(inplace=True)
     df_pno_features['MarketText'] = df_pno_features['Code'].map(df_features.set_index('Code')['MarketText'])
 
+    df_pno_features.drop_duplicates(inplace=True)
     return df_pno_features.to_json(orient='records')

@@ -82,7 +82,7 @@ def get_valid_engines(country, engine_cat, time):
         df_engines['EngineType'] = ''
         return df_engines.groupby('EngineType').agg({'Code': list}).reset_index()
     
-    df_engines = df_all_engines[df_all_engines['EngineCategory'] == engine_cat]
+    df_engines = df_engines[df_engines['EngineCategory'] == engine_cat]
     if df_engines.empty:
         DBOperations.instance.logger.info(f"No engines found for the given engine category {engine_cat}")
         return 
