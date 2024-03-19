@@ -249,6 +249,7 @@ CREATE TABLE PNOFeature (
     Reference VARCHAR(255),
     Options VARCHAR(12),
     RuleName VARCHAR(12),
+    CustomName VARCHAR(255),
     StartDate INT,
     EndDate INT,
     FOREIGN KEY (PNOID) REFERENCES PNO(ID)

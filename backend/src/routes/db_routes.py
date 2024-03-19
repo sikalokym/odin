@@ -70,3 +70,156 @@ def get_gearboxes(country, model_year):
 
     df_gearboxes = df_gearboxes[df_gearboxes['Code'].isin(df_pnos['Gearbox'])]
     return df_gearboxes.to_json(orient='records')
+
+@bp_db_manager.route('/options', methods=['GET'])
+def get_options(country, model_year):
+    model = request.args.get('model')
+    engine = request.args.get('engine')
+    sales_version = request.args.get('sales_version')
+    gearbox = request.args.get('gearbox')
+
+    conditions = [f'CountryCode = {country}']
+    if model:
+        conditions.append(f"Model = '{model}'")
+    if engine:
+        conditions.append(f"Engine = '{engine}'")
+    if sales_version:
+        conditions.append(f"SalesVersion = '{sales_version}'")
+    if gearbox:
+        conditions.append(f"Gearbox = '{gearbox}'")
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
+    df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    ids = df_pnos['ID'].tolist()
+
+    df_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'OPT'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
+    df_options = filter_df_by_model_year(df_options, model_year)
+    df_options.drop(columns=['StartDate', 'EndDate'], inplace=True)
+    df_options.drop_duplicates(subset='Code', inplace=True)
+
+    df_pno_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'OPT'), columns=['ID', 'Code'], conditions=[f'PNOID in {tuple(ids)}'])
+    df_pno_options.drop_duplicates(inplace=True)
+    
+    df_options_custom = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'OPT_Custom'), columns=['RelationID', 'CustomName'])
+    if df_options_custom.empty:
+        df_pno_options['CountryText'] = ''
+    else:
+        df_pno_options['CountryText'] = df_pno_options['ID'].map(df_options_custom.set_index('RelationID')['CustomName'])
+    
+    df_pno_options['MarketText'] = df_pno_options['Code'].map(df_options.set_index('Code')['MarketText'])
+    df_pno_options.drop(columns=['ID'], inplace=True)
+
+    return df_pno_options.to_json(orient='records')
+
+@bp_db_manager.route('/colors', methods=['GET'])
+def get_colors(country, model_year):
+    model = request.args.get('model')
+    engine = request.args.get('engine')
+    sales_version = request.args.get('sales_version')
+    gearbox = request.args.get('gearbox')
+
+    conditions = [f'CountryCode = {country}']
+    if model:
+        conditions.append(f"Model = '{model}'")
+    if engine:
+        conditions.append(f"Engine = '{engine}'")
+    if sales_version:
+        conditions.append(f"SalesVersion = '{sales_version}'")
+    if gearbox:
+        conditions.append(f"Gearbox = '{gearbox}'")
+
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
+    df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    ids = df_pnos['ID'].tolist()
+
+    df_colors = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'COL'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
+    df_colors = filter_df_by_model_year(df_colors, model_year)
+    df_colors.drop(columns=['StartDate', 'EndDate'], inplace=True)
+    df_colors.drop_duplicates(subset='Code', inplace=True)
+
+    df_pno_colors = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'COL'), columns=['ID', 'Code'], conditions=[f'PNOID in {tuple(ids)}'])
+    df_pno_colors.drop_duplicates(inplace=True)
+    
+    df_colors_custom = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'COL_Custom'), columns=['RelationID', 'CustomName'])
+    if df_colors_custom.empty:
+        df_pno_colors['CountryText'] = ''
+    else:
+        df_pno_colors['CountryText'] = df_pno_colors['ID'].map(df_colors_custom.set_index('RelationID')['CustomName'])
+    
+    df_pno_colors['MarketText'] = df_pno_colors['Code'].map(df_colors.set_index('Code')['MarketText'])
+    df_pno_colors.drop(columns=['ID'], inplace=True)
+
+    return df_pno_colors.to_json(orient='records')
+
+@bp_db_manager.route('/upholstery', methods=['GET'])
+def get_upholstery(country, model_year):
+    model = request.args.get('model')
+    engine = request.args.get('engine')
+    sales_version = request.args.get('sales_version')
+    gearbox = request.args.get('gearbox')
+
+    conditions = [f'CountryCode = {country}']
+    if model:
+        conditions.append(f"Model = '{model}'")
+    if engine:
+        conditions.append(f"Engine = '{engine}'")
+    if sales_version:
+        conditions.append(f"SalesVersion = '{sales_version}'")
+    if gearbox:
+        conditions.append(f"Gearbox = '{gearbox}")
+
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
+    df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    ids = df_pnos['ID'].tolist()
+
+    df_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'UPH'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
+    df_upholstery = filter_df_by_model_year(df_upholstery, model_year)
+    df_upholstery.drop(columns=['StartDate', 'EndDate'], inplace=True)
+    df_upholstery.drop_duplicates(subset='Code', inplace=True)
+
+    df_pno_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'UPH'), columns=['ID', 'Code'], conditions=[f'PNOID in {tuple(ids)}'])
+    df_pno_upholstery.drop_duplicates(inplace=True)
+    
+    df_upholstery_custom = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), columns=['RelationID', 'CustomName'])
+    if df_upholstery_custom.empty:
+        df_pno_upholstery['CountryText'] = ''
+    else:
+        df_pno_upholstery['CountryText'] = df_pno_upholstery['ID'].map(df_upholstery_custom.set_index('RelationID')['CustomName'])
+    
+    df_pno_upholstery['MarketText'] = df_pno_upholstery['Code'].map(df_upholstery.set_index('Code')['MarketText'])
+    df_pno_upholstery.drop(columns=['ID'], inplace=True)
+
+    return df_pno_upholstery.to_json(orient='records')
+
+@bp_db_manager.route('/features', methods=['GET'])
+def get_features(country, model_year):
+    model = request.args.get('model')
+    engine = request.args.get('engine')
+    sales_version = request.args.get('sales_version')
+    gearbox = request.args.get('gearbox')
+
+    conditions = [f'CountryCode = {country}']
+    if model:
+        conditions.append(f"Model = '{model}'")
+    if engine:
+        conditions.append(f"Engine = '{engine}'")
+    if sales_version:
+        conditions.append(f"SalesVersion = '{sales_version}'")
+    if gearbox:
+        conditions.append(f"Gearbox = '{gearbox}")
+
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
+    df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    ids = df_pnos['ID'].tolist()
+
+    df_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'FEA'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
+    df_features = filter_df_by_model_year(df_features, model_year)
+    df_features.drop(columns=['StartDate', 'EndDate'], inplace=True)
+    df_features['Code'] = df_features['Code'].str.strip()
+    df_features.drop_duplicates(subset='Code', inplace=True)
+
+    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['Code', 'CustomName'], conditions=[f'PNOID in {tuple(ids)}'])
+    df_pno_features['Code'] = df_pno_features['Code'].str.strip()
+    df_pno_features.drop_duplicates(inplace=True)
+    df_pno_features['MarketText'] = df_pno_features['Code'].map(df_features.set_index('Code')['MarketText'])
+
+    return df_pno_features.to_json(orient='records')

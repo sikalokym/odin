@@ -58,7 +58,7 @@ class DBOperations:
             raise ValueError('Conditions must be a list')
         
         with self.get_cursor() as cursor:
-            cursor.execute(f"SELECT {columns} FROM {table_name}")
+            cursor.execute(f"SELECT {columns} FROM {table_name} WHERE {conditions};")
             data = cursor.fetchall()
             if not data:
                 return pd.DataFrame()
@@ -245,6 +245,7 @@ class DBOperations:
             self.logger.info('No data to insert')
             return
         df = df_from_datarows(datarows, ['Code', 'Special', 'Reference'])
+        df['Code'] = df['Code'].str.strip()
         df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f'CountryCode={spec_market}'])
         df_pnos = df_pnos.drop('CountryCode', axis=1)
         if df_pnos.empty:
