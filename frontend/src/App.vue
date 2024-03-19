@@ -1,0 +1,52 @@
+<template>
+  <div id="app">
+    <NavBar />
+    <div class="editor">
+      <RouterView></RouterView>
+    </div>
+  </div>
+</template>
+
+<script>
+import NavBar from './components/NavBar.vue'
+import { usePNOStore } from './stores/pno.js'
+
+export default {
+  name: 'App',
+  components: {
+    NavBar,
+  },
+  async created() {
+    
+    const pnoStore = usePNOStore()
+
+    await pnoStore.fetchSupportedCountries().then(() => {
+      console.log('Supported countries fetched')
+    }).catch((error) => {
+      console.error('Error fetching countries', error)
+    })
+
+    await pnoStore.fetchAvailableModelYears().then(() => {
+      console.log('Available model years fetched')
+    }).catch((error) => {
+      console.error('Error fetching available model years', error)
+    })
+  },
+};
+</script>
+
+<style>
+#app {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  color: #2c3e50;
+  margin: 0%;
+}
+
+.editor {
+  height: 100%;
+  display: flex;
+}
+</style>
