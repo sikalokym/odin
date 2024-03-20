@@ -1,6 +1,4 @@
 import logging
-from dotenv import load_dotenv
-load_dotenv()
 from flask import Flask, render_template_string
 from flask_cors import CORS
 from src.database.db_operations import DBOperations
@@ -51,4 +49,4 @@ def welcome():
     return render_template_string(WELCOME_PAGE_TEMPLATE, rules=rules)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=True, port=5000)

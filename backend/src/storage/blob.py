@@ -61,7 +61,7 @@ def load_visa_files(spec_markt):
                 df_list.append(df)
             except Exception as e:
                 print(f"Failed to read blob {blob.name}: {e}")
-                print(f"Data: {data.getvalue()[:100]}")
+                print(f"Data: {data.getvalue()[:10]}")
                 raise e
 
     return pd.concat(df_list, ignore_index=True)
