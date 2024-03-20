@@ -36,6 +36,7 @@
 
     <br><br>
     <button style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translate(-50%);" @click="exportVariantBinder" :disabled="this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === ''">Export Variant Binder</button>
+    <!-- <button style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translate(-50%);" @click="exportVariantBinder" >Export Test Variant Binder</button> -->
     <br><br><br>
     <button style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translate(-50%); " :disabled="this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === ''">Export Changelog</button>
 
@@ -128,19 +129,12 @@
         console.log('Engine cats refreshed')
       },
       async exportVariantBinder() {
-        let response = await this.pnoStore.exportVariantBinder(this.validity_year,this.validity_week,this.model,this.engine)
-        console.log(response)
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-          const link = document.createElement('a');
-          link.href = url;
-    
-          // Extract filename from download_name header
-          let filename = response.headers['download_name']; // Default filename if download_name is not present
-    
-          link.setAttribute('download', filename);
-          document.body.appendChild(link);
-          link.click();
-          console.log(response.headers)
+        const link = document.createElement('a');
+        link.href = `http://127.0.0.1:5000/api/231/export/variant_binder?date=${this.validity_year}${this.validity_week}&model=${this.model}&engines_category=${this.engine}`;
+  
+        link.setAttribute('download', 'VariantBinder_.xlsx');
+        document.body.appendChild(link);
+        link.click();
       },
       changeCountry(newCountry) {
         this.pnoStore.setCountry(newCountry);

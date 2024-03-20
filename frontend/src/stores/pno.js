@@ -141,9 +141,12 @@ export const usePNOStore = defineStore({
       this.model_year = newModelYear;
     },
     async exportVariantBinder(validity_year, validity_week, model, engine) {
-      let path = `/${this.country}/export/variant_binder?date=${validity_year}${validity_week}&model=${model}&engines_category=${engine}`;
-      return await index.get(path, {responseType: 'blob'})
+      console.log(validity_year, validity_week, model, engine);
+      // let path = `/${this.country}/export/variant_binder?date=${validity_year}${validity_week}&model=${model}&engines_category=${engine}`;
+      let path = '/231/export/variant_binder?date=202503&model=246&engines_category=Plug-in%20Hybrid'
+      return index.get(path, {responseType: 'blob'})
         .then((response) => {
+          console.log('response');
           console.log(response);
           return response;
         })
