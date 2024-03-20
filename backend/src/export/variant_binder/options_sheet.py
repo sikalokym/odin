@@ -15,7 +15,7 @@ all_border = Border(top=Side(style='thin', color='000000'),
 white_border = Border(right=Side(style='thin', color="FFFFFF"))
 fill = PatternFill(start_color='000080', end_color='000080', fill_type='solid')
 
-def get_sheet(ws, sales_versions, title, country, time):
+def get_sheet(ws, sales_versions, title, time):
     """
     Fetches options data and inserts it into the specified worksheet.
 
@@ -28,7 +28,7 @@ def get_sheet(ws, sales_versions, title, country, time):
         None
     """
 
-    df_res = fetch_options_data(country, sales_versions, time)
+    df_res = fetch_options_data(sales_versions, time)
 
     # Calculate the number of empty rows to append
     num_empty_rows = 2 - len(ws['A'])
@@ -44,8 +44,6 @@ def get_sheet(ws, sales_versions, title, country, time):
     prepare_sheet(ws, sales_versions.SalesVersionName, title)
 
 def prepare_sheet(ws, sales_versions, title):
-    # Finding of the last columns and rows with content for border lines
-    max_c_pre = ws.max_column
     max_r_pre = ws.max_row 
 
     # Format cells according to templates
@@ -204,13 +202,11 @@ def prepare_sheet(ws, sales_versions, title):
                             top=Side(style='thin'),
                             right=Side(style='thin'))
         
-def fetch_options_data(country, sales_versions, time):
-    df_pno_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'OPT'), columns=['ID', 'PNOID', 'Code', 'RuleName'], conditions=[f'CountryCode = {country}'])
-    df_pno_options = filter_df_by_timestamp(df_pno_options, time)
+def fetch_options_data(sales_versions, time):
     df_pno_option_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'OPT_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax', 'CustomName'])
+    df_pno_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'OPT'), columns=['ID', 'PNOID', 'Code', 'RuleName', 'StartDate', 'EndDate'])
     df_pno_options = filter_df_by_timestamp(df_pno_options, time)
-
-    df_pno_options = df_pno_options[~df_pno_options['Code'].str.startswith('A')]
+    df_pno_options.drop(columns=['StartDate', 'EndDate'], inplace=True)
     
     sales_versions.rename(columns={'ID': 'TmpCode'}, inplace=True)
     df_pno_options = df_pno_options.merge(sales_versions[['TmpCode', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='TmpCode', how='left')
@@ -220,7 +216,7 @@ def fetch_options_data(country, sales_versions, time):
     df_pno_options_with_price = df_pno_options_with_sv.merge(df_pno_option_price, left_on='ID', right_on='RelationID', how='left')
 
     # Concatenate Price and PriceBeforeTax
-    df_pno_options_with_price['Price'] = df_pno_options_with_price.apply(lambda x: f"{x['Price']}/{x['PriceBeforeTax']}", axis=1)
+    df_pno_options_with_price['Price'] = df_pno_options_with_price.apply(lambda x: f"{x['Price']}/{x['PriceBeforeTax']}" if x['RuleName'] != 'P' else 'Pack Only', axis=1)
     
     # Create the pivot table
     pivot_df = df_pno_options_with_price.pivot_table(index=['Code', 'Price'], columns='SalesVersion', values='RuleName', aggfunc='first')

@@ -38,7 +38,14 @@ def is_valid_engine_category(engine_category, year, country_code, model):
     Returns:
         bool: True if engine category is valid, False otherwise
     """
-    return engine_category.lower() in get_engine_cats(country_code, year, model) + ['all', '']
+    engine_cats = [cat.lower() for cat in get_engine_cats(country_code, year, model)]
+    additional_cats = ['all', '']
+
+    # Combine the lists
+    all_cats = engine_cats + additional_cats
+
+    # Check if engine_category is in all_cats
+    return engine_category.lower() in all_cats
 
 def excel_files_to_df(files):
     """Convert excel files to dataframes.

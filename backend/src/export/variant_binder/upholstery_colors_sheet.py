@@ -12,7 +12,7 @@ all_border = Border(top=Side(style='thin', color='000000'),
 fill = PatternFill(start_color='000080', end_color='000080', fill_type='solid')
 
 
-def get_sheet(ws, sales_versions, title, country, time):
+def get_sheet(ws, sales_versions, title, time):
     """
     Fetches options data and inserts it into the specified worksheet.
 
@@ -24,8 +24,8 @@ def get_sheet(ws, sales_versions, title, country, time):
     Returns:
         None
     """
-    df_colors = fetch_color_data(country, sales_versions, time)
-    df_upholstery = fetch_upholstery_data(country, sales_versions, time)
+    df_colors = fetch_color_data(sales_versions, time)
+    df_upholstery = fetch_upholstery_data(sales_versions, time)
 
     prepare_sheet(ws, sales_versions.SalesVersionName, title)
 
@@ -108,11 +108,10 @@ def prepare_sheet(ws, sales_versions, title):
     ws['B2'].font = Font(size=10, bold=True)
     
 
-def fetch_color_data(country, sales_versions, time):
-    df_pno_color = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'COL'), columns=['ID', 'PNOID', 'Code', 'RuleName'], conditions=[f'CountryCode = {country}'])
+def fetch_color_data(sales_versions, time):
+    df_pno_color = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'COL'), columns=['ID', 'PNOID', 'Code', 'RuleName', 'StartDate', 'EndDate'])
     df_pno_color = filter_df_by_timestamp(df_pno_color, time)
     df_pno_color_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'COL_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax', 'CustomName'])
-    df_pno_color_price = filter_df_by_timestamp(df_pno_color_price, time)
 
     sales_versions.rename(columns={'ID': 'TmpCode'}, inplace=True)
     df_pno_color = df_pno_color.merge(sales_versions[['TmpCode', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='TmpCode', how='left')
@@ -136,11 +135,10 @@ def fetch_color_data(country, sales_versions, time):
 
     return df_result
 
-def fetch_upholstery_data(country, sales_versions, time):
-    df_pno_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'UPH'), columns=['ID', 'PNOID', 'Code', 'RuleName'], conditions=[f'CountryCode = {country}'])
+def fetch_upholstery_data(sales_versions, time):
+    df_pno_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'UPH'), columns=['ID', 'PNOID', 'Code', 'RuleName', 'StartDate', 'EndDate'])
     df_pno_upholstery = filter_df_by_timestamp(df_pno_upholstery, time)
     df_pno_upholstery_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax', 'CustomName'])
-    df_pno_upholstery_price = filter_df_by_timestamp(df_pno_upholstery_price, time)
 
     sales_versions.rename(columns={'ID': 'TmpCode'}, inplace=True)
     df_pno_upholstery = df_pno_upholstery.merge(sales_versions[['TmpCode', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='TmpCode', how='left')

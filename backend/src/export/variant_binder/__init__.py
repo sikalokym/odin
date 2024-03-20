@@ -1,4 +1,5 @@
 from io import BytesIO
+import numpy as np
 from openpyxl import Workbook
 from src.database.db_operations import DBOperations
 from src.export.variant_binder import prices_sheet, options_sheet, upholstery_colors_sheet
@@ -16,7 +17,7 @@ def extract_variant_binder(country, model, engines_types, time):
         valid_engines = get_valid_engines(country, engines_types, time)
         valid_pnos = get_valid_pnos(country, model, time, valid_engines)
         sales_versions = get_sales_versions(country, valid_pnos, time)
-        title = get_model_name(model, time)
+        title = get_model_name(country, model, time)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error getting VB Data: {e}")
         return str(e), 500
@@ -27,12 +28,12 @@ def extract_variant_binder(country, model, engines_types, time):
     ws_1 = wb.create_sheet("Preise")
     prices_sheet.get_sheet(ws_1, valid_pnos, sales_versions, title, time, valid_engines, country)
     ws_2 = wb.create_sheet("Optionen")
-    options_sheet.get_sheet(ws_2, sales_versions, title, country)
+    options_sheet.get_sheet(ws_2, sales_versions, title, time)
     ws_3 = wb.create_sheet("Polster & Farben")
-    upholstery_colors_sheet.get_sheet(ws_3, sales_versions, title, country)
+    upholstery_colors_sheet.get_sheet(ws_3, sales_versions, title, time)
 
     wb.save(f'dist/VB {title} {engines_types} {time}.xlsx')
-    return
+    # return
     output = BytesIO()
     wb.save(output)
     output.seek(0)
@@ -87,7 +88,7 @@ def get_valid_engines(country, engine_cat, time):
         DBOperations.instance.logger.info(f"No engines found for the given engine category {engine_cat}")
         return 
     
-    df_engines['EngineType'] = df_engines['EngineType'].fillna(df_engines['EngineCategory'])
+    df_engines['EngineType'] = df_engines['EngineType'].replace('', np.nan).fillna(df_engines['EngineCategory'])
     
     # group by the new column and return the list of engines for each group
     return df_engines.groupby('EngineType').agg({'Code': list}).reset_index()
