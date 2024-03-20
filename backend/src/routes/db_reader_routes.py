@@ -70,7 +70,9 @@ def get_gearboxes(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Gearbox', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     
-    df_gearboxes = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'G'), columns=['Code', 'CountryText', 'MarketText'], conditions=[f'CountryCode = {country}'])
+    df_gearboxes = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'G'), columns=['Code', 'CountryText', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
+    df_gearboxes = filter_df_by_model_year(df_gearboxes, model_year)
+    df_gearboxes = df_gearboxes.sort_values('StartDate', ascending=False).drop_duplicates('Code', keep='first')
 
     df_gearboxes = df_gearboxes[df_gearboxes['Code'].isin(df_pnos['Gearbox'])]
     df_gearboxes.drop_duplicates(inplace=True)
