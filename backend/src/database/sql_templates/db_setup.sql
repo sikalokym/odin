@@ -222,7 +222,6 @@ CREATE TABLE PNOOptions (
     FOREIGN KEY (PNOID) REFERENCES PNO(ID)
 );
 
--- ['PackageCode', 'Text', 'Code', 'Type', 'Rule', 'Base', 'StartDate', 'EndDate'],
 -- Create the PNOPackage table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PNOPackage')
 CREATE TABLE PNOPackage (
@@ -303,6 +302,18 @@ CREATE TABLE PNOOptionsCustom (
     FOREIGN KEY (RelationID) REFERENCES PNOOptions(ID)
 );
 
+-- Create the custom table of PNOPackageCustom table
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PNOPackageCustom')
+CREATE TABLE PNOPackageCustom (
+    RelationID UNIQUEIDENTIFIER,
+    Price DECIMAL(19,2),
+    PriceBeforeTax DECIMAL(19,2),
+    CustomName VARCHAR(255),
+    StartDate INT,
+    EndDate INT,
+    FOREIGN KEY (RelationID) REFERENCES PNOPackage(ID)
+);
+
 -- Create the customization rules table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CustomizationRules')
 CREATE TABLE CustomizationRules (
@@ -327,6 +338,7 @@ CREATE TABLE VisaFilesPrices (
     Gearbox VARCHAR(12),
     Steering VARCHAR(12),
     MarketCode VARCHAR(12),
+    CountryCode VARCHAR(12),
     ModelYear INT,
     StartDate INT,
     EndDate INT,

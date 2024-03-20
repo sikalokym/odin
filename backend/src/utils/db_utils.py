@@ -256,55 +256,21 @@ def get_pno_ids_from_variants(df_pno, df_variants, is_relation=False):
 
 def get_relation_ids(df_relation, df_assigned):
     """
-    Retrieves the relation IDs from the given dataframes.
+    Retrieves relation IDs based on matching attributes.
 
     Args:
-        df_relation (pandas.DataFrame): The dataframe containing relation information.
-        df_assigned (pandas.DataFrame): The dataframe containing assigned data.
+        df_relation (DataFrame): The DataFrame containing relation data.
+        df_assigned (DataFrame): The DataFrame containing assigned data.
 
     Returns:
-        pandas.DataFrame: A new dataframe with expanded rows and filtered columns.
-
-    Example:
-        df_relation:
-            +----+-------+
-            | ID | Value |
-            +----+-------+
-            | 1  | A     |
-            | 2  | B     |
-            +----+-------+
-
-        df_assigned:
-            +----+-------+----------------------+
-            | ID | Value | Matching_Relation_IDs |
-            +----+-------+----------------------+
-            | 1  | X     | [1, 2]               |
-            | 2  | Y     | [2]                  |
-            +----+-------+----------------------+
-
-        get_relation_ids(df_relation, df_assigned):
-            +------------+-------+----------------------+
-            | RelationID | Value | Matching_Relation_IDs |
-            +------------+-------+----------------------+
-            | 1          | X     | [1, 2]               |
-            | 2          | X     | [1, 2]               |
-            | 1          | Y     | [2]                  |
-            +------------+-------+----------------------+
+        DataFrame: The DataFrame with matched relation IDs.
     """
     df = df_assigned.copy()
-    df['Matching_Relation_IDs'] = df.apply(lambda row: find_matching_relation_ids(row, df_relation), axis=1)
-    filtered_df = df[df['Matching_Relation_IDs'].notna()]
-    filtered_df.insert(0, 'RelationID', -1)
+    df.insert(0, 'RelationID', '')
+    df['RelationID'] = df.apply(lambda row: find_matching_relation_ids(row, df_relation), axis=1)
+    filtered_df = df[df['RelationID'].notna()]
     
-    expanded_rows = []
-    for _, row in filtered_df.iterrows():
-        for pno_id in row['Matching_Relation_IDs']:
-            new_row = row.copy()
-            new_row['RelationID'] = pno_id
-            expanded_rows.append(new_row.drop('Matching_Relation_IDs'))
-
-    # Create a new DataFrame from the expanded rows
-    expanded_df = pd.DataFrame(expanded_rows).reset_index(drop=True)
+    expanded_df = filtered_df.explode('RelationID')
     final_df = expanded_df.drop(['PNOID', 'Code'], axis=1)
     return final_df
     

@@ -285,19 +285,23 @@ class DBOperations:
         self.upsert_data_from_df(df_assigned, self.config.get('AUTH', 'PKG'), package_columns, package_conditional_columns)
 
     def assign_prices_from_visa_dataframe(self, spec_market):
-        df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f'CountryCode={spec_market}'])
-        df_pnos = df_pnos.drop('CountryCode', axis=1)
-        if df_pnos.empty:
+        df_all_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f'CountryCode={spec_market}'])
+        df_all_pnos = df_all_pnos.drop('CountryCode', axis=1)
+        if df_all_pnos.empty:
             self.logger.info("No existing PNOs found. It doesn't make sense to proceed without PNOs")
             return
         
-        df_visa = self.get_table_df(self.config.get('RELATIONS', 'VISA'), [f'MarketCode={spec_market}'])
+        df_visa = self.get_table_df(self.config.get('RELATIONS', 'VISA'), conditions=[f'CountryCode={spec_market}'])
+        if df_visa.empty:
+            self.logger.info("No VISA data found")
+            return
+        df_visa = df_visa.drop('CountryCode', axis=1)
 
         # Iterate over each model year prices
         for my, group in df_visa.groupby(df_visa['ModelYear']):
             # Drop the 'ModelYear' column from the group
             group = group.drop(columns=['ModelYear'])
-            df_pnos = filter_df_by_model_year(df_pnos, my)
+            df_pnos = filter_df_by_model_year(df_all_pnos, my)
 
             # Split the DataFrame into multiple DataFrames
             df_pno_prices, df_color_pno_prices, df_option_pno_prices, df_upholstery_pno_prices, df_package_pno_prices = split_df(group)
@@ -328,7 +332,7 @@ class DBOperations:
             self.upsert_data_from_df(df_upholstery, self.config.get('RELATIONS', 'UPH_Custom'), relation_columns, conditional_columns)
 
             df_package_pnos_assigned, df_pnos_unassigned = get_pno_ids_from_variants(df_pnos, df_package_pno_prices, is_relation=False)
-            df_package_pnos_assigned.drop_duplicates(subset=['PNOID', 'StartDate'], keep='last', inplace=True)
+            df_package_pnos_assigned.drop_duplicates(subset=['PNOID', 'Code', 'StartDate'], keep='last', inplace=True)
             df_packages = self.get_table_df(self.config.get('AUTH', 'PKG'))
             df_package = get_relation_ids(df_packages, df_package_pnos_assigned)
             self.upsert_data_from_df(df_package, self.config.get('RELATIONS', 'PKG_Custom'), relation_columns, conditional_columns)
