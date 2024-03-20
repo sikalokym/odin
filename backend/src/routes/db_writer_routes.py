@@ -13,17 +13,12 @@ def write_engines(country, model_year):
         return jsonify({'error': 'No data provided'}), 400
     
     # Create a DataFrame from the list of JSON objects
-    if not isinstance(data, list):
-        data = [data]
-    df = pd.DataFrame(data)
     df_engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), conditions=[f'CountryCode = {country}'])
     update_columns = ['CountryText', 'Performance', 'EngineCategory', 'EngineType']
 
     # Update the columns in the df_engines DataFrame
     for col in update_columns:
-        df_engines.loc[df_engines['Code'].isin(df['Code']), col] = df[col]
-
-
+        df_engines.loc[df_engines['Code'] == data['Code'], col] = data[col]
     all_columns = df_engines.columns.tolist()
     conditional_columns = list(set(all_columns) - set(update_columns))
 
