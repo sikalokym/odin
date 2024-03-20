@@ -215,8 +215,20 @@ def fetch_options_data(sales_versions, time):
     # Replace ID with Price from df_pno_option_price
     df_pno_options_with_price = df_pno_options_with_sv.merge(df_pno_option_price, left_on='ID', right_on='RelationID', how='left')
 
+    def get_prices(row):
+        if row['RuleName'] == 'P':
+            # Get all rows with the same code that are not 'P'
+            rows = df_pno_options_with_price[(df_pno_options_with_price['Code'] == row['Code']) & (df_pno_options_with_price['RuleName'] != 'P')]
+            # If there are no other rows with the same code, return 'Pack Only'
+            if rows.empty:
+                return ['Pack Only']
+            # return a list of all prices
+            return '/'.join([f"{r['Price']}/{r['PriceBeforeTax']}" for _, r in rows.iterrows()])
+        return [f"{row['Price']}/{row['PriceBeforeTax']}"]
+    
     # Concatenate Price and PriceBeforeTax
-    df_pno_options_with_price['Price'] = df_pno_options_with_price.apply(lambda x: f"{x['Price']}/{x['PriceBeforeTax']}" if x['RuleName'] != 'P' else 'Pack Only', axis=1)
+    df_pno_options_with_price['Price'] = df_pno_options_with_price.apply(lambda x: get_prices(x), axis=1)
+    df_pno_options_with_price = df_pno_options_with_price.explode('Price')
     
     # Create the pivot table
     pivot_df = df_pno_options_with_price.pivot_table(index=['Code', 'Price'], columns='SalesVersion', values='RuleName', aggfunc='first')

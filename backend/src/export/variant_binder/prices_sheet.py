@@ -1,11 +1,11 @@
 from openpyxl.cell.rich_text import TextBlock, CellRichText
 from openpyxl.cell.text import InlineFont
 from openpyxl.styles import Font, PatternFill, Border, Alignment, Side
-import pandas as pd
 from openpyxl.utils import get_column_letter
+import pandas as pd
+
 from src.database.db_operations import DBOperations
 from src.utils.db_utils import filter_df_by_timestamp
-
 from src.utils.db_utils import format_float_string
 
 
@@ -189,7 +189,7 @@ def insert_column(ws, col, curr_row, curr_col):
 def fetch_vb_price_data(country, df_valid_pnos, time):
     
     df_vb_prices = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'PNO_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax'])
-    df_price = df_valid_pnos.merge(df_vb_prices, left_on='ID', right_on='RelationID', how='inner')
+    df_price = df_valid_pnos.merge(df_vb_prices, left_on='ID', right_on='RelationID', how='left')
     
     df_gb = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'G'), conditions=[f'CountryCode = {country}'])
     df_gb = df_gb[df_gb['Code'].isin(df_price['Gearbox'].tolist())]

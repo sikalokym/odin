@@ -33,7 +33,7 @@ def extract_variant_binder(country, model, engines_types, time):
     upholstery_colors_sheet.get_sheet(ws_3, sales_versions, title, time)
 
     wb.save(f'dist/VB {title} {engines_types} {time}.xlsx')
-    # return
+    return
     output = BytesIO()
     wb.save(output)
     output.seek(0)
