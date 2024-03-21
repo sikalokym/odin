@@ -42,12 +42,12 @@ def get_sheet(ws, sales_versions, title, time):
             cell.fill = PatternFill(start_color='BFBFBF', end_color='BFBFBF', fill_type='solid')
 
         for _, row in df_options.iterrows():
-            ws.append(row.values.tolist())
+            ws.append([row['RuleCode'], row['CustomName'], row['RuleBase'], row['CustomName']] + [row[sv] for sv in sales_versions['SalesVersion']])
 
 def prepare_sheet(ws, sales_versions, title):
     ws.sheet_view.showGridLines = False
     ws.merge_cells('A1:B1')
-    ws['A1'] = f'{title} - Polster & Farben'
+    ws['A1'] = f'{title} - Pakete'
     ws['C1'] = 'EUR inkl. 19 % MwSt.\n EUR ohne MwSt.'
     for idx, value in enumerate(sales_versions, start=4):
         ws.cell(row=1, column=idx, value=value)
