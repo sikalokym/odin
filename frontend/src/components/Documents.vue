@@ -1,48 +1,47 @@
 <template>
-    <aside class="sidebar">
-      <font size="6">Specifications</font><br><br>
-      <label class="modelyear" style="width: 180px;">Model Year</label><br>
-      <select name="model_year" id="model_year" v-model="model_year" @change="refreshModelyear" style="width:180px; height:30px; position: absolute; left: 50%; transform: translate(-50%);">
-    <option disabled value="0">Year</option>
-    <option v-for="model_year in model_years" :key="model_year" :value="model_year">{{ model_year }}</option>
-  </select>
-  <br><br>
-      <label class="model" style="width: 180px;">Model</label><br>
-    <select name="model" id="model" v-model="model"  @change="refreshEnginecats" style="display:block;width:180px; height:30px; position: absolute; left: 50%; transform: translate(-50%);">
+  <aside class="sidebar">
+    <span class="title" style="font-size: 32px;">Specifications</span>
+    <!-- Filter for model years -->
+    <label class="modelyear" style="width: 180px;">Model Year</label><br>
+    <select name="model_year" id="model_year" v-model="model_year" @change="refreshModelyear" style="width:180px; height:30px; position: absolute;">
+      <option disabled value="0">Please select Model Year...</option>
+      <option v-for="model_year in model_years" :key="model_year" :value="model_year">{{ model_year }}</option>
+    </select>
+    <!-- Filter for models -->
+    <label class="model" style="width: 180px;">Model</label><br>
+    <select name="model" id="model" v-model="model"  @change="refreshEnginecats" style="width:180px; height:30px; position: absolute;">
       <option disabled value="">Please Select Model...</option>
       <option v-for="model in models" :key="model" :value="model">{{ model }}</option>
     </select>
-    <br><br>
-
-      <label class="engine" style="width: 180px;">Engine Category</label><br>
-    <select name="engine" id="engine" v-model="engine" style="display:block;width:180px; height:30px; position: absolute; left: 50%; transform: translate(-50%);">
+    <!-- Filter for engine categories -->
+    <label class="engine" style="width: 180px;">Engine Category</label><br>
+    <select name="engine" id="engine" v-model="engine" style="width:180px; height:30px; position: absolute; margin-left: -90px;">
       <option disabled value="">Please Select Engine...</option>
       <option value="">All</option>
       <option v-for="engine in engine_cats" :key="engine" :value="engine">{{ engine }}</option>
     </select>
     <br><br>
+    <!-- Filter for validity date of the Variant Binder export -->
+    <label class="validity_date" style="width: 180px;">Validity Date</label>
+    <div class="validity" style="display: flex; gap: 10px;">
+      <select name="validity_year" id="validity_year" v-model="validity_year" style="width:85px; height:30px; ">
+        <option disabled value="">Year</option>
+        <option v-for="validity_year in validity_years" :key="validity_year" :value="validity_year">{{ validity_year }}</option>
+      </select>
+      <select name="validity_week" id="validity_week" v-model="validity_week" style="width:85px; height:30px;">
+        <option disabled value="">Week</option>
+        <option v-for="n in 53" :key="n" :value="String(n).padStart(2, '0')">{{ String(n).padStart(2, '0') }}</option>
+      </select>
+    </div>
 
-    <label class="validity_date" style="width: 180px;">Validity Date</label><br>
-      <div class="validity" style="display: flex; gap: 10px;">
-  <select name="validity_year" id="validity_year" v-model="validity_year" style="width:85px; height:30px;">
-    <option disabled value="">Year</option>
-    <option v-for="validity_year in validity_years" :key="validity_year" :value="validity_year">{{ validity_year }}</option>
-  </select>
-  <select name="validity_week" id="validity_week" v-model="validity_week" style="width:85px; height:30px;">
-  <option disabled value="">Week</option>
-  <option v-for="n in 53" :key="n" :value="String(n).padStart(2, '0')">{{ String(n).padStart(2, '0') }}</option>
-</select>
-</div>
+    <!-- Export Variant Binder Button -->
+    <button style="display:block;width:180px; height:50px; margin-left: 35px; margin-top: 64px;" @click="exportVariantBinder" :disabled="this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === ''">Export Variant Binder</button>
+    <!-- Export Changelog Button --> 
+    <button style="display:block;width:180px; height:50px; margin-left: 35px; margin-top: 10px;" :disabled="this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === ''">Export Changelog</button>
 
-    <br><br>
-    <button style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translate(-50%);" @click="exportVariantBinder" :disabled="this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === ''">Export Variant Binder</button>
-    <!-- <button style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translate(-50%);" @click="exportVariantBinder" >Export Test Variant Binder</button> -->
-    <br><br><br>
-    <button style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translate(-50%); " :disabled="this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === ''">Export Changelog</button>
-
-    <br><br><br>
-    <div class="country">
-      <label for="country">Change Country: </label>
+    <!-- Country Select Dropdown Menu -->
+    <div class="country bottom-div">
+      <label for="country" class="countrylabel">Change Country: </label>
       <select v-model="selectedCountry" @change="changeCountry(selectedCountry)">
         <option disabled value="">Germany</option>
         <option v-for="country in countries" :key="country" :value="country">
@@ -50,15 +49,15 @@
         </option>
       </select>
     </div>
-    </aside>
-    <main class="main-content">
-
-    </main>
-  </template>
+  </aside>
+  <main class="main-content">
+  <!-- At present, no content is displayed here -->
+  </main>
+</template>
   
-  <script>
-  import { usePNOStore } from '../stores/pno.js'
-  import { useEntitiesStore } from '../stores/entities.js'
+<script>
+import { usePNOStore } from '../stores/pno.js'
+import { useEntitiesStore } from '../stores/entities.js'
 
   export default {
     name: 'DocumentsView',
@@ -74,44 +73,31 @@
         countries: [],
         selectedCountry: '',
       }
+  },
+  async created() {
+    this.pnoStore.model_year = '0';
+    this.entitiesStore.model_year = '0';
+  },
+  computed: {
+    filteredPnos() {
+      return this.pnoStore.filteredPnos(this.model, '0', '0', '0')
     },
-    async created() {
-      this.pnoStore.model_year = '0';
-      this.entitiesStore.model_year = '0';
-
-      await this.pnoStore.fetchSupportedCountries().then(() => {
-        console.log('Supported countries fetched')
-      }).catch((error) => {
-        console.error('Error fetching countries', error)
-      })
-
-      await this.pnoStore.fetchAvailableModelYears().then(() => {
-        console.log('Available model years fetched')
-      }).catch((error) => {
-        console.error('Error fetching available model years', error)
-      }) 
-      
+    models() {
+      return this.pnoStore.models
     },
-    computed: {
-      filteredPnos() {
-        return this.pnoStore.filteredPnos(this.model, '0', '0', '0')
-      },
-      models() {
-        return this.pnoStore.models
-      },
-      engine_cats() {
-        return this.pnoStore.engine_cats
-      },
-      model_years() {
-        return this.pnoStore.available_model_years
-      },
-      validity_years() {
-        if (this.model_year === '0') {
-          return;
-        }
-      return [this.model_year - 1, this.model_year, this.model_year + 1];
+    engine_cats() {
+      return this.pnoStore.engine_cats
+    },
+    model_years() {
+      return this.pnoStore.available_model_years
+    },
+    validity_years() {
+      if (this.model_year === '0') {
+        return;
       }
-    },
+    return [this.model_year - 1, this.model_year, this.model_year + 1];
+    }
+  },
     
   methods: {
       refreshModelyear() {
@@ -149,32 +135,51 @@
 <style scoped>
 
 .validity {
-margin-left: 36px;
+  margin-top: -1px;
+  margin-left: 35px;
+  position: absolute; 
 }
 
 .main-content {
   padding: 2rem;
-  margin-left: 250px;
+  /* height: 100vh; */
+  flex-grow: 1;
+  overflow: auto;
 }
 
 .sidebar {
   width: 250px;
   background-color: #f4f4f4;
   padding: 1rem;
-  height: 100vh;
-  position:fixed; 
+  /* height: 100vh; */
+  position:relative;
   border-right: 1px solid #c8c9c7;
 }
 
-.model, .modelyear, .engine .validity_date {
+.title {
+  display: block;
+  margin-bottom: -20px;
+}
+
+.model, .modelyear, .engine {
   text-align: left;
   display: inline-block;
+  width:180px;
+  margin-top: 42px;
 }
 
 .validity_date {
-  margin-left: -89px;
+  margin-left: -91px;
 }
-.engine {
-  margin-left: -64px;
+
+.countrylabel {
+  margin-right: 10px;
+} 
+.bottom-div {
+  margin-top: 416px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>
