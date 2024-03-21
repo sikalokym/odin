@@ -2,7 +2,7 @@ from io import BytesIO
 import numpy as np
 from openpyxl import Workbook
 from src.database.db_operations import DBOperations
-from src.export.variant_binder import prices_sheet, options_sheet, upholstery_colors_sheet, packages_sheet
+from src.export.variant_binder import prices_sheet, options_sheet, upholstery_colors_sheet, packages_sheet, sales_versions_sheet
 from src.utils.db_utils import filter_df_by_timestamp
 
 
@@ -28,25 +28,29 @@ def extract_variant_binder(country, model, engines_types, time):
 
     try:
         ws_1 = wb.create_sheet("Preise")
-        prices_sheet.get_sheet(ws_1, valid_pnos, sales_versions, title, time, valid_engines, country)
+        prices_sheet.get_sheet(ws_1, valid_pnos, sales_versions.copy(), title, time, valid_engines, country)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error creating sheet: {e}")
     try:
-        ws_2 = wb.create_sheet("Optionen")
-        options_sheet.get_sheet(ws_2, sales_versions, title, time)
+        ws_2 = wb.create_sheet("Serienausstattung")
+        sales_versions_sheet.get_sheet(ws_2, sales_versions, title, country, time)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error creating sheet: {e}")
     try:
-        ws_3 = wb.create_sheet("Polster & Farben")
-        upholstery_colors_sheet.get_sheet(ws_3, sales_versions, title, time)
+        ws_3 = wb.create_sheet("Pakete")
+        packages_sheet.get_sheet(ws_3, sales_versions, title, time)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error creating sheet: {e}")
     try:
-        ws_5 = wb.create_sheet("Pakete")
-        packages_sheet.get_sheet(ws_5, sales_versions, title, time)
+        ws_4 = wb.create_sheet("Optionen")
+        options_sheet.get_sheet(ws_4, sales_versions.copy(), title, time)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error creating sheet: {e}")
-
+    try:
+        ws_5 = wb.create_sheet("Polster & Farben")
+        upholstery_colors_sheet.get_sheet(ws_5, sales_versions.copy(), title, time)
+    except Exception as e:
+        DBOperations.instance.logger.error(f"Error creating sheet: {e}")
     wb.save(f'dist/VB {title} {engines_types} {time}.xlsx')
     # return
     output = BytesIO()
