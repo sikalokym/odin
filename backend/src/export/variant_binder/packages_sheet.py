@@ -1,7 +1,17 @@
+from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
+from openpyxl.utils import get_column_letter
 from src.database.db_operations import DBOperations
+from src.utils.db_utils import filter_df_by_timestamp
+import pandas as pd
 
+all_border = Border(top=Side(style='thin', color='000000'),
+                    bottom=Side(style='thin', color='000000'),
+                    left=Side(style='thin', color='000000'),
+                    right=Side(style='thin', color='000000'))
 
-def get_sheet(ws, sales_versions, title):
+fill = PatternFill(start_color='000080', end_color='000080', fill_type='solid')
+
+def get_sheet(ws, sales_versions, title, time):
     """
     Fetches options data and inserts it into the specified worksheet.
 
@@ -13,33 +23,133 @@ def get_sheet(ws, sales_versions, title):
     Returns:
         None
     """
-    fetch_color_data(sales_versions)
-    fetch_upholstery_data(sales_versions)
+    prepare_sheet(ws, sales_versions.SalesVersionName, title)
+    df_packages = fetch_package_data(sales_versions, time)
 
-def fetch_upholstery_data(sales_versions):
-    df_pno_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'UPH'), columns=['ID', 'PNOID', 'Code', 'RuleName'], conditions=[f'CountryCode = {country}'])
-    df_pno_upholstery_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax', 'CustomName'])
+    for (code, title, price), group in df_packages.groupby(['Code', 'Title', 'Price']):
+        group.drop(columns=['Code', 'Title', 'Price'], inplace=True)
+        df_options = group.sort_values(by='RuleCode', ascending=True)
 
+        # check if any column has a NaN value, then set all values of that column to empty string
+        for col in df_options.columns:
+            if df_options[col].isnull().values.any():
+                df_options[col] = ''
+
+        # Write the data to the worksheet
+        ws.append([code, title, price])
+        # format the row in gray
+        for cell in ws[len(ws["A"])]:
+            cell.fill = PatternFill(start_color='BFBFBF', end_color='BFBFBF', fill_type='solid')
+
+        for _, row in df_options.iterrows():
+            ws.append(row.values.tolist())
+
+def prepare_sheet(ws, sales_versions, title):
+    ws.sheet_view.showGridLines = False
+    ws.merge_cells('A1:B1')
+    ws['A1'] = f'{title} - Polster & Farben'
+    ws['C1'] = 'EUR inkl. 19 % MwSt.\n EUR ohne MwSt.'
+    for idx, value in enumerate(sales_versions, start=4):
+        ws.cell(row=1, column=idx, value=value)
+    ws['A2'] = 'Code (ab Werk)\n + VCG Paket'
+    ws['B2'] = 'Description'
+
+    #Definition of column widths & row heights
+    max_c = ws.max_column
+
+    ws.column_dimensions['A'].width = 11
+    ws.column_dimensions['B'].width = 65
+    for col in range(3, max_c + 1):
+        ws.column_dimensions[get_column_letter(col)].width = 25
+
+    ws.row_dimensions[1].height = 45
+    ws.row_dimensions[2].height = 35
+
+    # Formatting of first row
+    ws['A1'].font = Font(name='Arial', size=16, bold=True, color="FFFFFF")
+    ws['A1'].alignment = Alignment(horizontal='left', vertical='center')
+    
+    for col in range(3, 20):
+        cell = ws.cell(row=1, column=col)
+        cell.font = Font(name='Arial', size=10, bold=True, color='FFFFFF')
+        cell.alignment = Alignment(horizontal='center', vertical='center',wrap_text=True)
+
+    for col in range(1,max_c+1):
+        cell = ws.cell(row=1, column=col)
+        cell.fill = fill
+        
+    # Formatting of second row
+    ws['A2'].alignment = Alignment(horizontal='center', vertical='center',wrap_text=True)
+    ws['A2'].font = Font(size=10, bold=True)
+    ws['B2'].alignment = Alignment(horizontal='center', vertical='center')
+    ws['B2'].font = Font(size=10, bold=True)
+    
+def fetch_package_data(sales_versions, time):
+    pno_ids = sales_versions.ID.unique().tolist()
     sales_versions.rename(columns={'ID': 'TmpCode'}, inplace=True)
-    df_pno_upholstery = df_pno_upholstery.merge(sales_versions[['TmpCode', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='TmpCode', how='left')
-    df_pno_upholstery.drop(columns='TmpCode', inplace=True)
-    df_pno_upholstery_with_sv = df_pno_upholstery[df_pno_upholstery['SalesVersion'].notna()]
-    # Replace ID with Price from df_pno_upholstery_price
-    df_pno_upholstery_with_price = df_pno_upholstery_with_sv.merge(df_pno_upholstery_price, left_on='ID', right_on='RelationID', how='left')
+    df_pno_package = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PKG'), columns=['ID', 'PNOID', 'Code', 'Title', 'RuleCode', 'RuleName', 'RuleBase', 'StartDate', 'EndDate'], conditions=[f'PNOID in {tuple(pno_ids)}', "Code not like 'PA%'"])
+    df_pno_package = filter_df_by_timestamp(df_pno_package, time)
+    df_pno_package.drop(columns=['StartDate', 'EndDate'], inplace=True)
+    df_pno_package['RuleCode'] = df_pno_package['RuleCode'].apply(lambda x: str(x).lstrip('0'))
 
-    # Create the pivot table
-    pivot_df = df_pno_upholstery_with_price.pivot_table(index=['Code', 'Price'], columns='SalesVersion', values='RuleName', aggfunc='first')
+    rule_codes = df_pno_package['RuleCode'].unique().tolist()
+    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Reference as RuleCode', 'RuleName', 'CustomName'], conditions=[f'PNOID in {tuple(pno_ids)}', f'Reference in {tuple(rule_codes)}'])
+
+    df_merged = df_pno_features.merge(df_pno_package[['PNOID', 'RuleCode', 'RuleName']], on=['PNOID', 'RuleCode'], how='left', suffixes=('_features', '_package'))
+    df_merged['RuleName'] = df_merged['RuleName_package'].combine_first(df_merged['RuleName_features'])
+    df_merged.drop(columns=['RuleName_features', 'RuleName_package'], inplace=True)
+    df_pno_package.drop(columns=['RuleName'], inplace=True)
+
+    merged_df_with_features = df_merged.merge(df_pno_package, on=['PNOID', 'RuleCode'], how='left')
+    df_pno_package_with_sv = merged_df_with_features.merge(sales_versions[['TmpCode', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='TmpCode', how='inner')
+    df_pno_package_with_sv.drop(columns=['TmpCode', 'PNOID'], inplace=True)
+    df_pno_package_with_sv.drop_duplicates(inplace=True)
+    
+    package_ids = df_pno_package_with_sv['ID'].dropna().unique().tolist()
+    df_pno_package_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'PKG_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax', 'CustomName as PCustomName'], conditions=[f'RelationID in {tuple(package_ids)}'])
+    df_pno_package_with_price = df_pno_package_with_sv.merge(df_pno_package_price, left_on='ID', right_on='RelationID', how='left')
+
+    new_rows = []
+    df = df_pno_package_with_price.copy()
+
+    for rule_code in df['RuleCode'].unique():
+        template_rows = df[(df['RuleCode'] == rule_code) & df['ID'].notna() & df['Code'].notna() & df['Title'].notna() & df['RuleBase'].notna()]
+        should_sales_versions = df[(df['RuleCode'] == rule_code) & (df['RuleName'] == 'S')]['SalesVersion'].unique()
+        for code in template_rows['Code'].unique():
+            unique_prices = template_rows[template_rows['Code'] == code]['Price'].unique()
+            if not len(unique_prices):
+                unique_prices = ['']
+            for price in unique_prices:
+                conditions = df['Price'] == price if price != '' else df['Price'].isna()
+                not_available_sales_versions = [sv for sv in should_sales_versions if sv not in df[(df['RuleCode'] == rule_code) & (df['Code'] == code) & conditions]['SalesVersion'].unique()]
+                for sales_version in not_available_sales_versions:
+                    template_row = template_rows[(template_rows['Code'] == code) & (template_rows['Price'] == price)].iloc[0].to_dict()
+                    template_row.update({"SalesVersion": sales_version, "RuleName": 'S'})
+                    new_rows.append(template_row)
+
+    # Convert the list of dictionaries to a DataFrame
+    df_new_rows = pd.DataFrame(new_rows)
+
+    # Append new_rows to the DataFrame
+    df_pno_package_with_price = pd.concat([df_pno_package_with_price, df_new_rows], ignore_index=True)
+    df_pno_package_with_price.dropna(subset=['ID'], inplace=True)
+    # if a rulecode has rulename S for some salesversion, then it is duplicated for all Codes, sales versions and Prices
 
     # Concatenate Price and PriceBeforeTax
-    df_pno_upholstery_with_price['Price'] = df_pno_upholstery_with_price.apply(lambda x: f"{x['Price']}/{x['PriceBeforeTax']}", axis=1)
+    df_pno_package_with_price['Price'] = df_pno_package_with_price.apply(lambda x: f"{x['Price']}/{x['PriceBeforeTax']}", axis=1)
+    # Title is custom name if available, else Title
+    df_pno_package_with_price['Title'] = df_pno_package_with_price.apply(lambda x: f"CPAM - {x['PCustomName']}" if x['PCustomName'] and x['CustomName'] != '' else x['Title'], axis=1)
+    df_pno_package_with_price.drop(columns=['ID', 'RelationID', 'PriceBeforeTax', 'PCustomName'], inplace=True)
+
+    # Create the pivot table
+    pivot_df = df_pno_package_with_price.pivot_table(index=['Code', 'Price', 'RuleCode', 'RuleBase'], columns='SalesVersion', values='RuleName', aggfunc='first')
 
     # Drop the now unneeded columns and duplicates
-    df_pno_upholstery_with_price.drop(['ID', 'PNOID', 'RelationID', 'RuleName', 'SalesVersion', 'SalesVersionName', 'PriceBeforeTax'], axis=1, inplace=True)
-    df_pno_upholstery_with_price.drop_duplicates(inplace=True)
+    df_pno_package_final = df_pno_package_with_price[['Code', 'Price', 'RuleCode', 'RuleBase', 'Title', 'CustomName']]
+    df_pno_package_final.drop_duplicates(inplace=True)
 
     # Join the pivoted DataFrame with the original one. sort after code ascending
-    result_df = df_pno_upholstery_with_price.join(pivot_df, on=['Code', 'Price']).sort_values(by='Code')
+    df_result = df_pno_package_final.join(pivot_df, on=['Code', 'Price', 'RuleCode', 'RuleBase']).sort_values(by='Code')
+    df_result['RuleCode'] = df_result['RuleCode'].apply(lambda x: x.zfill(6))
 
-    result_df.to_csv('upholstery.csv', index=False)
-
-    # return result_df
+    return df_result
