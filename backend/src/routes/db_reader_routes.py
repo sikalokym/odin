@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 
 from src.database.db_operations import DBOperations
 from src.database.services import get_engine_cats
-from src.utils.db_utils import filter_df_by_model_year
+from src.utils.db_utils import filter_df_by_model_year, filter_model_year_by_translation
 
 
 bp_db_reader = Blueprint('db_reader', __name__, url_prefix='/api/db/<country>/<model_year>')
@@ -36,46 +36,56 @@ def get_pnos(country, model_year):
 def get_models(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Model', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    models = df_pnos['Model'].unique().tolist()
     
-    df_models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), columns=['Code', 'CountryText', 'MarketText'], conditions=[f'CountryCode = {country}'])
-
-    df_models = df_models[df_models['Code'].isin(df_pnos['Model'])]
+    df_models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), columns=['Code', 'CountryText', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f'Code in {tuple(models)}'])
+    df_models = filter_df_by_model_year(df_models, model_year)
+    df_models = filter_model_year_by_translation(df_models, conditional_columns=['CountryText'])
+    df_models = df_models.drop(columns=['StartDate', 'EndDate'], axis=1)
     df_models.drop_duplicates(inplace=True)
+
     return df_models.to_json(orient='records')
 
 @bp_db_reader.route('/sales_versions', methods=['GET'])
 def get_sales_versions(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['SalesVersion', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    sales_versions = df_pnos['SalesVersion'].unique().tolist()
     
-    df_sales_versions = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), columns=['Code', 'CountryText', 'MarketText'], conditions=[f'CountryCode = {country}'])
-
-    df_sales_versions = df_sales_versions[df_sales_versions['Code'].isin(df_pnos['SalesVersion'])]
+    df_sales_versions = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), columns=['Code', 'CountryText', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f'Code in {tuple(sales_versions)}'])
+    df_sales_versions = filter_df_by_model_year(df_sales_versions, model_year)
+    df_sales_versions = filter_model_year_by_translation(df_sales_versions, conditional_columns=['CountryText'])
+    df_sales_versions = df_sales_versions.drop(columns=['StartDate', 'EndDate'], axis=1)
     df_sales_versions.drop_duplicates(inplace=True)
+
     return df_sales_versions.to_json(orient='records')
 
 @bp_db_reader.route('/engines', methods=['GET'])
 def get_engines(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Engine', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    engine_codes = df_pnos['Engine'].unique().tolist()
     
-    df_engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), columns=['Code', 'MarketText', 'CountryText', 'Performance', 'EngineCategory', 'EngineType'], conditions=[f'CountryCode = {country}'])
-
-    df_engines = df_engines[df_engines['Code'].isin(df_pnos['Engine'])]
+    df_engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), columns=['Code', 'MarketText', 'CountryText', 'Performance', 'EngineCategory', 'EngineType', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f'Code in {tuple(engine_codes)}'])
+    df_engines = filter_df_by_model_year(df_engines, model_year)
+    df_engines = filter_model_year_by_translation(df_engines, conditional_columns=['CountryText', 'Performance', 'EngineCategory', 'EngineType'])
+    df_engines = df_engines.drop(columns=['StartDate', 'EndDate'], axis=1)
     df_engines.drop_duplicates(inplace=True)
+
     return df_engines.to_json(orient='records') 
 
 @bp_db_reader.route('/gearboxes', methods=['GET'])
 def get_gearboxes(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Gearbox', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    gearbox_codes = df_pnos['Gearbox'].unique().tolist()
     
-    df_gearboxes = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'G'), columns=['Code', 'CountryText', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
+    df_gearboxes = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'G'), columns=['Code', 'CountryText', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f'Code in {tuple(gearbox_codes)}'])
     df_gearboxes = filter_df_by_model_year(df_gearboxes, model_year)
-    df_gearboxes = df_gearboxes.sort_values('StartDate', ascending=False).drop_duplicates('Code', keep='first')
-
-    df_gearboxes = df_gearboxes[df_gearboxes['Code'].isin(df_pnos['Gearbox'])]
+    df_gearboxes = filter_model_year_by_translation(df_gearboxes, conditional_columns=['CountryText'])
+    df_gearboxes = df_gearboxes.drop(columns=['StartDate', 'EndDate'], axis=1)
     df_gearboxes.drop_duplicates(inplace=True)
+
     return df_gearboxes.to_json(orient='records')
 
 @bp_db_reader.route('/options', methods=['GET'])

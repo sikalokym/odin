@@ -313,6 +313,26 @@ def filter_df_by_model_year(df, model_year):
         raise ValueError("Model year must be an integer or string.")
     return df[(df['StartDate'].apply(get_model_year_from_date) == model_year) | (df['EndDate'].apply(get_model_year_from_date) == model_year)]
     
+def filter_model_year_by_translation(df, conditional_columns):
+    """
+    Filters a DataFrame based on the model year and translation.
+
+    Args:
+        df (pandas.DataFrame): The DataFrame to be filtered.
+        conditional_columns (list): A list of columns to filter by.
+    Returns:
+        pandas.DataFrame: The filtered DataFrame.
+    """
+
+    if 'ModelYear' in df.columns:
+        df = df.sort_values('StartDate', ascending=False).drop_duplicates(['Code', 'ModelYear'], keep='first')
+        # filter based on number of unique entries in conditional columns
+        df['TmpModelYear'] = df['Code'].apply(lambda x: '' if df[df['Code'] == x][conditional_columns].nunique().max() <= 1 else None)
+        df['ModelYear'] = df['TmpModelYear'].combine_first(df['ModelYear'])
+        df.drop(columns=['TmpModelYear'], inplace=True)
+    else:
+        df = df.sort_values('StartDate', ascending=False).drop_duplicates('Code', keep='first')
+    return df
 
 def get_model_year_from_date(date):
     """
