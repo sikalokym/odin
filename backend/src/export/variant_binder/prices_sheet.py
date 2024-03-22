@@ -39,7 +39,6 @@ def get_sheet(ws, df_valid_pnos, df_sales_versions, title, time, df_engines_type
         type = row['EngineType']
         group = df_price[df_price['Engine'].isin(row['Code'])]
 
-        group = group.sort_values(by='Price')
         df_group_sv = pd.DataFrame()
         df_group_sv['Code'] = group['SalesVersion'].drop_duplicates()
         df_group_sv['MarketText'] = df_group_sv['Code'].apply(lambda x: df_sales_versions[df_sales_versions['SalesVersion'] == x].iloc[0]['SalesVersionName'])
@@ -58,12 +57,12 @@ def get_sheet(ws, df_valid_pnos, df_sales_versions, title, time, df_engines_type
 def prepare_sheet(ws, title):
     ws.sheet_view.showGridLines = False
     ws.sheet_view.headingsVisible = False
+    ws.freeze_panes = ws['A2']
     for i in range(1, 100):
         ws.column_dimensions[get_column_letter(i)].width = 20
         ws.row_dimensions[i].height = 12
     ws.column_dimensions['A'].width = 45
     
-    ws.freeze_panes = 'A2'
     create_title(ws, f'Volvo {title} - Preise')
 
 def create_title(ws, title):
@@ -166,6 +165,7 @@ def insert_meta_column(ws, curr_row, df_sales_version):
         ws.cell(row=curr_row, column=1, value=field)
         ws.cell(row=curr_row, column=1).font = Font(name='Arial',bold=True, sz=10)
         ws.cell(row=curr_row, column=1).alignment = Alignment(horizontal='left', vertical='center')
+        ws.cell(row=curr_row, column=1).fill = PatternFill(start_color='bfbfbf', end_color='bfbfbf', fill_type='solid')
         ws.cell(row=curr_row, column=1).border = blr_border
 
 def insert_column(ws, col, curr_row, curr_col):

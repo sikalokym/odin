@@ -30,6 +30,7 @@ def get_sheet(ws, sales_versions, title, country, time):
     ws['A1'].font = Font(size=16, bold=True)
     ws.merge_cells('A1:F1')
     ws['A1'].alignment = Alignment(horizontal='center')
+    ws.freeze_panes = ws['A2']
 
     ws.column_dimensions['A'].width = 11
     ws.column_dimensions['B'].width = 150

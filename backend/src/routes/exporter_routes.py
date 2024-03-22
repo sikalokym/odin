@@ -30,4 +30,4 @@ def variant_binder(country):
         xlsx_file = extract_variant_binder(country, model, engines_types, int(time))
     except Exception as e:
         return str(e), 500
-    return send_file(xlsx_file, download_name=f'VB {model} - {time} {engines_types}.xlsx', as_attachment=True), 200
+    return send_file(xlsx_file, download_name=f'VB {model} - {time[:4]}w{time[4:]} {engines_types}.xlsx', as_attachment=True), 200

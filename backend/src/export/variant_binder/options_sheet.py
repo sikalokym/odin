@@ -1,3 +1,4 @@
+import numpy as np
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Border, Alignment, Side
 
@@ -39,43 +40,26 @@ def get_sheet(ws, sales_versions, title, time):
 
     # insert data into the sheet ab row 3
     for _, row in df_res.iterrows():
-        ws.append([row['Code'], row['CustomName'], row['Price']] + [row[sv] for sv in sales_versions['SalesVersion']])
-
-    prepare_sheet(ws, sales_versions.SalesVersionName, title)
-
-def prepare_sheet(ws, sales_versions, title):
-    max_r_pre = ws.max_row 
-
-    # Format cells according to templates
-    for row in range(max_r_pre, 3, -1):  # Beginne von unten, um die Position der Zeilen nicht zu verändern
-        ws.insert_rows(row)
-
-    row = 3
-    while row <= max_r_pre:
-    # Test if cell in column C has content
-        if ws.cell(row=row, column=3).value:
-        # Split up price data in column C
-            prices = ws.cell(row=row, column=3).value.split('/')
-        
-        # Den zweiten Preis in die nächste leere Zeile verschieben
-            if len(prices) > 1:
-                next_empty_row = row + 1
-                while ws.cell(row=next_empty_row, column=3).value:
-                    next_empty_row += 1
-                ws.cell(row=next_empty_row, column=3).value = float(prices[1])
-                ws.cell(row=row, column=3).value = float(prices[0])
-                max_r_pre += 1  # Eine zusätzliche Zeile wurde hinzugefügt, also erhöhe max_row
-            row += 2  # Überspringe die nächste Zeile, da sie bereits eingefügt wurde
+        svs = [row[sv] if row[sv] != '' and row[sv] is not None and row[sv] is not np.nan else '-' for sv in sales_versions['SalesVersion']]
+        if row['Price'] == 'Pack Only':
+            ws.append([row['Code'], row['CustomName'], row['Price']] + svs)
+            ws.append([])
         else:
-            row += 1
+            prices = row['Price'].split('/')
+            if len(prices) > 1:
+                ws.append([row['Code'], row['CustomName'], prices[0]] + svs)
+                ws.cell(row=ws.max_row, column=3).alignment = Alignment(horizontal='center', vertical='bottom')
+                ws.append(['', '', prices[1]] + svs) 
+                ws.cell(row=ws.max_row, column=3).alignment = Alignment(horizontal='center', vertical='top')
 
+    prepare_sheet(ws, sales_versions, title)
+
+def prepare_sheet(ws, df_sales_versions, title):
     # Finding of the last columns and rows with content for border lines
+    ws.freeze_panes = ws['A2']
     max_c = ws.max_column
-    max_r = ws.max_row 
+    max_r = ws.max_row
 
-    for row in range(3, max_r + 1, 2):
-        ws.merge_cells(start_row=row, end_row=row + 1, start_column=1, end_column=1)  # Mergen von A-Zellen
-        ws.merge_cells(start_row=row, end_row=row + 1, start_column=2, end_column=2)  # Mergen von B-Zellen
     for col in range(4, max_c + 1):
         for row in range(3, max_r + 1, 2):
             ws.merge_cells(start_row=row, end_row=row + 1, start_column=col, end_column=col)
@@ -84,10 +68,11 @@ def prepare_sheet(ws, sales_versions, title):
     ws.merge_cells('A1:B1')
     ws['A1'] = f'{title} - Optionen'
     ws['C1'] = 'EUR inkl. 19 % MwSt.\n EUR ohne MwSt.'
-    for idx, value in enumerate(sales_versions, start=4):
-        ws.cell(row=1, column=idx, value=value)
     ws['A2'] = 'Code (ab Werk)\n + VCG Paket'
-    ws['B2'] = 'Description'
+    ws['B2'] = 'Beschreibung'
+
+    for idx, row in df_sales_versions.iterrows():
+        ws.cell(row=1, column=idx+4, value=f'{row["SalesVersionName"]}\nSV {row["SalesVersion"]}')
 
     #Definition of column widths & row heights
     ws.column_dimensions['A'].width = 11
@@ -96,7 +81,7 @@ def prepare_sheet(ws, sales_versions, title):
         ws.column_dimensions[get_column_letter(col)].width = 25
 
     ws.row_dimensions[1].height = 45
-    ws.row_dimensions[2].height = 35
+    ws.row_dimensions[2].height = 43
 
     # Formatting of first row
     ws['A1'].font = Font(name='Arial', size=16, bold=True, color="FFFFFF")
@@ -128,6 +113,22 @@ def prepare_sheet(ws, sales_versions, title):
         for cell in row:
             cell.border = all_border
 
+    # Formatting of data output format in Column C as EUR
+    for row in range(3, max_r + 1):
+        for col in range(4, max_c + 1):
+            ws.cell(row=row, column=col).alignment = Alignment(horizontal='center', vertical='center')
+        cell = ws.cell(row=row, column=1)
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell = ws[f'C{row}']
+        if row % 2 != 0:
+           cell.font = Font(bold=True)
+           cell.border = Border(top=Side(style='thin'),
+                                right=Side(style='thin'),
+                                left=Side(style='thin'))
+           ws.cell(row=row-1, column=3).border = Border(bottom=Side(style='thin'),
+                                                        right=Side(style='thin'),
+                                                        left=Side(style='thin'))
+           
     # Setting of border lines context sensitive around data
     for col in range(1, max_c + 1):
         cell = ws.cell(row=3, column=col)
@@ -157,27 +158,39 @@ def prepare_sheet(ws, sales_versions, title):
                                         top=Side(style='thin'),
                                         left=Side(style='thin'))
 
-    # Formatting of data output format in Column C as EUR
-    for row in range(3, max_r + 1):
-        cell = ws.cell(row=row, column=3)
-        cell.number_format = '€ #,##0.00'
 
-    # Formatting of alignment of content cells
-    for row in range(3, max_r + 1):
-        for col in range(3, max_c + 1):
-            cell = ws.cell(row=row, column=col)
-            cell.alignment = Alignment(horizontal='center', vertical='center')
-
-    for row in range(3, max_r + 1):
-        cell = ws.cell(row=row, column=1)
-        cell.alignment = Alignment(horizontal='center', vertical='center')
-    
     # Formatting of "Pack Only" options
     for row in range(3, max_r + 1):  
         if ws.cell(row=row, column=3).value == "Pack Only":
+            ws.cell(row=row, column=3).alignment = Alignment(horizontal='center', vertical='center')
             for col in range(1, max_c + 1):
-                ws.cell(row=row, column=col).font = Font(color="A6A6A6")
+                ws.cell(row=row, column=col).font = Font(color="A6A6A6", bold = False)
+                ws.merge_cells(start_row=row, end_row=row + 1, start_column=3, end_column=3)
 
+    row = 3
+    while row <= ws.max_row:
+        # Read code in current row
+        current_code = ws[f"A{row}"].value
+
+        # Search for next different code
+        next_row = row + 2  # Skip one row
+        while next_row <= ws.max_row:
+            next_code = ws[f"A{next_row}"].value
+            if next_code != current_code:
+                break
+            next_row += 2  # Skip one row
+
+        # Merging in columns A & B if codes have duplicates
+        if next_row - row > 2:
+            ws.merge_cells(start_row=row, end_row=next_row-1, start_column=1, end_column=1)  # Merge column A
+            ws.merge_cells(start_row=row, end_row=next_row-1, start_column=2, end_column=2)  # Merge column B
+        else:
+            ws.merge_cells(start_row=row, end_row=row+1, start_column=1, end_column=1)  # Merge column A
+            ws.merge_cells(start_row=row, end_row=row+1, start_column=2, end_column=2)  # Merge column B
+
+        # Set next row as first row of new control circle
+        row = next_row
+    
     # Formatting of gap to extra section
     ws.column_dimensions[get_column_letter(max_c + 1)].width = 1
 
@@ -201,7 +214,9 @@ def prepare_sheet(ws, sales_versions, title):
                             left=Side(style='thin'),
                             top=Side(style='thin'),
                             right=Side(style='thin'))
-        
+    
+    ws.sheet_view.showGridLines = False
+
 def fetch_options_data(sales_versions, time):
     df_pno_option_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'OPT_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax', 'CustomName'])
     df_pno_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'OPT'), columns=['ID', 'PNOID', 'Code', 'RuleName', 'StartDate', 'EndDate'])

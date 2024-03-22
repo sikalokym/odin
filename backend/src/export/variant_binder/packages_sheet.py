@@ -23,7 +23,7 @@ def get_sheet(ws, sales_versions, title, time):
     Returns:
         None
     """
-    prepare_sheet(ws, sales_versions.SalesVersionName, title)
+    prepare_sheet(ws, sales_versions, title)
     df_packages = fetch_package_data(sales_versions, time)
 
     for (code, title, price), group in df_packages.groupby(['Code', 'Title', 'Price']):
@@ -40,21 +40,26 @@ def get_sheet(ws, sales_versions, title, time):
         # format the row in gray
         for cell in ws[len(ws["A"])]:
             cell.fill = PatternFill(start_color='BFBFBF', end_color='BFBFBF', fill_type='solid')
+            cell.font = Font(name='Arial', size=12, bold=True)
+            cell.alignment = Alignment(horizontal='left', vertical='center')
 
         for _, row in df_options.iterrows():
-            ws.append([row['RuleCode'], row['CustomName'], row['RuleBase'], row['CustomName']] + [row[sv] for sv in sales_versions['SalesVersion']])
+            ws.append([row['RuleCode'], row['CustomName'], row['RuleBase']] + [row[sv] for sv in sales_versions['SalesVersion']])
+    
 
-def prepare_sheet(ws, sales_versions, title):
+def prepare_sheet(ws, df_sales_versions, title):
     ws.sheet_view.showGridLines = False
-    ws.merge_cells('A1:B1')
+    ws.freeze_panes = ws['A2']
     ws['A1'] = f'{title} - Pakete'
     ws['C1'] = 'EUR inkl. 19 % MwSt.\n EUR ohne MwSt.'
-    for idx, value in enumerate(sales_versions, start=4):
-        ws.cell(row=1, column=idx, value=value)
     ws['A2'] = 'Code (ab Werk)\n + VCG Paket'
-    ws['B2'] = 'Description'
-
-    #Definition of column widths & row heights
+    ws['B2'] = 'Beschreibung'
+    
+    ws.merge_cells('A1:B1')
+    for idx, row in df_sales_versions.iterrows():
+        ws.cell(row=1, column=idx+4, value=f'{row["SalesVersionName"]}\nSV {row["SalesVersion"]}')
+        
+    # Definition of column widths & row heights
     max_c = ws.max_column
 
     ws.column_dimensions['A'].width = 11
@@ -77,7 +82,7 @@ def prepare_sheet(ws, sales_versions, title):
     for col in range(1,max_c+1):
         cell = ws.cell(row=1, column=col)
         cell.fill = fill
-        
+    
     # Formatting of second row
     ws['A2'].alignment = Alignment(horizontal='center', vertical='center',wrap_text=True)
     ws['A2'].font = Font(size=10, bold=True)

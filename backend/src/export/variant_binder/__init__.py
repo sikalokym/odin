@@ -1,5 +1,6 @@
 from io import BytesIO
 import numpy as np
+import pandas as pd
 from openpyxl import Workbook
 from src.database.db_operations import DBOperations
 from src.export.variant_binder import prices_sheet, options_sheet, upholstery_colors_sheet, packages_sheet, sales_versions_sheet
@@ -17,9 +18,12 @@ def extract_variant_binder(country, model, engines_types, time):
         valid_engines = get_valid_engines(country, engines_types, time)
         valid_pnos = get_valid_pnos(country, model, time, valid_engines)
         sales_versions = get_sales_versions(country, valid_pnos, time)
+        sv_ordered = sales_versions['SalesVersion'].tolist()
+        valid_pnos = pd.concat([valid_pnos[valid_pnos['SalesVersion'] == sv] for sv in sv_ordered])
         title = get_model_name(country, model, time)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error getting VB Data: {e}")
+        raise Exception(f"Error getting VB Data: {e}")
         return str(e), 500
 
     if valid_pnos.empty or sales_versions.empty or valid_engines.empty:
@@ -60,14 +64,18 @@ def extract_variant_binder(country, model, engines_types, time):
     return output
     
 def get_model_name(country, model, time):
-    models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), conditions=[f'CountryCode = {country}'])
+    models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), ['MarketText', 'CountryText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f'Code = {model}'])
 
     # filter models where StartDate and End Data wrap the current time for the given model
     df_model = filter_df_by_timestamp(models, time)
-    df_model = models[models['Code'] == model]
+    
+    df_model['Title'] = df_model['CountryText'].combine_first(df_model['MarketText'])
 
-    # return the model name
-    return df_model['MarketText'].values[0]
+    title = df_model.iloc[0]['Title']
+    if title:
+        return title
+    else:
+        raise Exception(f"No model found for model {model}")
 
 def get_sales_versions(country, pnos, time):
     df_sv = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), conditions=[f'CountryCode = {country}'])
@@ -77,16 +85,25 @@ def get_sales_versions(country, pnos, time):
     df_sv = filter_df_by_timestamp(df_sv, time)
     df_sv.rename(columns={'Code': 'TmpCode'}, inplace=True)
 
-    df_allowed_sv = pnos.merge(df_sv[['TmpCode', 'MarketText']], left_on='SalesVersion', right_on='TmpCode', how='left')
-    df_allowed_sv.rename(columns={'MarketText': 'SalesVersionName'}, inplace=True)
+    df_allowed_sv = pnos.merge(df_sv[['TmpCode', 'MarketText', 'CountryText']], left_on='SalesVersion', right_on='TmpCode', how='left')
+    df_allowed_sv['SalesVersionName'] = df_allowed_sv['CountryText'].combine_first(df_allowed_sv['MarketText'])
     df_allowed_sv.drop_duplicates(subset='SalesVersion', keep='first', inplace=True)
-    df_allowed_sv.drop(columns='TmpCode', inplace=True)
 
     df_allowed_sv['SalesVersionPrice'] = df_allowed_sv['ID'].map(df_pno_price.set_index('RelationID')['Price'])
+    df_allowed_sv = df_allowed_sv[['ID', 'SalesVersion', 'SalesVersionName', 'SalesVersionPrice']]
 
-    # Sort by price descending and return the names and prices
-    df_allowed_sv = df_allowed_sv.sort_values(by='SalesVersionPrice', ascending=True)
-    return df_allowed_sv[['ID', 'SalesVersion', 'SalesVersionName', 'SalesVersionPrice']]
+    # group by SalesVersionName name's first word and represent each group with its maximum price and sort on price ascending and return the names and prices
+    df_allowed_sv['SalesVersionNameGroup'] = df_allowed_sv['SalesVersionName'].str.split().str[0]
+    df = df_allowed_sv.groupby('SalesVersionNameGroup').agg({'SalesVersionName': list, 'SalesVersionPrice': 'max'}).sort_values('SalesVersionPrice', ascending=True)
+    # explode the list of names to get the names sorted by price
+    sorted_sv_names = df.explode('SalesVersionName')['SalesVersionName'].tolist()
+
+    # now we have the names of the sales versions sorted by price
+    # sort the original df by the order of the names in the sorted df
+    df_final = df_allowed_sv.set_index('SalesVersionName').loc[sorted_sv_names].reset_index()
+    df_final.drop(columns=['SalesVersionNameGroup'], inplace=True)
+
+    return df_final
 
 def get_valid_engines(country, engine_cat, time):
     df_all_engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), conditions=[f'CountryCode = {country}'])
