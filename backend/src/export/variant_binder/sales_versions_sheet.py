@@ -71,7 +71,12 @@ def get_sheet(ws, sales_versions, title, country, time):
             
 def fetch_sales_version_data(df_sales_versions, country, time):
     pno_ids = df_sales_versions.ID.unique().tolist()
-    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Code', 'Reference', 'Options', 'CustomName'], conditions=[f'PNOID in {tuple(pno_ids)}'])
+    conditions = []
+    if len(pno_ids) == 1:
+        conditions.append(f"PNOID = '{pno_ids[0]}'")
+    else:
+        conditions.append(f"PNOID in {tuple(pno_ids)}")
+    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Code', 'Reference', 'Options', 'CustomName'], conditions=conditions)
     df_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'FEA'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_features = filter_df_by_timestamp(df_features, time)
     df_features.drop(columns=['StartDate', 'EndDate'], inplace=True)

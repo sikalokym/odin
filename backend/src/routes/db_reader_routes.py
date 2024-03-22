@@ -37,8 +37,13 @@ def get_models(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Model', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     models = df_pnos['Model'].unique().tolist()
-    
-    df_models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), columns=['Code', 'CountryText', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f'Code in {tuple(models)}'])
+    conditions = [f'CountryCode = {country}']
+    if len(models) == 1:
+        conditions.append(f"Code = '{models[0]}'")
+    else:
+        conditions.append(f"Code in {tuple(models)}")
+
+    df_models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), columns=['Code', 'CountryText', 'MarketText', 'StartDate', 'EndDate'], conditions=conditions)
     df_models = filter_df_by_model_year(df_models, model_year)
     df_models = filter_model_year_by_translation(df_models, conditional_columns=['CountryText'])
     df_models = df_models.drop(columns=['StartDate', 'EndDate'], axis=1)
@@ -51,8 +56,13 @@ def get_sales_versions(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['SalesVersion', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     sales_versions = df_pnos['SalesVersion'].unique().tolist()
+    conditions = [f'CountryCode = {country}']
+    if len(sales_versions) == 1:
+        conditions.append(f"Code = '{sales_versions[0]}'")
+    else:
+        conditions.append(f"Code in {tuple(sales_versions)}")
     
-    df_sales_versions = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), columns=['Code', 'CountryText', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f'Code in {tuple(sales_versions)}'])
+    df_sales_versions = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), columns=['Code', 'CountryText', 'MarketText', 'StartDate', 'EndDate'], conditions=conditions)
     df_sales_versions = filter_df_by_model_year(df_sales_versions, model_year)
     df_sales_versions = filter_model_year_by_translation(df_sales_versions, conditional_columns=['CountryText'])
     df_sales_versions = df_sales_versions.drop(columns=['StartDate', 'EndDate'], axis=1)
@@ -65,8 +75,13 @@ def get_engines(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Engine', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     engine_codes = df_pnos['Engine'].unique().tolist()
+    conditions = [f'CountryCode = {country}']
+    if len(engine_codes) == 1:
+        conditions.append(f"Code = '{engine_codes[0]}'")
+    else:
+        conditions.append(f"Code in {tuple(engine_codes)}")
     
-    df_engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), columns=['Code', 'MarketText', 'CountryText', 'Performance', 'EngineCategory', 'EngineType', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f'Code in {tuple(engine_codes)}'])
+    df_engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), columns=['Code', 'MarketText', 'CountryText', 'Performance', 'EngineCategory', 'EngineType', 'StartDate', 'EndDate'], conditions=conditions)
     df_engines = filter_df_by_model_year(df_engines, model_year)
     df_engines = filter_model_year_by_translation(df_engines, conditional_columns=['CountryText', 'Performance', 'EngineCategory', 'EngineType'])
     df_engines = df_engines.drop(columns=['StartDate', 'EndDate'], axis=1)
@@ -79,8 +94,13 @@ def get_gearboxes(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Gearbox', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     gearbox_codes = df_pnos['Gearbox'].unique().tolist()
+    conditions = [f'CountryCode = {country}']
+    if len(gearbox_codes) == 1:
+        conditions.append(f"Code = '{gearbox_codes[0]}'")
+    else:
+        conditions.append(f"Code in {tuple(gearbox_codes)}")
     
-    df_gearboxes = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'G'), columns=['Code', 'CountryText', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f'Code in {tuple(gearbox_codes)}'])
+    df_gearboxes = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'G'), columns=['Code', 'CountryText', 'MarketText', 'StartDate', 'EndDate'], conditions=conditions)
     df_gearboxes = filter_df_by_model_year(df_gearboxes, model_year)
     df_gearboxes = filter_model_year_by_translation(df_gearboxes, conditional_columns=['CountryText'])
     df_gearboxes = df_gearboxes.drop(columns=['StartDate', 'EndDate'], axis=1)
@@ -107,13 +127,18 @@ def get_options(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     ids = df_pnos['ID'].tolist()
+    conditions = [f'CountryCode = {country}']
+    if len(ids) == 1:
+        conditions.append(f"PNOID = '{ids[0]}'")
+    else:
+        conditions.append(f"PNOID in {tuple(ids)}")
 
     df_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'OPT'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_options = filter_df_by_model_year(df_options, model_year)
     df_options.drop(columns=['StartDate', 'EndDate'], inplace=True)
     df_options.drop_duplicates(subset='Code', inplace=True)
 
-    df_pno_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'OPT'), columns=['ID', 'Code'], conditions=[f'PNOID in {tuple(ids)}'])
+    df_pno_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'OPT'), columns=['ID', 'Code'], conditions=conditions)
     df_pno_options.drop_duplicates(inplace=True)
     
     df_options_custom = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'OPT_Custom'), columns=['RelationID', 'CustomName'])
@@ -148,13 +173,18 @@ def get_colors(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     ids = df_pnos['ID'].tolist()
+    conditions = [f'CountryCode = {country}']
+    if len(ids) == 1:
+        conditions.append(f"PNOID = '{ids[0]}'")
+    else:
+        conditions.append(f"PNOID in {tuple(ids)}")
 
     df_colors = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'COL'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_colors = filter_df_by_model_year(df_colors, model_year)
     df_colors.drop(columns=['StartDate', 'EndDate'], inplace=True)
     df_colors.drop_duplicates(subset='Code', inplace=True)
 
-    df_pno_colors = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'COL'), columns=['ID', 'Code'], conditions=[f'PNOID in {tuple(ids)}'])
+    df_pno_colors = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'COL'), columns=['ID', 'Code'], conditions=conditions)
     df_pno_colors.drop_duplicates(inplace=True)
     
     df_colors_custom = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'COL_Custom'), columns=['RelationID', 'CustomName'])
@@ -189,13 +219,18 @@ def get_upholstery(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     ids = df_pnos['ID'].tolist()
+    conditions = [f'CountryCode = {country}']
+    if len(ids) == 1:
+        conditions.append(f"PNOID = '{ids[0]}'")
+    else:
+        conditions.append(f"PNOID in {tuple(ids)}")
 
     df_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'UPH'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_upholstery = filter_df_by_model_year(df_upholstery, model_year)
     df_upholstery.drop(columns=['StartDate', 'EndDate'], inplace=True)
     df_upholstery.drop_duplicates(subset='Code', inplace=True)
 
-    df_pno_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'UPH'), columns=['ID', 'Code'], conditions=[f'PNOID in {tuple(ids)}'])
+    df_pno_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'UPH'), columns=['ID', 'Code'], conditions=conditions)
     df_pno_upholstery.drop_duplicates(inplace=True)
     
     df_upholstery_custom = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), columns=['RelationID', 'CustomName'])
@@ -230,6 +265,11 @@ def get_features(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     ids = df_pnos['ID'].tolist()
+    conditions = [f'CountryCode = {country}']
+    if len(ids) == 1:
+        conditions.append(f"PNOID = '{ids[0]}'")
+    else:
+        conditions.append(f"PNOID in {tuple(ids)}")
 
     df_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'FEA'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_features = filter_df_by_model_year(df_features, model_year)
@@ -237,7 +277,7 @@ def get_features(country, model_year):
     df_features['Code'] = df_features['Code'].str.strip()
     df_features.drop_duplicates(subset='Code', inplace=True)
 
-    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['Code', 'CustomName'], conditions=[f'PNOID in {tuple(ids)}'])
+    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['Code', 'CustomName'], conditions=conditions)
     df_pno_features['Code'] = df_pno_features['Code'].str.strip()
     df_pno_features.drop_duplicates(inplace=True)
     df_pno_features['MarketText'] = df_pno_features['Code'].map(df_features.set_index('Code')['MarketText'])
