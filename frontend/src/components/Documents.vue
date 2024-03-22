@@ -43,7 +43,7 @@
     <div class="country bottom-div">
       <label for="country" class="countrylabel">Change Country: </label>
       <select v-model="selectedCountry" @change="changeCountry(selectedCountry)">
-        <option disabled value="">Germany</option>
+        <option disabled value=""></option>
         <option v-for="country in countries" :key="country" :value="country">
           {{ country }}
         </option>

@@ -10,8 +10,8 @@
     <div class="linkcountry">   
     <ul class="nav-links">
       <router-link to="/" active-class="active-link">Home</router-link>
-      <router-link to="/database" active-class="active-link">View Database</router-link>
-      <router-link to="/documents" active-class="active-link">Export Documents</router-link>
+      <router-link to="/database" active-class="active-link">Database</router-link>
+      <router-link to="/documents" active-class="active-link">Export</router-link>
     </ul>
 </div>
   </nav>

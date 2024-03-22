@@ -303,8 +303,6 @@ def filter_df_by_model_year(df, model_year):
     if isinstance(model_year, str):
         if not model_year.isdigit():
             raise ValueError("Model year must be a valid integer.")
-        if len(model_year) != 4:
-            raise ValueError("Model year must be in the format YYYY.")
         model_year = int(model_year)
         if not model_year:
             df['ModelYear'] = df['StartDate'].apply(get_model_year_from_date)
