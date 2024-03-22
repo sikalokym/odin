@@ -121,26 +121,40 @@ export const usePNOStore = defineStore({
         console.log(error)
       })
     },
+    // PNO-speficic updates
+    async pushUpdateFeature(id, feature, translation) {
+      let updates = {
+          Code: feature,
+          PNOID: id,
+          CustomName: translation,
+      }
+      let path = `/db/${this.country}/${this.model_year}/write/features`
+      return index.post(path, updates);
+    },
+    async pushUpdateColor(id, color, translation) {
+      let updates = {
+          Code: color,
+          PNOID: id,
+          CustomName: translation,
+      }
+      let path = `/db/${this.country}/${this.model_year}/write/colors`
+      return index.post(path, updates);
+    },
+    async pushUpdateUpholstery(id, feature, category) {
+      let updates = {
+          Code: feature,
+          PNOID: id,
+          Category: category,
+      }
+      let path = `/db/${this.country}/${this.model_year}/write/upholstery`
+      return index.post(path, updates);
+    },
     // General Setup
     setCountry(newCountry) {
       this.country = newCountry;
     },
     setModelYear(newModelYear) {
       this.model_year = newModelYear;
-    },
-    async exportVariantBinder(validity_year, validity_week, model, engine) {
-      console.log(validity_year, validity_week, model, engine);
-      // let path = `/${this.country}/export/variant_binder?date=${validity_year}${validity_week}&model=${model}&engines_category=${engine}`;
-      let path = '/231/export/variant_binder?date=202503&model=246&engines_category=Plug-in%20Hybrid'
-      return index.get(path, {responseType: 'blob'})
-        .then((response) => {
-          console.log('response');
-          console.log(response);
-          return response;
-        })
-        .catch((error) => {
-          console.log(error);
-        });
     },
   },
 })

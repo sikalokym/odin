@@ -73,7 +73,7 @@
   <main class="main-content">
     <!-- Model Table -->
     <table v-if="displaytable === 'Model'">
-      <thead>
+      <thead v-if="model_year !== '0'">
         <tr>
           <th v-if="model_year === ''">Model Year</th>
           <th>Model</th>
@@ -99,7 +99,7 @@
     </table>
     <!-- Salesversion Table -->
     <table v-if="displaytable === 'SalesVersion'">
-      <thead>
+      <thead v-if="model_year !== '0'">
         <tr>
           <th>Sales Version</th>
           <th>CPAM Text</th>
@@ -121,7 +121,7 @@
     </table>
     <!-- Engine Table -->
     <table v-if="displaytable === 'Engine'">
-      <thead>
+      <thead v-if="model_year !== '0'">
         <tr>
           <th>Engine</th>
           <th>CPAM Text</th>
@@ -155,9 +155,9 @@
     </table>
     <!-- Gearbox Table -->
     <table v-if="displaytable === 'Gearbox'">
-      <thead>
+      <thead v-if="model_year !== '0'">
         <tr>
-          <th>Engine</th>
+          <th>Gearbox</th>
           <th>CPAM Text</th>
           <th>Market Text</th>
           <th></th>
@@ -177,7 +177,7 @@
     </table>
     <!-- Features Table -->
     <table v-if="displaytable === 'Features'">
-      <thead>
+      <thead v-if="model_year !== '0'">
         <tr>
           <th v-if="model === ''">Model</th>
           <th>Feature</th>
@@ -194,15 +194,16 @@
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
           <td>
-            <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true" @click="startEditing(pno)" />
+            <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true" @change="pushUpdateFeature(pno)" />
           </td>
         </tr>
       </tbody>
     </table>
     <!-- Colors Table -->
     <table v-if="displaytable === 'Colors'">
-      <thead>
+      <thead v-if="model_year !== '0'">
         <tr>
+          <th v-if="model === ''">Model</th>
           <th>Color</th>
           <th>CPAM Text</th>
           <th>Market Text</th>
@@ -211,37 +212,40 @@
       </thead>
       <tbody>
         <tr v-for="pno in tableColors" :key="pno.id" :class="{ 'editing': pno.edited }">
+          <td v-if="model === ''">
+            {{ pno.model }}
+          </td>
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
           <td>
-            <input type="MarketText" v-model="pno.CountryText" @input="pno.edited = true" @click="startEditing(pno)" />
+            <input type="MarketText" v-model="pno.CountryText" @input="pno.edited = true" @change="pushUpdateColor(pno)" />
           </td>
         </tr>
       </tbody>
     </table>
     <!-- Options Table -->
     <table v-if="displaytable === 'Options'">
-      <thead>
+      <thead v-if="model_year !== '0'">
         <tr>
           <th>Option</th>
+          <th>Feature</th>
           <th>CPAM Text</th>
-          <th>Market Text</th>
+          <th>Feature Text</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="pno in tableOptions" :key="pno.id" :class="{ 'editing': pno.edited }">
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
+          <td style="background-color: #f4f4f4;">{{ pno.Feature }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
-          <td>
-            <input type="MarketText" v-model="pno.CountryText" @input="pno.edited = true" @click="startEditing(pno)" />
-          </td>
+          <td class="FeatureColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.FeatureText }}</td>
         </tr>
       </tbody>
     </table>
     <!-- Upholstery Table -->
     <table v-if="displaytable === 'Upholstery'">
-      <thead>
+      <thead v-if="model_year !== '0'">
         <tr>
           <th>Upholstery</th>
           <th>CPAM Text</th>
@@ -254,7 +258,7 @@
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
           <td>
-            <input type="MarketText" v-model="pno.Category" @input="pno.edited = true" @click="startEditing(pno)" />
+            <input type="Category" v-model="pno.Category" @input="pno.edited = true" @change="pushUpdateUpholstery(pno)" />
           </td>
         </tr>
       </tbody>
@@ -448,7 +452,6 @@ methods: {
     pno.edited = false
   },
   pushUpdateEngine(pno) {
-    console.log(pno);
     this.entitiesStore.pushUpdateEngine(pno.Code, pno.CountryText, pno.EngineCategory, pno.EngineType, pno.Performance)
     pno.edited = false
   },
@@ -460,6 +463,20 @@ methods: {
     this.entitiesStore.pushUpdateGearbox(pno.Code, pno.CountryText)
     pno.edited = false
   },
+  // PNO-specific updates
+  pushUpdateFeature(pno) {
+    this.entitiesStore.pushUpdateFeature(pno.PNOID, pno.Code, pno.CustomName)
+    pno.edited = false
+  },
+  pushUpdateColor(pno) {
+    this.entitiesStore.pushUpdateColor(pno.PNOID, pno.Code, pno.CountryText)
+    pno.edited = false
+  },
+  pushUpdateUpholstery(pno) {
+    this.entitiesStore.pushUpdateUpholstery(pno.PNOID, pno.Code, pno.Category)
+    pno.edited = false
+  },
+  // Database updates 
   uploadVisa() {
     const file = this.$refs.file.files[0];
     console.log(file)
