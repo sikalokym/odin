@@ -8,26 +8,23 @@
 </template>
 
 <script>
-import NavBar from './components/NavBar.vue'
+import NavBar from './components/shared/NavBar.vue';
 import { usePNOStore } from './stores/pno.js'
 import { useEntitiesStore } from './stores/entities.js'
 
 export default {
   name: 'App',
   components: {
-    NavBar,
+    NavBar
   },
   async created() {
     
     const pnoStore = usePNOStore()
     const entitiesStore = useEntitiesStore()
 
-    await pnoStore.fetchSupportedCountries().then(() => {
-      console.log('Supported countries fetched')
-    }).catch((error) => {
-      console.error('Error fetching countries', error)
-    })
-
+    let country = await entitiesStore.fetchSupportedCountries()
+    console.log(country)
+    pnoStore.setCountry(country)
     await pnoStore.fetchAvailableModelYears().then(() => {
       console.log('Available model years fetched')
     }).catch((error) => {

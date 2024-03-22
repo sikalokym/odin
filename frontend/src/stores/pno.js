@@ -12,7 +12,7 @@ export const usePNOStore = defineStore({
     supported_countries: [],
     available_model_years: [],
     engine_cats: [],
-    country: '231',
+    country: '',
     model_year: new Date().getFullYear() + 1,
   }),
   getters: {
@@ -63,15 +63,6 @@ export const usePNOStore = defineStore({
     }
   },
   actions: {
-    async fetchSupportedCountries() {
-      let path = `/setup/supported_countries`
-      return await index.get(path).then((response) => {
-        this.supported_countries = response.data
-        console.log("Available countries fetched")
-      }).catch((error) => {
-        console.log(error)
-      })
-    },
     async fetchAvailableModelYears() {
       let path = `/setup/${this.country}/available_model_years`
       return await index.get(path).then((response) => {
@@ -132,9 +123,6 @@ export const usePNOStore = defineStore({
     },
     // General Setup
     setCountry(newCountry) {
-      if (newCountry === 'Germany') {
-        this.country = '231';
-      }
       this.country = newCountry;
     },
     setModelYear(newModelYear) {
