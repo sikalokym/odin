@@ -55,8 +55,7 @@ def extract_variant_binder(country, model, engines_types, time):
         upholstery_colors_sheet.get_sheet(ws_5, sales_versions.copy(), title, time)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error creating sheet: {e}")
-    wb.save(f'dist/VB {title} {engines_types} {time}.xlsx')
-    # return
+
     output = BytesIO()
     wb.save(output)
     output.seek(0)
