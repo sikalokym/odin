@@ -2,7 +2,7 @@ import Axios from 'axios';
 
 let ENDPOINT = '/api';
 if (process.env.NODE_ENV === 'development') {
-	ENDPOINT = 'http://127.0.0.1:5000' + ENDPOINT;
+	ENDPOINT = 'https://pmt-portal-backend.azurewebsites.net' + ENDPOINT;
 }
 
 export default {
