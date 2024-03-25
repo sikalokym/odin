@@ -135,7 +135,7 @@ def get_options(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     ids = df_pnos['ID'].tolist()
-    conditions = [f'CountryCode = {country}']
+    conditions = []
     if len(ids) == 1:
         conditions.append(f"PNOID = '{ids[0]}'")
     else:
@@ -181,7 +181,7 @@ def get_colors(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     ids = df_pnos['ID'].tolist()
-    conditions = [f'CountryCode = {country}']
+    conditions = []
     if len(ids) == 1:
         conditions.append(f"PNOID = '{ids[0]}'")
     else:
@@ -227,7 +227,7 @@ def get_upholstery(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     ids = df_pnos['ID'].tolist()
-    conditions = [f'CountryCode = {country}']
+    conditions = []
     if len(ids) == 1:
         conditions.append(f"PNOID = '{ids[0]}'")
     else:
