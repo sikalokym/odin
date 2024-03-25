@@ -28,7 +28,7 @@ export default {
       return
     }
     console.log(country)
-    pnoStore.setCountry(country)
+    await pnoStore.setCountry(country)
     await pnoStore.fetchAvailableModelYears().then(() => {
       console.log('Available model years fetched')
     }).catch((error) => {

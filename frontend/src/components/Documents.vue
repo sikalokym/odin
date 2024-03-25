@@ -42,11 +42,8 @@
     <!-- Country Select Dropdown Menu -->
     <div class="country bottom-div">
       <label for="country" class="countrylabel">Change Country: </label>
-      <select v-model="selectedCountry" @change="changeCountry(selectedCountry)">
-        <option disabled value=""></option>
-        <option v-for="country in countries" :key="country" :value="country">
-          {{ country }}
-        </option>
+      <select v-model="selectedCountry" @change="changeCountry(this.selectedCountry)">
+        <option value="231" selected disabled>Germany</option>
       </select>
     </div>
   </aside>
@@ -71,7 +68,7 @@ import { useEntitiesStore } from '../stores/entities.js'
         pnoStore: usePNOStore(),
         entitiesStore: useEntitiesStore(),
         countries: [],
-        selectedCountry: '',
+        selectedCountry: '231',
       }
   },
   async created() {
