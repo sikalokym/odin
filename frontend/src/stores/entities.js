@@ -33,11 +33,7 @@ export const useEntitiesStore = defineStore({
       })
     },
     async fetchModels() {
-        let model_year = "0000"
-        if (this.model_year !== '0') {
-            model_year = this.model_year
-        }
-        let path = `/db/${this.country}/${model_year}/models`
+        let path = `/db/${this.country}/${this.model_year}/models`
         return await index.get(path).then((response) => {
             this.models = response.data
         }).catch((error) => {
@@ -45,11 +41,7 @@ export const useEntitiesStore = defineStore({
         })
     },
     async fetchEngines() {
-        let model_year = "0000"
-        if (this.model_year !== '0') {
-            model_year = this.model_year
-        }
-        let path = `/db/${this.country}/${model_year}/engines`
+        let path = `/db/${this.country}/${this.model_year}/engines`
         return await index.get(path).then((response) => {
             this.engines = response.data
         }).catch((error) => {
@@ -57,11 +49,7 @@ export const useEntitiesStore = defineStore({
         })
         },
     async fetchSalesversions() {
-        let model_year = "0000" 
-        if (this.model_year !== '0') {
-            model_year = this.model_year
-        }
-        let path = `/db/${this.country}/${model_year}/sales_versions`
+        let path = `/db/${this.country}/${this.model_year}/sales_versions`
         return await index.get(path).then((response) => {
             this.salesversions = response.data
         }).catch((error) => {
@@ -69,11 +57,7 @@ export const useEntitiesStore = defineStore({
         })
     },
     async fetchGearboxes() {
-        let model_year = "0000"
-        if (this.model_year !== '0') {
-            model_year = this.model_year
-        }
-        let path = `/db/${this.country}/${model_year}/gearboxes`
+        let path = `/db/${this.country}/${this.model_year}/gearboxes`
         return await index.get(path).then((response) => {
             this.gearboxes = response.data
         }).catch((error) => {

@@ -288,8 +288,8 @@ export default {
     }
   },
   async created() {
-    this.pnoStore.model_year = '0';
-    this.entitiesStore.model_year = '0';
+    this.pnoStore.setModelYear('0');
+    this.entitiesStore.setModelYear('0');
   },
   computed: {
     filteredPnos() {
@@ -371,8 +371,8 @@ methods: {
     },
 
   refreshModelyear() {
-    this.pnoStore.model_year = this.model_year
-    this.entitiesStore.model_year = this.model_year
+    this.pnoStore.setModelYear(this.model_year)
+    this.entitiesStore.setModelYear(this.model_year)
     console.log(this.model_year)
     console.log('Model year refreshed')
 
@@ -438,7 +438,7 @@ methods: {
   this.salesversion = '';
   this.gearbox = '';
   this.displaytable = '';
-  this.pnoStore.model_year = '0';
+  this.pnoStore.model_year.setModelYear('0');
 
   this.pnoStore.fetchPnos().then(() => {
     console.log('PNOs fetched')

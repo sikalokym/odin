@@ -75,8 +75,8 @@ import { useEntitiesStore } from '../stores/entities.js'
       }
   },
   async created() {
-    this.pnoStore.model_year = '0';
-    this.entitiesStore.model_year = '0';
+    this.pnoStore.model_year.setModelYear('0');
+    this.entitiesStore.model_year.setModelYear('0');
   },
   computed: {
     filteredPnos() {
@@ -101,7 +101,7 @@ import { useEntitiesStore } from '../stores/entities.js'
     
   methods: {
       refreshModelyear() {
-        this.pnoStore.model_year = this.model_year
+        this.pnoStore.model_year.setModelYear(this.model_year)
         console.log('Model year refreshed')
 
         this.pnoStore.fetchPnos()
