@@ -23,6 +23,10 @@ export default {
     const entitiesStore = useEntitiesStore()
 
     let country = await entitiesStore.fetchSupportedCountries()
+    if (country === undefined) {
+      console.error('Error fetching supported countries')
+      return
+    }
     console.log(country)
     pnoStore.setCountry(country)
     await pnoStore.fetchAvailableModelYears().then(() => {
