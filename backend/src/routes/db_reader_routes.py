@@ -38,6 +38,8 @@ def get_models(country, model_year):
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     models = df_pnos['Model'].unique().tolist()
     conditions = [f'CountryCode = {country}']
+    if not models:
+        return jsonify([])
     if len(models) == 1:
         conditions.append(f"Code = '{models[0]}'")
     else:
@@ -57,6 +59,8 @@ def get_sales_versions(country, model_year):
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     sales_versions = df_pnos['SalesVersion'].unique().tolist()
     conditions = [f'CountryCode = {country}']
+    if not sales_versions:
+        return jsonify([])
     if len(sales_versions) == 1:
         conditions.append(f"Code = '{sales_versions[0]}'")
     else:
@@ -76,7 +80,9 @@ def get_engines(country, model_year):
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     engine_codes = df_pnos['Engine'].unique().tolist()
     conditions = [f'CountryCode = {country}']
-    if len(engine_codes) == 1:
+    if not engine_codes:
+        return jsonify([])
+    elif len(engine_codes) == 1:
         conditions.append(f"Code = '{engine_codes[0]}'")
     else:
         conditions.append(f"Code in {tuple(engine_codes)}")
@@ -95,6 +101,8 @@ def get_gearboxes(country, model_year):
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     gearbox_codes = df_pnos['Gearbox'].unique().tolist()
     conditions = [f'CountryCode = {country}']
+    if not gearbox_codes:
+        return jsonify([])
     if len(gearbox_codes) == 1:
         conditions.append(f"Code = '{gearbox_codes[0]}'")
     else:
