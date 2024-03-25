@@ -4,7 +4,7 @@ from openpyxl.styles import Font, PatternFill, Border, Alignment, Side
 
 from openpyxl.utils import get_column_letter
 from src.database.db_operations import DBOperations
-from src.utils.db_utils import filter_df_by_timestamp
+from src.utils.db_utils import filter_df_by_timestamp, format_float_string
 
 
 #General formating of border lines & cell colours in excel spreadsheet
@@ -41,7 +41,7 @@ def get_sheet(ws, sales_versions, title, time):
     # insert data into the sheet ab row 3
     for _, row in df_res.iterrows():
         svs = [row[sv] if row[sv] != '' and row[sv] is not None and row[sv] is not np.nan else '-' for sv in sales_versions['SalesVersion']]
-        if row['Price'] == 'Pack Only':
+        if row['Price'] == 'Pack Only'or row['Price'] == 'Serie':
             ws.append([row['Code'], row['CustomName'], row['Price']] + svs)
             ws.append([])
         else:
@@ -113,7 +113,6 @@ def prepare_sheet(ws, df_sales_versions, title):
         for cell in row:
             cell.border = all_border
 
-    # Formatting of data output format in Column C as EUR
     for row in range(3, max_r + 1):
         for col in range(4, max_c + 1):
             ws.cell(row=row, column=col).alignment = Alignment(horizontal='center', vertical='center')
@@ -166,6 +165,9 @@ def prepare_sheet(ws, df_sales_versions, title):
             for col in range(1, max_c + 1):
                 ws.cell(row=row, column=col).font = Font(color="A6A6A6", bold = False)
                 ws.merge_cells(start_row=row, end_row=row + 1, start_column=3, end_column=3)
+        elif ws.cell(row=row, column=3).value == "Serie":
+            ws.merge_cells(start_row=row, end_row=row+1, start_column=3, end_column=3)
+            ws.cell(row=row, column=3).alignment = Alignment(horizontal='center', vertical='center')
 
     row = 3
     while row <= ws.max_row:
@@ -238,8 +240,20 @@ def fetch_options_data(sales_versions, time):
             if rows.empty:
                 return ['Pack Only']
             # return a list of all prices
+        
+        if row['RuleName'] == '%':
+            # Get all rows with the same code that are not 'P'
+            rows = df_pno_options_with_price[(df_pno_options_with_price['Code'] == row['Code']) & (df_pno_options_with_price['RuleName'] != '%')]
+            # If there are no other rows with the same code, return 'Pack Only'
+            if rows.empty:
+                return ['Serie']
+
             return '/'.join([f"{r['Price']}/{r['PriceBeforeTax']}" for _, r in rows.iterrows()])
         return [f"{row['Price']}/{row['PriceBeforeTax']}"]
+    
+    # format prices to float using format_float_string
+    df_pno_options_with_price['Price'] = df_pno_options_with_price['Price'].apply(format_float_string)
+    df_pno_options_with_price['PriceBeforeTax'] = df_pno_options_with_price['PriceBeforeTax'].apply(format_float_string)
     
     # Concatenate Price and PriceBeforeTax
     df_pno_options_with_price['Price'] = df_pno_options_with_price.apply(lambda x: get_prices(x), axis=1)
