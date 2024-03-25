@@ -45,9 +45,9 @@ def get_models(country, model_year):
     else:
         conditions.append(f"Code in {tuple(models)}")
 
-    df_models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), columns=['Code', 'CountryText', 'MarketText', 'StartDate', 'EndDate'], conditions=conditions)
+    df_models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), columns=['Code', 'CustomName', 'MarketText', 'StartDate', 'EndDate'], conditions=conditions)
     df_models = filter_df_by_model_year(df_models, model_year)
-    df_models = filter_model_year_by_translation(df_models, conditional_columns=['CountryText'])
+    df_models = filter_model_year_by_translation(df_models, conditional_columns=['CustomName'])
     df_models = df_models.drop(columns=['StartDate', 'EndDate'], axis=1)
     df_models.drop_duplicates(inplace=True)
 
@@ -66,9 +66,9 @@ def get_sales_versions(country, model_year):
     else:
         conditions.append(f"Code in {tuple(sales_versions)}")
     
-    df_sales_versions = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), columns=['Code', 'CountryText', 'MarketText', 'StartDate', 'EndDate'], conditions=conditions)
+    df_sales_versions = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), columns=['Code', 'CustomName', 'MarketText', 'StartDate', 'EndDate'], conditions=conditions)
     df_sales_versions = filter_df_by_model_year(df_sales_versions, model_year)
-    df_sales_versions = filter_model_year_by_translation(df_sales_versions, conditional_columns=['CountryText'])
+    df_sales_versions = filter_model_year_by_translation(df_sales_versions, conditional_columns=['CustomName'])
     df_sales_versions = df_sales_versions.drop(columns=['StartDate', 'EndDate'], axis=1)
     df_sales_versions.drop_duplicates(inplace=True)
 
@@ -87,9 +87,9 @@ def get_engines(country, model_year):
     else:
         conditions.append(f"Code in {tuple(engine_codes)}")
     
-    df_engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), columns=['Code', 'MarketText', 'CountryText', 'Performance', 'EngineCategory', 'EngineType', 'StartDate', 'EndDate'], conditions=conditions)
+    df_engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), columns=['Code', 'MarketText', 'CustomName', 'Performance', 'EngineCategory', 'EngineType', 'StartDate', 'EndDate'], conditions=conditions)
     df_engines = filter_df_by_model_year(df_engines, model_year)
-    df_engines = filter_model_year_by_translation(df_engines, conditional_columns=['CountryText', 'Performance', 'EngineCategory', 'EngineType'])
+    df_engines = filter_model_year_by_translation(df_engines, conditional_columns=['CustomName', 'Performance', 'EngineCategory', 'EngineType'])
     df_engines = df_engines.drop(columns=['StartDate', 'EndDate'], axis=1)
     df_engines.drop_duplicates(inplace=True)
 
@@ -108,9 +108,9 @@ def get_gearboxes(country, model_year):
     else:
         conditions.append(f"Code in {tuple(gearbox_codes)}")
     
-    df_gearboxes = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'G'), columns=['Code', 'CountryText', 'MarketText', 'StartDate', 'EndDate'], conditions=conditions)
+    df_gearboxes = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'G'), columns=['Code', 'CustomName', 'MarketText', 'StartDate', 'EndDate'], conditions=conditions)
     df_gearboxes = filter_df_by_model_year(df_gearboxes, model_year)
-    df_gearboxes = filter_model_year_by_translation(df_gearboxes, conditional_columns=['CountryText'])
+    df_gearboxes = filter_model_year_by_translation(df_gearboxes, conditional_columns=['CustomName'])
     df_gearboxes = df_gearboxes.drop(columns=['StartDate', 'EndDate'], axis=1)
     df_gearboxes.drop_duplicates(inplace=True)
 
@@ -151,9 +151,9 @@ def get_options(country, model_year):
     
     df_options_custom = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'OPT_Custom'), columns=['RelationID', 'CustomName'])
     if df_options_custom.empty:
-        df_pno_options['CountryText'] = ''
+        df_pno_options['CustomName'] = ''
     else:
-        df_pno_options['CountryText'] = df_pno_options['ID'].map(df_options_custom.set_index('RelationID')['CustomName'])
+        df_pno_options['CustomName'] = df_pno_options['ID'].map(df_options_custom.set_index('RelationID')['CustomName'])
     
     df_pno_options['MarketText'] = df_pno_options['Code'].map(df_options.set_index('Code')['MarketText'])
     df_pno_options.drop(columns=['ID'], inplace=True)
@@ -197,9 +197,9 @@ def get_colors(country, model_year):
     
     df_colors_custom = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'COL_Custom'), columns=['RelationID', 'CustomName'])
     if df_colors_custom.empty:
-        df_pno_colors['CountryText'] = ''
+        df_pno_colors['CustomName'] = ''
     else:
-        df_pno_colors['CountryText'] = df_pno_colors['ID'].map(df_colors_custom.set_index('RelationID')['CustomName'])
+        df_pno_colors['CustomName'] = df_pno_colors['ID'].map(df_colors_custom.set_index('RelationID')['CustomName'])
     
     df_pno_colors['MarketText'] = df_pno_colors['Code'].map(df_colors.set_index('Code')['MarketText'])
     df_pno_colors.drop(columns=['ID'], inplace=True)
@@ -243,9 +243,9 @@ def get_upholstery(country, model_year):
     
     df_upholstery_custom = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), columns=['RelationID', 'CustomName'])
     if df_upholstery_custom.empty:
-        df_pno_upholstery['CountryText'] = ''
+        df_pno_upholstery['CustomName'] = ''
     else:
-        df_pno_upholstery['CountryText'] = df_pno_upholstery['ID'].map(df_upholstery_custom.set_index('RelationID')['CustomName'])
+        df_pno_upholstery['CustomName'] = df_pno_upholstery['ID'].map(df_upholstery_custom.set_index('RelationID')['CustomName'])
     
     df_pno_upholstery['MarketText'] = df_pno_upholstery['Code'].map(df_upholstery.set_index('Code')['MarketText'])
     df_pno_upholstery.drop(columns=['ID'], inplace=True)
@@ -273,7 +273,7 @@ def get_features(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     ids = df_pnos['ID'].tolist()
-    conditions = [f'CountryCode = {country}']
+    conditions = []
     if len(ids) == 1:
         conditions.append(f"PNOID = '{ids[0]}'")
     else:

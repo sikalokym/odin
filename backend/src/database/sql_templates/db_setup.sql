@@ -17,7 +17,7 @@ CREATE TABLE Model (
     ShortText VARCHAR(255),
     MarketText VARCHAR(255),
     CountryCode VARCHAR(12),
-    CountryText VARCHAR(255),
+    CustomName NVARCHAR(MAX),
     StartDate INT,
     EndDate INT,
     FOREIGN KEY (CountryCode) REFERENCES SupportedCountry(Code)
@@ -31,7 +31,7 @@ CREATE TABLE Engine (
     ShortText VARCHAR(255),
     MarketText VARCHAR(255),
     CountryCode VARCHAR(12),
-    CountryText VARCHAR(255),
+    CustomName NVARCHAR(MAX),
     Performance VARCHAR(255),
     EngineCategory VARCHAR(255),
     EngineType VARCHAR(255),
@@ -48,7 +48,7 @@ CREATE TABLE SalesVersion (
     ShortText VARCHAR(255),
     MarketText VARCHAR(255),
     CountryCode VARCHAR(12),
-    CountryText VARCHAR(255),
+    CustomName NVARCHAR(MAX),
     StartDate INT,
     EndDate INT,
     FOREIGN KEY (CountryCode) REFERENCES SupportedCountry(Code)
@@ -62,7 +62,7 @@ CREATE TABLE Gearbox (
     ShortText VARCHAR(255),
     MarketText VARCHAR(255),
     CountryCode VARCHAR(12),
-    CountryText VARCHAR(255),
+    CustomName NVARCHAR(MAX),
     StartDate INT,
     EndDate INT
 );
@@ -248,7 +248,8 @@ CREATE TABLE PNOFeature (
     Reference VARCHAR(255),
     Options VARCHAR(12),
     RuleName VARCHAR(12),
-    CustomName VARCHAR(255),
+    CustomName NVARCHAR(MAX),
+    CustomCategory VARCHAR(255),
     StartDate INT,
     EndDate INT,
     FOREIGN KEY (PNOID) REFERENCES PNO(ID)
@@ -260,7 +261,7 @@ CREATE TABLE PNOCustom (
     RelationID UNIQUEIDENTIFIER,
     Price DECIMAL(19,2),
     PriceBeforeTax DECIMAL(19,2),
-    CustomName VARCHAR(255),
+    CustomName NVARCHAR(MAX),
     StartDate INT,
     EndDate INT,
     FOREIGN KEY (RelationID) REFERENCES PNO(ID)
@@ -272,7 +273,7 @@ CREATE TABLE PNOColorCustom (
     RelationID UNIQUEIDENTIFIER,
     Price DECIMAL(19,2),
     PriceBeforeTax DECIMAL(19,2),
-    CustomName VARCHAR(255),
+    CustomName NVARCHAR(MAX),
     StartDate INT,
     EndDate INT,
     FOREIGN KEY (RelationID) REFERENCES PNOColor(ID)
@@ -284,7 +285,7 @@ CREATE TABLE PNOUpholsteryCustom (
     RelationID UNIQUEIDENTIFIER,
     Price DECIMAL(19,2),
     PriceBeforeTax DECIMAL(19,2),
-    CustomName VARCHAR(255),
+    CustomName NVARCHAR(MAX),
     StartDate INT,
     EndDate INT,
     FOREIGN KEY (RelationID) REFERENCES PNOUpholstery(ID)
@@ -296,7 +297,7 @@ CREATE TABLE PNOOptionsCustom (
     RelationID UNIQUEIDENTIFIER,
     Price DECIMAL(19,2),
     PriceBeforeTax DECIMAL(19,2),
-    CustomName VARCHAR(255),
+    CustomName NVARCHAR(MAX),
     StartDate INT,
     EndDate INT,
     FOREIGN KEY (RelationID) REFERENCES PNOOptions(ID)
@@ -308,7 +309,7 @@ CREATE TABLE PNOPackageCustom (
     RelationID UNIQUEIDENTIFIER,
     Price DECIMAL(19,2),
     PriceBeforeTax DECIMAL(19,2),
-    CustomName VARCHAR(255),
+    CustomName NVARCHAR(MAX),
     StartDate INT,
     EndDate INT,
     FOREIGN KEY (RelationID) REFERENCES PNOPackage(ID)

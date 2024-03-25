@@ -361,7 +361,8 @@ def format_float_string(float_string):
         >>> format_float_string('1234567.890')
         '1.234.567,89'
     """
-    
+    if not float_string or not isinstance(float_string, str):
+        return 'Not Assigned'
     # Convert string to float to ensure correct handling
     float_value = float(float_string)
     

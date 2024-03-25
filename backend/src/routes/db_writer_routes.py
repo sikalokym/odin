@@ -14,7 +14,7 @@ def write_models(country, model_year):
     
     # Create a DataFrame from the list of JSON objects
     df_models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), conditions=[f'CountryCode = {country}'])
-    update_columns = ['CountryText']
+    update_columns = ['CustomName']
 
     # Update the columns in the df_models DataFrame
     for col in update_columns:
@@ -33,7 +33,7 @@ def write_engines(country, model_year):
     
     # Create a DataFrame from the list of JSON objects
     df_engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), conditions=[f'CountryCode = {country}'])
-    update_columns = ['CountryText', 'Performance', 'EngineCategory', 'EngineType']
+    update_columns = ['CustomName', 'Performance', 'EngineCategory', 'EngineType']
 
     # Update the columns in the df_engines DataFrame
     for col in update_columns:
@@ -52,7 +52,7 @@ def write_sales_versions(country, model_year):
     
     # Create a DataFrame from the list of JSON objects
     df_sales_versions = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), conditions=[f'CountryCode = {country}'])
-    update_columns = ['CountryText']
+    update_columns = ['CustomName']
 
     # Update the columns in the df_sales_versions DataFrame
     for col in update_columns:
@@ -71,7 +71,7 @@ def write_gearboxes(country, model_year):
     
     # Create a DataFrame from the list of JSON objects
     df_gearboxes = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'G'), conditions=[f'CountryCode = {country}'])
-    update_columns = ['CountryText']
+    update_columns = ['CustomName']
 
     # Update the columns in the df_gearboxes DataFrame
     for col in update_columns:
