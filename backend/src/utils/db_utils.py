@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 pd.set_option('future.no_silent_downcasting', True)
@@ -361,10 +362,13 @@ def format_float_string(float_string):
         >>> format_float_string('1234567.890')
         '1.234.567,89'
     """
-    if not float_string or not isinstance(float_string, str):
-        return 'Not Assigned'
-    # Convert string to float to ensure correct handling
-    float_value = float(float_string)
+    try:
+        # Convert string to float to ensure correct handling
+        float_value = float(float_string)
+        if not float_value or np.isnan(float_value):
+            return 'Not Assigned. Check Visa File'
+    except ValueError:
+        return 'Not Assigned. Check Visa File'
     
     # Format with thousands separator (dot) and two decimal places
     # Note: The format uses a comma for the decimal separator as per the locale setting
