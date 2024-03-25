@@ -19,12 +19,12 @@ def extract_variant_binder(country, model, engines_types, time):
         valid_pnos = get_valid_pnos(country, model, time, valid_engines)
         sales_versions = get_sales_versions(country, valid_pnos, time)
         sv_ordered = sales_versions['SalesVersion'].tolist()
-        valid_pnos = pd.concat([valid_pnos[valid_pnos['SalesVersion'] == sv] for sv in sv_ordered])
+        valid_pnos['SalesVersion'] = pd.Categorical(valid_pnos['SalesVersion'], categories=sv_ordered, ordered=True)
+        valid_pnos = valid_pnos.sort_values('SalesVersion')
         title = get_model_name(country, model, time)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error getting VB Data: {e}")
         raise Exception(f"Error getting VB Data: {e}")
-        return str(e), 500
 
     if valid_pnos.empty or sales_versions.empty or valid_engines.empty:
         DBOperations.instance.logger.info(f"No data found for model {model} and engine category {engines_types} at time {time}")
@@ -55,7 +55,8 @@ def extract_variant_binder(country, model, engines_types, time):
         upholstery_colors_sheet.get_sheet(ws_5, sales_versions.copy(), title, time)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error creating sheet: {e}")
-
+    time = str(time)
+    wb.save(f'VB {model} - {time[:4]}w{time[4:]}.xlsx')
     output = BytesIO()
     wb.save(output)
     output.seek(0)
