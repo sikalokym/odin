@@ -3,7 +3,7 @@
     <span class="title" style="font-size: 32px;">PNO</span>
     <!-- Table Selection -->
     <label class="displaytable" style="width: 180px;">Display Table</label><br>
-    <select name="displaytable" v-model="displaytable" id="displaytable" @change="fetchPnoSpecifics" style="width:180px; height:30px; position: absolute;">
+    <select name="displaytable" v-model="displaytable" id="displaytable" @change="fetchPnoSpecifics(); displaytablereset()" style="width:180px; height:30px; position: absolute;">
       <option disabled value="">Please Select...</option>
       <option value="Model">Model</option>       
       <option value="Engine">Engine</option>
@@ -16,7 +16,7 @@
     </select>
     <!-- Filter for model years -->
     <label class="modelyear" style="width: 180px;">Model Year</label><br>
-    <select name="model_year" id="model_year" v-model="model_year" @change="refreshModelyear" style="width:180px; height:30px; position: absolute;" :disabled="displaytable === ''">
+    <select name="model_year" id="model_year" v-model="model_year" @change="refreshModelyear(); fetchPnoSpecifics()" style="width:180px; height:30px; position: absolute;" :disabled="displaytable === ''">
       <option disabled value="0">Please Select...</option>
       <option value="0000" :disabled="!['Model', 'Engine', 'SalesVersion', 'Gearbox'].includes(displaytable)">All</option>
       <option v-for="model_year in model_years" :key="model_year" :value="model_year">{{ model_year }}</option>
@@ -72,7 +72,7 @@
   </aside>
   <main class="main-content">
     <!-- Model Table -->
-    <table v-if="displaytable === 'Model'">
+    <table v-if="displaytable === 'Model' && model_year !== '0'">
       <thead v-if="model_year !== '0'">
         <tr>
           <th v-if="model_year === ''">Model Year</th>
@@ -83,7 +83,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="pno in listModels" :key="pno.id" :class="{ 'editing': pno.edited }">
+        <tr v-for="pno in tableModels" :key="pno.id" :class="{ 'editing': pno.edited }">
           <td v-if="model_year === ''">
             {{ pno.model_year }}
           </td>
@@ -92,13 +92,13 @@
             {{ pno.MarketText }}
           </td>
           <td>
-            <input type="MarketText" v-model="pno.CountryText" @input="pno.edited = true" @change="pushUpdateModel(pno)" />
+            <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true" @change="pushUpdateModel(pno)" />
           </td>
         </tr>
       </tbody>
     </table>
     <!-- Salesversion Table -->
-    <table v-if="displaytable === 'SalesVersion'">
+    <table v-if="displaytable === 'SalesVersion' && model_year !== '0'">
       <thead v-if="model_year !== '0'">
         <tr>
           <th>Sales Version</th>
@@ -108,19 +108,19 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="pno in listSalesversions" :key="pno.id" :class="{ 'editing': pno.edited }">
+        <tr v-for="pno in tableSalesversions" :key="pno.id" :class="{ 'editing': pno.edited }">
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">
             {{ pno.MarketText }}
           </td>
           <td>
-            <input type="MarketText" v-model="pno.CountryText" @input="pno.edited = true" @change="pushUpdateSV(pno)" />
+            <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true" @change="pushUpdateSV(pno)" />
           </td>
         </tr>
       </tbody>
     </table>
     <!-- Engine Table -->
-    <table v-if="displaytable === 'Engine'">
+    <table v-if="displaytable === 'Engine' && model_year !== '0'">
       <thead v-if="model_year !== '0'">
         <tr>
           <th>Engine</th>
@@ -133,13 +133,13 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="pno in listEngines" :key="pno.id" :class="{ 'editing': pno.edited }">
+        <tr v-for="pno in tableEngines" :key="pno.id" :class="{ 'editing': pno.edited }">
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">
             {{ pno.MarketText }}
           </td>
           <td>
-            <input type="MarketText" v-model="pno.CountryText" @input="pno.edited = true" @change="pushUpdateEngine(pno)" />
+            <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true" @change="pushUpdateEngine(pno)" />
           </td>
           <td>
             <input type="EngineCategory" v-model="pno.EngineCategory" @input="pno.edited = true" @change="pushUpdateEngine(pno)" />
@@ -154,7 +154,7 @@
       </tbody>
     </table>
     <!-- Gearbox Table -->
-    <table v-if="displaytable === 'Gearbox'">
+    <table v-if="displaytable === 'Gearbox' && model_year !== '0'">
       <thead v-if="model_year !== '0'">
         <tr>
           <th>Gearbox</th>
@@ -164,22 +164,22 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="pno in listGearboxes" :key="pno.id" :class="{ 'editing': pno.edited }">
+        <tr v-for="pno in tableGearboxes" :key="pno.id" :class="{ 'editing': pno.edited }">
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">
             {{ pno.MarketText }}
           </td>
           <td>
-            <input type="MarketText" v-model="pno.CountryText" @input="pno.edited = true" @change="pushUpdateGearbox(pno)" />
+            <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true" @change="pushUpdateGearbox(pno)" />
           </td>
         </tr>
       </tbody>
     </table>
     <!-- Features Table -->
-    <table v-if="displaytable === 'Features'">
+    <table v-if="displaytable === 'Features' && model_year !== '0'">
       <thead v-if="model_year !== '0'">
         <tr>
-          <th v-if="model === ''">Model</th>
+          <!-- <th v-if="model === ''">Model</th> -->
           <th>Feature</th>
           <th>CPAM Text</th>
           <th>Market Text</th>
@@ -188,9 +188,9 @@
       </thead>
       <tbody>
         <tr v-for="pno in tableFeatures" :key="pno.id" :class="{ 'editing': pno.edited }">
-          <td v-if="model === ''">
+          <!-- <td v-if="model === ''">
             {{ pno.model }}
-          </td>
+          </td> -->
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
           <td>
@@ -200,7 +200,7 @@
       </tbody>
     </table>
     <!-- Colors Table -->
-    <table v-if="displaytable === 'Colors'">
+    <table v-if="displaytable === 'Colors' && model_year !== '0'">
       <thead v-if="model_year !== '0'">
         <tr>
           <th v-if="model === ''">Model</th>
@@ -218,13 +218,13 @@
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
           <td>
-            <input type="MarketText" v-model="pno.CountryText" @input="pno.edited = true" @change="pushUpdateColor(pno)" />
+            <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true" @change="pushUpdateColor(pno)" />
           </td>
         </tr>
       </tbody>
     </table>
     <!-- Options Table -->
-    <table v-if="displaytable === 'Options'">
+    <table v-if="displaytable === 'Options' && model_year !== '0'">
       <thead v-if="model_year !== '0'">
         <tr>
           <th>Option</th>
@@ -244,7 +244,7 @@
       </tbody>
     </table>
     <!-- Upholstery Table -->
-    <table v-if="displaytable === 'Upholstery'">
+    <table v-if="displaytable === 'Upholstery' && model_year !== '0'">
       <thead v-if="model_year !== '0'">
         <tr>
           <th>Upholstery</th>
@@ -310,46 +310,30 @@ export default {
     model_years() {
       return this.pnoStore.available_model_years
     },
-    model_text() {
-      return this.entitiesStore.models
-    },
-    engines_text() {
-      return this.entitiesStore.engines
-    },
-    salesversion_text() {
-      return this.entitiesStore.salesversions
-    },
-    gearboxes_text() {
-      return this.entitiesStore.gearboxes
-    },
     // Unique values for tables
-    listModels() {
-      let models = this.entitiesStore.models;
-      let filteredModels = models.filter(models => {
-        return this.tableFilteredPnos().some(pno => pno.Model === models.Code);
-      });
-      return filteredModels;
+    tableModels() {
+      if (this.model === "") {
+        return this.entitiesStore.models;
+      }
+      return this.entitiesStore.models.filter(model => model.Code === this.model)
     },
-    listEngines() {
-      let en = this.entitiesStore.engines;
-      let filteredEn = en.filter(en => {
-        return this.tableFilteredPnos().some(pno => pno.Engine === en.Code);
-      });
-      return filteredEn;
+    tableEngines() {
+      if (this.engine === "") {
+        return this.entitiesStore.engines;
+      }
+      return this.entitiesStore.engines.filter(engine => engine.Code === this.engine)
     },
-    listSalesversions() {
-      let sv = this.entitiesStore.salesversions;
-      let filteredSv = sv.filter(sv => {
-        return this.tableFilteredPnos().some(pno => pno.SalesVersion === sv.Code);
-      });
-      return filteredSv;
+    tableSalesversions() {
+      if (this.salesversion === "") {
+        return this.entitiesStore.salesversions;
+      }
+      return this.entitiesStore.salesversions.filter(salesversion => salesversion.Code === this.salesversion)
     },
-    listGearboxes() {
-      let gearboxes = this.entitiesStore.gearboxes;
-      let filteredGearboxes = gearboxes.filter(gearboxes => {
-        return this.tableFilteredPnos().some(pno => pno.Gearbox === gearboxes.Code);
-      });
-      return filteredGearboxes;
+    tableGearboxes() {
+      if (this.gearbox === "") {
+        return this.entitiesStore.gearboxes;
+      }
+      return this.entitiesStore.gearboxes.filter(gearbox => gearbox.Code === this.gearbox)
     },
     tableFeatures() {
       return this.pnoStore.pnosFeatures
@@ -366,11 +350,7 @@ export default {
   },
 methods: {
 
-  tableFilteredPnos() {
-      return this.pnoStore.filteredPnos(this.model, this.engine, this.salesversion, this.gearbox)
-    },
-
-  refreshModelyear() {
+  async refreshModelyear() {
     this.pnoStore.setModelYear(this.model_year)
     this.entitiesStore.setModelYear(this.model_year)
     console.log(this.model_year)
@@ -381,7 +361,7 @@ methods: {
     this.salesversion = '';
     this.gearbox = '';
 
-    this.pnoStore.fetchPnos().then(() => {
+    await this.pnoStore.fetchPnos().then(() => {
     console.log('PNOs fetched')
     }).catch((error) => {
       console.error('Error fetching PNOs', error)
@@ -393,8 +373,6 @@ methods: {
 
   async fetchEntities() {
     try {
-      await this.pnoStore.fetchPnos();
-      console.log('PNOs fetched');
       await this.entitiesStore.fetchModels();
       console.log('Model text fetched');
       await this.entitiesStore.fetchEngines();
@@ -432,35 +410,37 @@ methods: {
   },
 
   reset() {
-  this.model_year = '0';
-  this.model = '';
-  this.engine = '';
-  this.salesversion = '';
-  this.gearbox = '';
-  this.displaytable = '';
-  this.pnoStore.model_year.setModelYear('0');
-
-  this.pnoStore.fetchPnos().then(() => {
-    console.log('PNOs fetched')
-  }).catch((error) => {
-    console.error('Error fetching PNOs', error)
-  })
+    this.model_year = '0';
+    this.model = '';
+    this.engine = '';
+    this.salesversion = '';
+    this.gearbox = '';
+    this.displaytable = '';
+    this.pnoStore.setModelYear('0');
+  },
+  displaytablereset() {
+    this.model_year = '0';
+    this.model = '';
+    this.engine = '';
+    this.salesversion = '';
+    this.gearbox = '';
+    this.pnoStore.setModelYear('0');
   },
   // Non-PNO-specific updates
   pushUpdateModel(pno) {
-    this.entitiesStore.pushUpdateModel(pno.Code, pno.CountryText)
+    this.entitiesStore.pushUpdateModel(pno.Code, pno.CustomName)
     pno.edited = false
   },
   pushUpdateEngine(pno) {
-    this.entitiesStore.pushUpdateEngine(pno.Code, pno.CountryText, pno.EngineCategory, pno.EngineType, pno.Performance)
+    this.entitiesStore.pushUpdateEngine(pno.Code, pno.CustomName, pno.EngineCategory, pno.EngineType, pno.Performance)
     pno.edited = false
   },
   pushUpdateSV(pno) {
-    this.entitiesStore.pushUpdateSV(pno.Code, pno.CountryText)
+    this.entitiesStore.pushUpdateSV(pno.Code, pno.CustomName)
     pno.edited = false
   },
   pushUpdateGearbox(pno) {
-    this.entitiesStore.pushUpdateGearbox(pno.Code, pno.CountryText)
+    this.entitiesStore.pushUpdateGearbox(pno.Code, pno.CustomName)
     pno.edited = false
   },
   // PNO-specific updates
@@ -469,7 +449,7 @@ methods: {
     pno.edited = false
   },
   pushUpdateColor(pno) {
-    this.entitiesStore.pushUpdateColor(pno.PNOID, pno.Code, pno.CountryText)
+    this.entitiesStore.pushUpdateColor(pno.PNOID, pno.Code, pno.CustomName)
     pno.edited = false
   },
   pushUpdateUpholstery(pno) {

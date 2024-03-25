@@ -75,8 +75,8 @@ import { useEntitiesStore } from '../stores/entities.js'
       }
   },
   async created() {
-    this.pnoStore.model_year.setModelYear('0');
-    this.entitiesStore.model_year.setModelYear('0');
+    this.pnoStore.setModelYear('0');
+    this.entitiesStore.setModelYear('0');
   },
   computed: {
     filteredPnos() {
@@ -101,7 +101,7 @@ import { useEntitiesStore } from '../stores/entities.js'
     
   methods: {
       refreshModelyear() {
-        this.pnoStore.model_year.setModelYear(this.model_year)
+        this.pnoStore.setModelYear(this.model_year)
         console.log('Model year refreshed')
 
         this.pnoStore.fetchPnos()
@@ -116,7 +116,8 @@ import { useEntitiesStore } from '../stores/entities.js'
       },
       async exportVariantBinder() {
         const link = document.createElement('a');
-        link.href = `https://pmt-portal-backend.azurewebsites.net/api/231/export/variant_binder?date=${this.validity_year}${this.validity_week}&model=${this.model}&engines_category=${this.engine}`;
+        // link.href = `https://pmt-portal-backend.azurewebsites.net/api/231/export/variant_binder?date=${this.validity_year}${this.validity_week}&model=${this.model}&engines_category=${this.engine}`;
+        link.href = `http://127.0.0.1:5000/api/231/export/variant_binder?date=${this.validity_year}${this.validity_week}&model=${this.model}&engines_category=${this.engine}`;
   
         link.setAttribute('download', 'VariantBinder_.xlsx');
         document.body.appendChild(link);
