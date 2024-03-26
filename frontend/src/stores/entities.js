@@ -76,7 +76,7 @@ export const useEntitiesStore = defineStore({
     async pushUpdateModel(model, translation) {
         let updates = {
             Code: model,
-            CountryText: translation,
+            CustomName: translation,
         }
         let path = `/db/${this.country}/${this.model_year}/write/models`
         return index.post(path, updates);
@@ -84,7 +84,7 @@ export const useEntitiesStore = defineStore({
     async pushUpdateEngine(engine, translation, enginecategory, enginetype, performance) {
         let updates = {
             Code: engine,
-            CountryText: translation,
+            CustomName: translation,
             EngineCategory: enginecategory,
             EngineType: enginetype,
             Performance: performance
@@ -95,7 +95,7 @@ export const useEntitiesStore = defineStore({
     async pushUpdateSV(salesversion, translation) {
         let updates = {
             Code: salesversion,
-            CountryText: translation,
+            CustomName: translation,
         }
         let path = `/db/${this.country}/${this.model_year}/write/sales_versions`
         return index.post(path, updates);
@@ -103,7 +103,7 @@ export const useEntitiesStore = defineStore({
     async pushUpdateGearbox(gearbox, translation) {
         let updates = {
             Code: gearbox,
-            CountryText: translation,
+            CustomName: translation,
         }
         let path = `/db/${this.country}/${this.model_year}/write/gearboxes`
         return index.post(path, updates);

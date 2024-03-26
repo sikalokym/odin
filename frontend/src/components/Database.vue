@@ -24,7 +24,7 @@
     <!-- Filter for models -->
     <label class="model" style="width: 180px;">Model</label><br>
     <select name="model" id="model" v-model="model" @change="fetchPnoSpecifics" style="width:180px; height:30px; position: absolute;" :disabled="!['Model', 'Features', 'Colors', 'Options','Upholstery'].includes(displaytable) || model_year === '0'">
-      <option value="">All</option>
+      <option value="" :disabled="!['Model', 'Engine', 'SalesVersion', 'Gearbox'].includes(displaytable)">All</option>
       <option v-for="model in models" :key="model" :value="model">{{ model }}</option>
     </select>
     <!-- Filter for engines -->
@@ -173,13 +173,14 @@
       </tbody>
     </table>
     <!-- Features Table -->
-    <table v-if="displaytable === 'Features' && model_year !== '0'">
+    <table v-if="displaytable === 'Features' && model_year !== '0' && this.model !== ''">
       <thead v-if="model_year !== '0'">
         <tr>
           <!-- <th v-if="model === ''">Model</th> -->
           <th>Feature</th>
           <th>CPAM Text</th>
           <th>Market Text</th>
+          <th>Feature Category</th>
           <th></th>
         </tr>
       </thead>
@@ -193,11 +194,14 @@
           <td>
             <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true" @change="pushUpdateFeature(pno)" />
           </td>
+          <td>
+            <input type="Category" v-model="pno.CustomCategory" @input="pno.edited = true" @change="pushUpdateFeature(pno)" />
+          </td>
         </tr>
       </tbody>
     </table>
     <!-- Colors Table -->
-    <table v-if="displaytable === 'Colors' && model_year !== '0'">
+    <table v-if="displaytable === 'Colors' && model_year !== '0' && this.model !== ''">
       <thead v-if="model_year !== '0'">
         <tr>
           <!-- <th v-if="model === ''">Model</th> -->
@@ -221,13 +225,13 @@
       </tbody>
     </table>
     <!-- Options Table -->
-    <table v-if="displaytable === 'Options' && model_year !== '0'">
+    <table v-if="displaytable === 'Options' && model_year !== '0' && this.model !== ''">
       <thead v-if="model_year !== '0'">
         <tr>
-          <th>Option</th>
-          <th>Feature</th>
-          <th>CPAM Text</th>
+          <th>Option (Feature)</th>
           <th>Feature Text</th>
+          <th>Feature Category</th>
+          <th>CPAM Text</th>
           <th></th>
         </tr>
       </thead>
@@ -235,28 +239,28 @@
         <tr v-for="pno in tableOptions" :key="pno.id" :class="{ 'editing': pno.edited }">
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
           <td style="background-color: #f4f4f4;">{{ pno.Feature }}</td>
-          <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
           <td class="FeatureColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.FeatureText }}</td>
+          <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
         </tr>
       </tbody>
     </table>
     <!-- Upholstery Table -->
-    <table v-if="displaytable === 'Upholstery' && model_year !== '0'">
+    <table v-if="displaytable === 'Upholstery' && model_year !== '0' && this.model !== ''">
       <thead v-if="model_year !== '0'">
         <tr>
-          <th>Upholstery</th>
-          <th>CPAM Text</th>
+          <th>Upholstery (Feature)</th>
+          <th>Feature Text</th>
           <th>Feature Category</th>
+          <th>CPAM Text</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="pno in tableUpholstery" :key="pno.id" :class="{ 'editing': pno.edited }">
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
+          <td class="FeatureColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.FeatureText }}</td>
+          <td class="Category" style="background-color: #f4f4f4; text-align: left;">{{ pno.Category }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
-          <td>
-            <input type="Category" v-model="pno.CustomName" @input="pno.edited = true" @change="pushUpdateUpholstery(pno)" />
-          </td>
         </tr>
       </tbody>
     </table>
@@ -395,19 +399,19 @@ methods: {
 
   async fetchPnoSpecifics() {
     try {
-      if (this.displaytable === 'Features') {
+      if (this.displaytable === 'Features' && this.model !== '') {
         await this.pnoStore.fetchPnosFeatures(this.model, this.engine, this.salesversion, this.gearbox);
         console.log('PNO Features fetched');
       }
-      if (this.displaytable === 'Colors') {
+      if (this.displaytable === 'Colors' && this.model !== '') {
         await this.pnoStore.fetchPnosColors(this.model, this.engine, this.salesversion, this.gearbox);
         console.log('PNO Colors fetched');
       }
-      if (this.displaytable === 'Options') {
+      if (this.displaytable === 'Options' && this.model !== '') {
         await this.pnoStore.fetchPnosOptions(this.model, this.engine, this.salesversion, this.gearbox);
         console.log('PNO Options fetched');
       }
-      if (this.displaytable === 'Upholstery') {
+      if (this.displaytable === 'Upholstery' && this.model !== '') {
         await this.pnoStore.fetchPnosUpholstery(this.model, this.engine, this.salesversion, this.gearbox);
         console.log('PNO Upholstery fetched');
       }
@@ -452,15 +456,11 @@ methods: {
   },
   // PNO-specific updates
   pushUpdateFeature(pno) {
-    this.entitiesStore.pushUpdateFeature(pno.PNOID, pno.Code, pno.CustomName)
+    this.pnoStore.pushUpdateFeature(this.model, pno.Code, pno.CustomName, pno.CustomCategory)
     pno.edited = false
   },
   pushUpdateColor(pno) {
-    this.entitiesStore.pushUpdateColor(pno.PNOID, pno.Code, pno.CustomName)
-    pno.edited = false
-  },
-  pushUpdateUpholstery(pno) {
-    this.entitiesStore.pushUpdateUpholstery(pno.PNOID, pno.Code, pno.Category)
+    this.pnoStore.pushUpdateColor(this.model, pno.Code, pno.CustomName)
     pno.edited = false
   },
   // Database updates 

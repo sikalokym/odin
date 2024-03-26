@@ -122,31 +122,23 @@ export const usePNOStore = defineStore({
       })
     },
     // PNO-speficic updates
-    async pushUpdateFeature(id, feature, translation) {
+    async pushUpdateFeature(model, feature, translation, category) {
       let updates = {
+          Model: model,
           Code: feature,
-          PNOID: id,
           CustomName: translation,
+          CustomCategory: category
       }
       let path = `/db/${this.country}/${this.model_year}/write/features`
       return index.post(path, updates);
     },
-    async pushUpdateColor(id, color, translation) {
+    async pushUpdateColor(model, color, translation) {
       let updates = {
+          Model: model,
           Code: color,
-          PNOID: id,
           CustomName: translation,
       }
       let path = `/db/${this.country}/${this.model_year}/write/colors`
-      return index.post(path, updates);
-    },
-    async pushUpdateUpholstery(id, feature, category) {
-      let updates = {
-          Code: feature,
-          PNOID: id,
-          Category: category,
-      }
-      let path = `/db/${this.country}/${this.model_year}/write/upholstery`
       return index.post(path, updates);
     },
     // General Setup
