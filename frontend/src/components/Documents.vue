@@ -175,7 +175,7 @@ import { useEntitiesStore } from '../stores/entities.js'
   margin-right: 10px;
 } 
 .bottom-div {
-  margin-top: 417px;
+  margin-top: 591px;
   width: 100%;
   display: flex;
   align-items: center;
