@@ -114,6 +114,43 @@ def write_features(country, model_year):
     DBOperations.instance.upsert_data_from_df(df_pno_features, DBOperations.instance.config.get('AUTH', 'FEAT'), all_columns, conditional_columns)
     return jsonify({'message': 'Features written successfully'}), 200
 
+@bp_db_writer.route('/options', methods=['POST'])
+def write_options(country, model_year):
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
+    model = data['Model']
+    code = data['Code']
+
+    # Create a DataFrame from the list of JSON objects
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f"Model = '{model}'"])
+    df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    ids = df_pnos['ID'].tolist()
+    conditions = [f"Code = '{code}'"]
+    if len(ids) == 1:
+        conditions.append(f"PNOID = '{ids[0]}'")
+    else:
+        conditions.append(f"PNOID in {tuple(ids)}")
+
+    df_pno_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'OPT'), conditions=conditions)
+    df_pno_options['CustomName'] = data['CustomName']
+
+    df_pno_options_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'OPT_Custom'))
+
+    df_pno_options_relations = df_pno_options_relations[df_pno_options_relations['RelationID'].isin(df_pno_options['ID'])]
+
+    update_columns = ['CustomName']
+
+    # Update the columns in the df_pno_options_relation DataFrame
+    for col in update_columns:
+        df_pno_options_relations[col] = data[col]
+    all_columns = df_pno_options_relations.columns.tolist()
+    conditional_columns = list(set(all_columns) - set(update_columns))
+
+    DBOperations.instance.upsert_data_from_df(df_pno_options_relations, DBOperations.instance.config.get('RELATIONS', 'OPT_Custom'), all_columns, conditional_columns)
+    return jsonify({'message': 'Options written successfully'}), 200
+
 @bp_db_writer.route('/colors', methods=['POST'])
 def write_colors(country, model_year):
     data = request.get_json()
@@ -150,3 +187,40 @@ def write_colors(country, model_year):
 
     DBOperations.instance.upsert_data_from_df(df_pno_colors_relations, DBOperations.instance.config.get('RELATIONS', 'COL_Custom'), all_columns, conditional_columns)
     return jsonify({'message': 'Colors written successfully'}), 200
+
+@bp_db_writer.route('/upholstery', methods=['POST'])
+def write_upholstery(country, model_year):
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
+    model = data['Model']
+    code = data['Code']
+
+    # Create a DataFrame from the list of JSON objects
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f"Model = '{model}'"])
+    df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    ids = df_pnos['ID'].tolist()
+    conditions = [f"Code = '{code}'"]
+    if len(ids) == 1:
+        conditions.append(f"PNOID = '{ids[0]}'")
+    else:
+        conditions.append(f"PNOID in {tuple(ids)}")
+
+    df_pno_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'UPH'), conditions=conditions)
+    df_pno_upholstery['CustomName'] = data['CustomName']
+
+    df_pno_upholstery_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'))
+
+    df_pno_upholstery_relations = df_pno_upholstery_relations[df_pno_upholstery_relations['RelationID'].isin(df_pno_upholstery['ID'])]
+
+    update_columns = ['CustomName']
+
+    # Update the columns in the df_pno_upholstery_relation DataFrame
+    for col in update_columns:
+        df_pno_upholstery_relations[col] = data[col]
+    all_columns = df_pno_upholstery_relations.columns.tolist()
+    conditional_columns = list(set(all_columns) - set(update_columns))
+
+    DBOperations.instance.upsert_data_from_df(df_pno_upholstery_relations, DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), all_columns, conditional_columns)
+    return jsonify({'message': 'Upholstery written successfully'}), 200
