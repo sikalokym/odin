@@ -132,13 +132,31 @@ export const usePNOStore = defineStore({
       let path = `/db/${this.country}/${this.model_year}/write/features`
       return index.post(path, updates);
     },
+    async pushUpdateOption(model, option, translation) {
+      let updates = {
+          Model: model,
+          Code: option,
+          CustomName: translation
+      }
+      let path = `/db/${this.country}/${this.model_year}/write/options`
+      return index.post(path, updates);
+    },
     async pushUpdateColor(model, color, translation) {
       let updates = {
           Model: model,
           Code: color,
-          CustomName: translation,
+          CustomName: translation
       }
       let path = `/db/${this.country}/${this.model_year}/write/colors`
+      return index.post(path, updates);
+    },
+    async pushUpdateUpholstery(model, upholstery, translation) {
+      let updates = {
+          Model: model,
+          Code: upholstery,
+          CustomName: translation
+      }
+      let path = `/db/${this.country}/${this.model_year}/write/upholstery`
       return index.post(path, updates);
     },
     // General Setup

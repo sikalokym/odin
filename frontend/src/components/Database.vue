@@ -176,7 +176,6 @@
     <table v-if="displaytable === 'Features' && model_year !== '0' && this.model !== ''">
       <thead v-if="model_year !== '0'">
         <tr>
-          <!-- <th v-if="model === ''">Model</th> -->
           <th>Feature</th>
           <th>CPAM Text</th>
           <th>Market Text</th>
@@ -186,9 +185,6 @@
       </thead>
       <tbody>
         <tr v-for="pno in tableFeatures" :key="pno.id" :class="{ 'editing': pno.edited }">
-          <!-- <td v-if="model === ''">
-            {{ pno.model }}
-          </td> -->
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
           <td>
@@ -204,7 +200,6 @@
     <table v-if="displaytable === 'Colors' && model_year !== '0' && this.model !== ''">
       <thead v-if="model_year !== '0'">
         <tr>
-          <!-- <th v-if="model === ''">Model</th> -->
           <th>Color</th>
           <th>CPAM Text</th>
           <th>Market Text</th>
@@ -213,9 +208,6 @@
       </thead>
       <tbody>
         <tr v-for="pno in tableColors" :key="pno.id" :class="{ 'editing': pno.edited }">
-          <!-- <td v-if="model === ''">
-            {{ pno.model }}
-          </td> -->
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
           <td>
@@ -228,8 +220,8 @@
     <table v-if="displaytable === 'Options' && model_year !== '0' && this.model !== ''">
       <thead v-if="model_year !== '0'">
         <tr>
-          <th>Option</th>
-          <th>Feature Text</th>
+          <th>Option (Feature)</th>
+          <th>Market Text</th>
           <th>Feature Category</th>
           <th>CPAM Text</th>
           <th></th>
@@ -238,8 +230,11 @@
       <tbody>
         <tr v-for="pno in tableOptions" :key="pno.id" :class="{ 'editing': pno.edited }">
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
-          <td style="background-color: #f4f4f4;">{{ pno.CustomName_y }}</td>
-          <td class="FeatureColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.CustomCategry }}</td>
+          <td style="background-color: #f4f4f4;">
+            <input v-if="!pno.hasFeature" v-model="pno.CustomName" type="text" @input="pno.edited = true" @change="pushUpdateOption(pno)" />
+            <span v-else>{{ pno.CustomName }}</span>
+          </td>
+          <td class="FeatureColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.CustomCategory }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
         </tr>
       </tbody>
@@ -249,18 +244,18 @@
       <thead v-if="model_year !== '0'">
         <tr>
           <th>Upholstery</th>
-          <th>Feature Text</th>
-          <th>Feature Category</th>
           <th>CPAM Text</th>
+          <th>Market Text</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="pno in tableUpholstery" :key="pno.id" :class="{ 'editing': pno.edited }">
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
-          <td class="FeatureColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.CustomName_y }}</td>
-          <td class="Category" style="background-color: #f4f4f4; text-align: left;">{{ pno.CustomCategory }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
+          <td>
+            <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true" @change="pushUpdateUpholstery(pno)" />           
+          </td>
         </tr>
       </tbody>
     </table>
@@ -459,8 +454,16 @@ methods: {
     this.pnoStore.pushUpdateFeature(this.model, pno.Code, pno.CustomName, pno.CustomCategory)
     pno.edited = false
   },
+  pushUpdateOption(pno) {
+    this.pnoStore.pushUpdateOption(this.model, pno.Code, pno.CustomName)
+    pno.edited = false
+  },
   pushUpdateColor(pno) {
     this.pnoStore.pushUpdateColor(this.model, pno.Code, pno.CustomName)
+    pno.edited = false
+  },
+  pushUpdateUpholstery(pno) {
+    this.pnoStore.pushUpdateUpholstery(this.model, pno.Code, pno.CustomName)
     pno.edited = false
   },
   // Database updates 
