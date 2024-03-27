@@ -228,7 +228,7 @@
     <table v-if="displaytable === 'Options' && model_year !== '0' && this.model !== ''">
       <thead v-if="model_year !== '0'">
         <tr>
-          <th>Option (Feature)</th>
+          <th>Option</th>
           <th>Feature Text</th>
           <th>Feature Category</th>
           <th>CPAM Text</th>
@@ -238,8 +238,8 @@
       <tbody>
         <tr v-for="pno in tableOptions" :key="pno.id" :class="{ 'editing': pno.edited }">
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
-          <td style="background-color: #f4f4f4;">{{ pno.Feature }}</td>
-          <td class="FeatureColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.FeatureText }}</td>
+          <td style="background-color: #f4f4f4;">{{ pno.CustomName_y }}</td>
+          <td class="FeatureColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.CustomCategry }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
         </tr>
       </tbody>
@@ -248,7 +248,7 @@
     <table v-if="displaytable === 'Upholstery' && model_year !== '0' && this.model !== ''">
       <thead v-if="model_year !== '0'">
         <tr>
-          <th>Upholstery (Feature)</th>
+          <th>Upholstery</th>
           <th>Feature Text</th>
           <th>Feature Category</th>
           <th>CPAM Text</th>
@@ -258,8 +258,8 @@
       <tbody>
         <tr v-for="pno in tableUpholstery" :key="pno.id" :class="{ 'editing': pno.edited }">
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
-          <td class="FeatureColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.FeatureText }}</td>
-          <td class="Category" style="background-color: #f4f4f4; text-align: left;">{{ pno.Category }}</td>
+          <td class="FeatureColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.CustomName_y }}</td>
+          <td class="Category" style="background-color: #f4f4f4; text-align: left;">{{ pno.CustomCategory }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
         </tr>
       </tbody>
@@ -487,6 +487,7 @@ methods: {
 
 
 .main-content {
+  margin-left: 312px;
   padding: 2rem;
   flex-grow: 1;
   overflow: auto;
@@ -496,8 +497,10 @@ methods: {
   width: 250px;
   background-color: #f4f4f4;
   padding: 1rem;
-  /* min-height: 1030px; */
-  position:relative;
+  position: fixed;
+  top: 82px;
+  bottom: 0;
+  overflow-y: auto;
   border-right: 1px solid #c8c9c7;
 }
 

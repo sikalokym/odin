@@ -149,8 +149,10 @@ import { useEntitiesStore } from '../stores/entities.js'
   width: 250px;
   background-color: #f4f4f4;
   padding: 1rem;
-  /* height: 100vh; */
-  position:relative;
+  position: fixed;
+  top: 82px;
+  bottom: 0;
+  overflow-y: auto;
   border-right: 1px solid #c8c9c7;
 }
 
@@ -174,7 +176,7 @@ import { useEntitiesStore } from '../stores/entities.js'
   margin-right: 10px;
 } 
 .bottom-div {
-  margin-top: 416px;
+  margin-top: 417px;
   width: 100%;
   display: flex;
   align-items: center;
