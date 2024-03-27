@@ -54,7 +54,7 @@ def extract_variant_binder(country, model, engines_types, time):
         DBOperations.instance.logger.error(f"Error creating sheet: {e}")
     model_year = get_model_year_from_date(time)
     time = str(time)
-    vb_title = f'{title.replace(' ', '')}_VB_{engines_types} - {time[:4]}w{time[4:]}.xlsx'
+    vb_title = f"{title.replace(' ', '')}_VB_{engines_types} - {time[:4]}w{time[4:]}.xlsx"
     wb.save(vb_title)
     output = BytesIO()
     wb.save(output)
