@@ -36,4 +36,5 @@ def new_visa_file(country):
     if visa.filename == '':
         return jsonify({"error": "No selected file"}), 400
     
-    upload_visa_file(visa, country)
+    res, code = upload_visa_file(visa, country)
+    return jsonify(res), code
