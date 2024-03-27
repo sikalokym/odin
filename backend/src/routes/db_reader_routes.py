@@ -51,6 +51,8 @@ def get_models(country, model_year):
     df_models = df_models.drop(columns=['StartDate', 'EndDate'], axis=1)
     df_models.drop_duplicates(inplace=True)
 
+    df_models = df_models.sort_values(by='Code', ascending=True)
+
     return df_models.to_json(orient='records')
 
 @bp_db_reader.route('/sales_versions', methods=['GET'])
@@ -71,6 +73,8 @@ def get_sales_versions(country, model_year):
     df_sales_versions = filter_model_year_by_translation(df_sales_versions, conditional_columns=['CustomName'])
     df_sales_versions = df_sales_versions.drop(columns=['StartDate', 'EndDate'], axis=1)
     df_sales_versions.drop_duplicates(inplace=True)
+
+    df_sales_versions = df_sales_versions.sort_values(by='Code', ascending=True)
 
     return df_sales_versions.to_json(orient='records')
 
@@ -93,6 +97,8 @@ def get_engines(country, model_year):
     df_engines = df_engines.drop(columns=['StartDate', 'EndDate'], axis=1)
     df_engines.drop_duplicates(inplace=True)
 
+    df_engines = df_engines.sort_values(by='Code', ascending=True)
+
     return df_engines.to_json(orient='records') 
 
 @bp_db_reader.route('/gearboxes', methods=['GET'])
@@ -113,6 +119,8 @@ def get_gearboxes(country, model_year):
     df_gearboxes = filter_model_year_by_translation(df_gearboxes, conditional_columns=['CustomName'])
     df_gearboxes = df_gearboxes.drop(columns=['StartDate', 'EndDate'], axis=1)
     df_gearboxes.drop_duplicates(inplace=True)
+
+    df_gearboxes = df_gearboxes.sort_values(by='Code', ascending=True)
 
     return df_gearboxes.to_json(orient='records')
 
@@ -146,7 +154,7 @@ def get_options(country, model_year):
     df_options.drop(columns=['StartDate', 'EndDate'], inplace=True)
     df_options.drop_duplicates(subset='Code', inplace=True)
 
-    df_pno_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'OPT'), columns=['ID', 'Code'], conditions=conditions)
+    df_pno_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'OPT'), columns=['ID', 'PNOID', 'Code'], conditions=conditions)
     df_pno_options.drop_duplicates(inplace=True)
     
     df_options_custom = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'OPT_Custom'), columns=['RelationID', 'CustomName'])
@@ -158,7 +166,23 @@ def get_options(country, model_year):
     df_pno_options['MarketText'] = df_pno_options['Code'].map(df_options.set_index('Code')['MarketText'])
     df_pno_options.drop(columns=['ID'], inplace=True)
 
+    
+    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Code', 'CustomName', 'CustomCategory'])
+    df_pno_features = df_pno_features[
+        (df_pno_features['PNOID'].isin(df_pno_options['PNOID'])) & 
+        (df_pno_features['Code'].isin(df_pno_options['Code']))
+    ]
+
+    df_pno_options = df_pno_options.merge(df_pno_features[['PNOID', 'Code', 'CustomName', 'CustomCategory']], 
+                                      how='left', 
+                                      left_on=['PNOID', 'Code'], 
+                                      right_on=['PNOID', 'Code'])
+
+    df_pno_options.drop(columns=['PNOID'], inplace=True)
     df_pno_options.drop_duplicates(inplace=True)
+
+    df_pno_options = df_pno_options.sort_values(by='Code', ascending=True)
+
     return df_pno_options.to_json(orient='records')
 
 @bp_db_reader.route('/colors', methods=['GET'])
@@ -203,8 +227,10 @@ def get_colors(country, model_year):
     
     df_pno_colors['MarketText'] = df_pno_colors['Code'].map(df_colors.set_index('Code')['MarketText'])
     df_pno_colors.drop(columns=['ID'], inplace=True)
-
     df_pno_colors.drop_duplicates(inplace=True)
+    
+    df_pno_colors = df_pno_colors.sort_values(by='Code', ascending=True)
+
     return df_pno_colors.to_json(orient='records')
 
 @bp_db_reader.route('/upholstery', methods=['GET'])
@@ -238,7 +264,7 @@ def get_upholstery(country, model_year):
     df_upholstery.drop(columns=['StartDate', 'EndDate'], inplace=True)
     df_upholstery.drop_duplicates(subset='Code', inplace=True)
 
-    df_pno_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'UPH'), columns=['ID', 'Code'], conditions=conditions)
+    df_pno_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'UPH'), columns=['ID', 'PNOID', 'Code'], conditions=conditions)
     df_pno_upholstery.drop_duplicates(inplace=True)
     
     df_upholstery_custom = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), columns=['RelationID', 'CustomName'])
@@ -250,7 +276,22 @@ def get_upholstery(country, model_year):
     df_pno_upholstery['MarketText'] = df_pno_upholstery['Code'].map(df_upholstery.set_index('Code')['MarketText'])
     df_pno_upholstery.drop(columns=['ID'], inplace=True)
 
+    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Code', 'CustomName', 'CustomCategory'])
+    df_pno_features = df_pno_features[
+        (df_pno_features['PNOID'].isin(df_pno_upholstery['PNOID'])) & 
+        (df_pno_features['Code'].isin(df_pno_upholstery['Code']))
+    ]
+
+    df_pno_upholstery = df_pno_upholstery.merge(df_pno_features[['PNOID', 'Code', 'CustomName', 'CustomCategory']], 
+                                      how='left', 
+                                      left_on=['PNOID', 'Code'], 
+                                      right_on=['PNOID', 'Code'])
+
+    df_pno_upholstery.drop(columns=['PNOID'], inplace=True)
     df_pno_upholstery.drop_duplicates(inplace=True)
+
+    df_pno_upholstery = df_pno_upholstery.sort_values(by='Code', ascending=True)
+
     return df_pno_upholstery.to_json(orient='records')
 
 @bp_db_reader.route('/features', methods=['GET'])
@@ -289,6 +330,8 @@ def get_features(country, model_year):
     df_pno_features['Code'] = df_pno_features['Code'].str.strip()
     df_pno_features.drop_duplicates(inplace=True)
     df_pno_features['MarketText'] = df_pno_features['Code'].map(df_features.set_index('Code')['MarketText'])
-
     df_pno_features.drop_duplicates(inplace=True)
+
+    df_pno_features = df_pno_features.sort_values(by='Code', ascending=True)
+
     return df_pno_features.to_json(orient='records')

@@ -138,7 +138,6 @@ def write_colors(country, model_year):
 
     df_pno_colors_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'COL_Custom'))
 
-    # df_pno_colors_relations['CustomName'] = df_pno_colors_relations['RelationID'].map(df_pno_colors.set_index('ID')['CustomName'])
     df_pno_colors_relations = df_pno_colors_relations[df_pno_colors_relations['RelationID'].isin(df_pno_colors['ID'])]
 
     update_columns = ['CustomName']
