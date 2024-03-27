@@ -23,8 +23,8 @@
     <br><br>
     <!-- Filter for validity date of the Variant Binder export -->
     <label class="validity_date" style="width: 180px;">Validity Date</label>
-    <div class="validity" style="display: flex; gap: 10px;">
-      <select name="validity_year" id="validity_year" v-model="validity_year" style="width:85px; height:30px; ">
+    <div class="validity" style="display: flex; gap: 10px; position:absolute; left: 50%; transform: translateX(-50%);">
+      <select name="validity_year" id="validity_year" v-model="validity_year" style="width:85px; height:30px;">
         <option disabled value="">Year</option>
         <option v-for="validity_year in validity_years" :key="validity_year" :value="validity_year">{{ validity_year }}</option>
       </select>
@@ -35,9 +35,9 @@
     </div>
 
     <!-- Export Variant Binder Button -->
-    <button style="display:block;width:180px; height:50px; margin-left: 35px; margin-top: 64px;" @click="exportVariantBinder" :disabled="this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === ''">Export Variant Binder</button>
+    <button style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translateX(-50%); margin-top: 120px;" @click="exportVariantBinder" :disabled="this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === ''">Export Variant Binder</button>
     <!-- Export Changelog Button --> 
-    <button style="display:block;width:180px; height:50px; margin-left: 35px; margin-top: 10px;" :disabled="this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === ''">Export Changelog</button>
+    <button style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translateX(-50%); margin-top: 64px;" :disabled="this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === ''">Export Changelog</button>
 
     <!-- Country Select Dropdown Menu -->
     <div class="country bottom-div">
@@ -133,9 +133,8 @@ import { useEntitiesStore } from '../stores/entities.js'
 <style scoped>
 
 .validity {
-  margin-top: -1px;
-  margin-left: 35px;
-  position: absolute; 
+  display: flex;
+  gap: 10px;
 }
 
 .main-content {
