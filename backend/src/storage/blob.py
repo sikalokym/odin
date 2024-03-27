@@ -28,11 +28,11 @@ def add_visa_file(file, spec_markt):
     blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
 
     try:
-        blob_client.delete_blob()
-    except:
-        pass
-
-    blob_client.upload_blob(file)
+        file.seek(0)
+        blob_client.upload_blob(file, overwrite=True)
+    except Exception as e:
+        print(f"Failed to upload blob {blob_name}: {e}")
+        raise e
 
 def load_visa_files(spec_markt):
     """

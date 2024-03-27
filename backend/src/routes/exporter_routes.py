@@ -27,7 +27,7 @@ def variant_binder(country):
         return 'Invalid engine category', 400
     
     try:
-        xlsx_file = extract_variant_binder(country, model, engines_types, int(time))
+        xlsx_file, title = extract_variant_binder(country, model, engines_types, int(time))
     except Exception as e:
         return str(e), 500
-    return send_file(xlsx_file, download_name=f'VB {model} - {time[:4]}w{time[4:]} {engines_types}.xlsx', as_attachment=True), 200
+    return send_file(xlsx_file, download_name=title, as_attachment=True), 200

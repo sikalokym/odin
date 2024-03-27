@@ -1,6 +1,7 @@
 import logging
 from flask import Flask, render_template_string
 from flask_cors import CORS
+from src.database.db_connection import DatabaseConnection
 from src.database.db_operations import DBOperations
 from src.routes.ingest_routes import bp_ingest
 from src.routes.db_reader_routes import bp_db_reader
@@ -24,8 +25,6 @@ app.register_blueprint(bp_db_reader)
 app.register_blueprint(bp_db_writer)
 app.register_blueprint(bp_exporter)
 
-DBOperations.create_instance()
-
 # Template string for rendering the welcome page
 WELCOME_PAGE_TEMPLATE = """
 <!doctype html>
@@ -42,6 +41,15 @@ WELCOME_PAGE_TEMPLATE = """
 </body>
 </html>
 """
+
+@app.before_request
+def before_request():
+    DBOperations.create_instance()
+
+@app.after_request
+def after_request(response):
+    DatabaseConnection.close_connection()
+    return response
 
 @app.route('/', methods=['GET'])
 def welcome():

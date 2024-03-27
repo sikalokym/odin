@@ -11,7 +11,7 @@ class DatabaseConnection:
     def close_connection(self):
         self.logger.debug('Closing database connection')
         try:
-            if self.connection:
+            if not self.connection.closed:
                 self.connection.close()
                 self.logger.debug('Database connection closed')
         except pyodbc.Error as e:

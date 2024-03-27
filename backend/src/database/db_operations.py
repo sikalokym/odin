@@ -11,20 +11,16 @@ class DBOperations:
 
     @classmethod
     def create_instance(cls):
-        if cls.instance is None:
-            config = configparser.ConfigParser()
-            config.read('config/data_model.cfg')
-            conn = DatabaseConnection.get_db_connection()
-            cls.instance = cls(conn, config)
+        config = configparser.ConfigParser()
+        config.read('config/data_model.cfg')
+        conn = DatabaseConnection.get_db_connection()
+        cls.instance = cls(conn, config)
         return cls.instance
     
     def __init__(self, db_conn, config):
         self.conn = db_conn
         self.config = config
         self.logger = logging.getLogger(__name__)
-
-    def __del__(self):
-        self.conn.close()
 
     @contextmanager
     def get_cursor(self):

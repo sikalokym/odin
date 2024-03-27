@@ -1,7 +1,7 @@
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from openpyxl.utils import get_column_letter
 from src.database.db_operations import DBOperations
-from src.utils.db_utils import filter_df_by_timestamp
+from src.utils.db_utils import filter_df_by_timestamp, format_float_string
 import pandas as pd
 
 all_border = Border(top=Side(style='thin', color='000000'),
@@ -10,6 +10,13 @@ all_border = Border(top=Side(style='thin', color='000000'),
                     right=Side(style='thin', color='000000'))
 
 fill = PatternFill(start_color='000080', end_color='000080', fill_type='solid')
+# Swap S and B and empty for dot and circle and dash for availability
+cell_values = {
+    'S': '•',
+    'B': 'o',
+    'E': 'o',
+    '': '-'
+}
 
 def get_sheet(ws, sales_versions, title, time):
     """
@@ -26,8 +33,13 @@ def get_sheet(ws, sales_versions, title, time):
     prepare_sheet(ws, sales_versions, title)
     df_packages = fetch_package_data(sales_versions, time)
 
-    for (code, title, price), group in df_packages.groupby(['Code', 'Title', 'Price']):
+    for (code, title), group in df_packages.groupby(['Code', 'Title']):
+
+        sales_versions['PKGPrice'] = sales_versions['SalesVersion'].apply(lambda x: group[group[x] == 'B']['Price'].values[0] if 'B' in group[x].values else '')
         group.drop(columns=['Code', 'Title', 'Price'], inplace=True)
+        # combine lines on column RuleCode by keeping the first non NaN value in the sales versions columns
+        group = group.groupby('RuleCode').first().reset_index()
+        
         df_options = group.sort_values(by='RuleCode', ascending=True)
 
         # check if any column has a NaN value, then set all values of that column to empty string
@@ -36,16 +48,49 @@ def get_sheet(ws, sales_versions, title, time):
                 df_options[col] = ''
 
         # Write the data to the worksheet
-        ws.append([code, title, price])
-        # format the row in gray
-        for cell in ws[len(ws["A"])]:
+        prices = sales_versions[sales_versions['PKGPrice'] != '']['PKGPrice'].unique().tolist()
+
+        if len(prices) == 1:
+            prices = prices[0].split('/')
+            ws.append([code, title, prices[0]] + sales_versions['PKGPrice'].map(lambda x: cell_values['B'] if x != '' else '').tolist())
+            ws.append(['', '', prices[1]])
+        else:
+            ws.append([code, title, 'Abhängig von der Serienausstattung'] + sales_versions['PKGPrice'].apply(lambda x: x.split('/')[0] if x != '' else '').tolist())
+            ws.append(['', '', ''] + sales_versions['PKGPrice'].apply(lambda x: x.split('/')[1] if len(x.split('/')) != 1 else '').tolist())
+            
+        for col in range(1, len(sales_versions) + 4):
+            cell = ws.cell(row=len(ws["A"])-1, column=col)
             cell.fill = PatternFill(start_color='BFBFBF', end_color='BFBFBF', fill_type='solid')
             cell.font = Font(name='Arial', size=12, bold=True)
-            cell.alignment = Alignment(horizontal='left', vertical='center')
+            alig = 'center' if cell.column > 2 else 'left'
+            cell.alignment = Alignment(horizontal=alig, vertical='center')
+
+        # merge the cells of the 2 rows vertically besides in column C
+        for col in range(1, len(sales_versions) + 4):
+            if not ws.cell(row=len(ws["A"])-1, column=col).value.replace('.', '').replace(',', '').isnumeric():
+                ws.merge_cells(start_row=len(ws["A"])-1, start_column=col, end_row=len(ws["A"]), end_column=col)
+                ws.cell(row=len(ws["A"])-1, column=col).border = all_border
+                ws.cell(row=len(ws["A"]), column=col).border = all_border
+            else:
+                # no bottom border
+                ws.cell(row=len(ws["A"])-1, column=col).border = Border(top=Side(style='thin', color='000000'),
+                                                                        left=Side(style='thin', color='000000'),
+                                                                        right=Side(style='thin', color='000000'))
+                ws.cell(row=len(ws["A"])-1, column=col).alignment = Alignment(horizontal='center', vertical='bottom')
+                ws.cell(row=len(ws["A"]), column=col).border = Border(left=Side(style='thin', color='000000'),
+                                                                        right=Side(style='thin', color='000000'),
+                                                                        bottom=Side(style='thin', color='000000'))
+                ws.cell(row=len(ws["A"]), column=col).alignment = Alignment(horizontal='center', vertical='top')
+                ws.cell(row=len(ws["A"]), column=col).fill = PatternFill(start_color='BFBFBF', end_color='BFBFBF', fill_type='solid')
 
         for _, row in df_options.iterrows():
-            ws.append([row['RuleCode'], row['CustomName'], row['RuleBase']] + [row[sv] for sv in sales_versions['SalesVersion']])
-    
+            ws.append([row['RuleCode'], row['CustomName'], row['RuleBase']] + [cell_values[row[sv]] for sv in sales_versions['SalesVersion']])
+            for cell in ws[len(ws["A"])]:
+                if cell.column > 2:
+                    cell.alignment = Alignment(horizontal='center', vertical='center')
+                else: 
+                    cell.border = all_border
+    format_sheet(ws, len(sales_versions) + 4)
 
 def prepare_sheet(ws, df_sales_versions, title):
     ws.sheet_view.showGridLines = False
@@ -89,6 +134,18 @@ def prepare_sheet(ws, df_sales_versions, title):
     ws['B2'].alignment = Alignment(horizontal='center', vertical='center')
     ws['B2'].font = Font(size=10, bold=True)
     
+def format_sheet(ws, max_c):
+    # add right border to the last column
+    for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=max_c, max_col=max_c):
+        for cell in row:
+            cell.border = Border(left=Side(style='thick', color='000000'))
+
+    max_r = ws.max_row + 1
+    # add bottom border to the last row
+    for row in ws.iter_rows(min_row=max_r, max_row=max_r, min_col=1, max_col=max_c):
+        for cell in row:
+            cell.border = Border(top=Side(style='thick', color='000000'))
+
 def fetch_package_data(sales_versions, time):
     pno_ids = sales_versions.ID.unique().tolist()
     conditions = []
@@ -106,9 +163,9 @@ def fetch_package_data(sales_versions, time):
     rule_codes = df_pno_package['RuleCode'].unique().tolist()
     pno_features_conditions = conditions.copy()
     if len(rule_codes) == 1:
-        pno_features_conditions.append(f"PNOID = '{rule_codes[0]}'")
+        pno_features_conditions.append(f"Reference = '{rule_codes[0]}'")
     else:
-        pno_features_conditions.append(f"PNOID in {tuple(rule_codes)}")
+        pno_features_conditions.append(f"Reference in {tuple(rule_codes)}")
     df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Reference as RuleCode', 'RuleName', 'CustomName'], conditions=pno_features_conditions)
 
     df_merged = df_pno_features.merge(df_pno_package[['PNOID', 'RuleCode', 'RuleName']], on=['PNOID', 'RuleCode'], how='left', suffixes=('_features', '_package'))
@@ -124,9 +181,9 @@ def fetch_package_data(sales_versions, time):
     package_ids = df_pno_package_with_sv['ID'].dropna().unique().tolist()
     pno_package_price_conditions = []
     if len(package_ids) == 1:
-        pno_package_price_conditions.append(f"PNOID = '{package_ids[0]}'")
+        pno_package_price_conditions.append(f"RelationID = '{package_ids[0]}'")
     else:
-        pno_package_price_conditions.append(f"PNOID in {tuple(package_ids)}")
+        pno_package_price_conditions.append(f"RelationID in {tuple(package_ids)}")
 
     df_pno_package_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'PKG_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax', 'CustomName as PCustomName'], conditions=pno_package_price_conditions)
     df_pno_package_with_price = df_pno_package_with_sv.merge(df_pno_package_price, left_on='ID', right_on='RelationID', how='left')
@@ -157,8 +214,13 @@ def fetch_package_data(sales_versions, time):
     df_pno_package_with_price.dropna(subset=['ID'], inplace=True)
     # if a rulecode has rulename S for some salesversion, then it is duplicated for all Codes, sales versions and Prices
 
+    # format prices to float using format_float_string
+    df_pno_package_with_price['Price'] = df_pno_package_with_price['Price'].apply(format_float_string)
+    df_pno_package_with_price['PriceBeforeTax'] = df_pno_package_with_price['PriceBeforeTax'].apply(format_float_string)
+
     # Concatenate Price and PriceBeforeTax
-    df_pno_package_with_price['Price'] = df_pno_package_with_price.apply(lambda x: f"{x['Price']}/{x['PriceBeforeTax']}", axis=1)
+    df_pno_package_with_price['Price'] = df_pno_package_with_price.apply(lambda x: f"{x['Price']}/{x['PriceBeforeTax']}" if x['RuleName'] != '%' else '%', axis=1)
+
     # Title is custom name if available, else Title
     df_pno_package_with_price['Title'] = df_pno_package_with_price.apply(lambda x: f"CPAM - {x['PCustomName']}" if x['PCustomName'] and x['CustomName'] != '' else x['Title'], axis=1)
     df_pno_package_with_price.drop(columns=['ID', 'RelationID', 'PriceBeforeTax', 'PCustomName'], inplace=True)

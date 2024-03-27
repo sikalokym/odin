@@ -14,9 +14,14 @@ def upload_visa_file(visa_excel, spec_markt):
     Args:
         visa_excel (str): The path to the visa Excel file.
     """
-    preprocess.is_visa_file(visa_excel)
-    blob.add_visa_file(visa_excel, spec_markt)
-    ingest_visa_data()
+    try:
+        preprocess.is_visa_file(visa_excel)
+        blob.add_visa_file(visa_excel, spec_markt)
+        ingest_visa_data(spec_markt)
+        return {"message": "File uploaded successfully"}, 200
+    except Exception as e:
+        print(f"Failed to upload visa file: {e}")
+        return {"error": str(e)}, 400
 
 def ingest_visa_data(spec_markt):
     """

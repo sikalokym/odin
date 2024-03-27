@@ -2,7 +2,7 @@ from src.database.db_operations import DBOperations
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from openpyxl.utils import get_column_letter
 
-from src.utils.db_utils import filter_df_by_timestamp
+from src.utils.db_utils import filter_df_by_timestamp, format_float_string
 from openpyxl.styles.borders import Border
 from openpyxl.styles import Side
 
@@ -213,6 +213,10 @@ def fetch_color_data(sales_versions, time):
     # Replace ID with Price from df_pno_color_price
     df_pno_color_with_price = df_pno_color_with_sv.merge(df_pno_color_price, left_on='ID', right_on='RelationID', how='left')
 
+    # format prices to float using format_float_string
+    df_pno_color_with_price['Price'] = df_pno_color_with_price['Price'].apply(format_float_string)
+    df_pno_color_with_price['PriceBeforeTax'] = df_pno_color_with_price['PriceBeforeTax'].apply(format_float_string)
+
     # Concatenate Price and PriceBeforeTax
     df_pno_color_with_price['Price'] = df_pno_color_with_price.apply(lambda x: f"{x['Price']}/{x['PriceBeforeTax']}", axis=1)
 
@@ -239,6 +243,10 @@ def fetch_upholstery_data(sales_versions, time):
     df_pno_upholstery_with_sv = df_pno_upholstery[df_pno_upholstery['SalesVersion'].notna()]
     # Replace ID with Price from df_pno_upholstery_price
     df_pno_upholstery_with_price = df_pno_upholstery_with_sv.merge(df_pno_upholstery_price, left_on='ID', right_on='RelationID', how='left')
+
+    # format prices to float using format_float_string
+    df_pno_upholstery_with_price['Price'] = df_pno_upholstery_with_price['Price'].apply(format_float_string)
+    df_pno_upholstery_with_price['PriceBeforeTax'] = df_pno_upholstery_with_price['PriceBeforeTax'].apply(format_float_string)
 
     # Concatenate Price and PriceBeforeTax
     df_pno_upholstery_with_price['Price'] = df_pno_upholstery_with_price.apply(lambda x: f"{x['Price']}/{x['PriceBeforeTax']}", axis=1)
