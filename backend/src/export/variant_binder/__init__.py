@@ -4,7 +4,7 @@ import pandas as pd
 from openpyxl import Workbook
 from src.database.db_operations import DBOperations
 from src.export.variant_binder import prices_sheet, options_sheet, upholstery_colors_sheet, packages_sheet, sales_versions_sheet
-from src.utils.db_utils import filter_df_by_timestamp
+from src.utils.db_utils import filter_df_by_timestamp, get_model_year_from_date
 
 
 def extract_variant_binder(country, model, engines_types, time):
@@ -52,13 +52,15 @@ def extract_variant_binder(country, model, engines_types, time):
         upholstery_colors_sheet.get_sheet(ws_5, sales_versions.copy(), title, time)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error creating sheet: {e}")
+    model_year = get_model_year_from_date(time)
     time = str(time)
-    wb.save(f'VB {model} - {time[:4]}w{time[4:]}.xlsx')
+    vb_title = f'{title.replace(' ', '')}_VB_{engines_types} - {time[:4]}w{time[4:]}.xlsx'
+    wb.save(vb_title)
     output = BytesIO()
     wb.save(output)
     output.seek(0)
     
-    return output
+    return output, vb_title
     
 def get_model_name(country, model, time):
     models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), ['MarketText', 'CustomName', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f'Code = {model}'])
