@@ -55,6 +55,7 @@
 <script>
 import { usePNOStore } from '../stores/pno.js'
 import { useEntitiesStore } from '../stores/entities.js'
+import axios from '../api/index.js'
 
   export default {
     name: 'DocumentsView',
@@ -97,36 +98,34 @@ import { useEntitiesStore } from '../stores/entities.js'
   },
     
   methods: {
-      refreshModelyear() {
-        this.pnoStore.setModelYear(this.model_year)
-        console.log('Model year refreshed')
+    refreshModelyear() {
+      this.pnoStore.setModelYear(this.model_year)
+      console.log('Model year refreshed')
 
-        this.pnoStore.fetchPnos()
-        this.model = '';
-        this.engine = '';
-        this.validity_year = '';
-        this.validity_week = '';
-      },
-      refreshEnginecats() {
-        this.pnoStore.fetchEngineCats(this.model)
-        console.log('Engine cats refreshed')
-      },
-      async exportVariantBinder() {
-        const link = document.createElement('a');
-        // link.href = `https://pmt-portal-backend.azurewebsites.net/api/231/export/variant_binder?date=${this.validity_year}${this.validity_week}&model=${this.model}&engines_category=${this.engine}`;
-        link.href = `https://pmt-portal-backend.azurewebsites.net/api/231/export/variant_binder?date=${this.validity_year}${this.validity_week}&model=${this.model}&engines_category=${this.engine}`;
-  
-        link.setAttribute('download', 'VariantBinder_.xlsx');
-        document.body.appendChild(link);
-        link.click();
-      },
-      changeCountry(newCountry) {
-        this.pnoStore.setCountry(newCountry);
-        this.entitiesStore.setCountry(newCountry);
-      },
-  
+      this.pnoStore.fetchPnos()
+      this.model = '';
+      this.engine = '';
+      this.validity_year = '';
+      this.validity_week = '';
+    },
+    refreshEnginecats() {
+      this.pnoStore.fetchEngineCats(this.model)
+      console.log('Engine cats refreshed')
+    },
+    async exportVariantBinder() {
+      const link = document.createElement('a');
+      link.href = `${axios.endpoint}/231/export/variant_binder?date=${this.validity_year}${this.validity_week}&model=${this.model}&engines_category=${this.engine}`;
+      console.log(link.href);
+      link.setAttribute('download', 'VariantBinder_.xlsx');
+      document.body.appendChild(link);
+      link.click();
+    },
+    changeCountry(newCountry) {
+      this.pnoStore.setCountry(newCountry);
+      this.entitiesStore.setCountry(newCountry);
+    },
   }
-  };
+};
 
 </script>
 
