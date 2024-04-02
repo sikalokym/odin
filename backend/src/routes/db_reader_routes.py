@@ -30,6 +30,8 @@ def get_pnos(country, model_year):
 
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), columns, conditions=[f'CountryCode = {country}'])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    if df_pnos.empty:
+        return jsonify([])
     
     df_pnos.drop_duplicates(inplace=True)
     return df_pnos.to_json(orient='records')
@@ -38,6 +40,8 @@ def get_pnos(country, model_year):
 def get_models(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Model', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    if df_pnos.empty:
+        return jsonify([])
     models = df_pnos['Model'].unique().tolist()
     conditions = [f'CountryCode = {country}']
     if not models:
@@ -84,6 +88,8 @@ def get_sales_versions(country, model_year):
 def get_engines(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Engine', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    if df_pnos.empty:
+        return jsonify([])
     engine_codes = df_pnos['Engine'].unique().tolist()
     conditions = [f'CountryCode = {country}']
     if not engine_codes:
@@ -107,6 +113,8 @@ def get_engines(country, model_year):
 def get_gearboxes(country, model_year):
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Gearbox', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    if df_pnos.empty:
+        return jsonify([])
     gearbox_codes = df_pnos['Gearbox'].unique().tolist()
     conditions = [f'CountryCode = {country}']
     if not gearbox_codes:
@@ -144,6 +152,8 @@ def get_options(country, model_year):
         conditions.append(f"Gearbox = '{gearbox}'")
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    if df_pnos.empty:
+        return jsonify([])
     ids = df_pnos['ID'].tolist()
     conditions = []
     if len(ids) == 1:
@@ -208,6 +218,8 @@ def get_colors(country, model_year):
 
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    if df_pnos.empty:
+        return jsonify([])
     ids = df_pnos['ID'].tolist()
     conditions = []
     if len(ids) == 1:
@@ -255,6 +267,8 @@ def get_upholstery(country, model_year):
         conditions.append(f"Gearbox = '{gearbox}'")
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    if df_pnos.empty:
+        return jsonify([])
     ids = df_pnos['ID'].tolist()
     conditions = []
     if len(ids) == 1:
@@ -303,6 +317,8 @@ def get_features(country, model_year):
 
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    if df_pnos.empty:
+        return jsonify([])
     ids = df_pnos['ID'].tolist()
     conditions = []
     if len(ids) == 1:
