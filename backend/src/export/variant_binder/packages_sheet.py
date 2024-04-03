@@ -52,7 +52,7 @@ def get_sheet(ws, sales_versions, title, time):
 
         if len(prices) == 1:
             prices = prices[0].split('/')
-            ws.append([code, title, prices[0]] + sales_versions['PKGPrice'].map(lambda x: cell_values['B'] if x != '' else '').tolist())
+            ws.append([code, title, prices[0]] + sales_versions['PKGPrice'].map(lambda x: cell_values['B'] if len(x) and x[0].isnumeric() else '').tolist())
             ws.append(['', '', prices[1]])
         else:
             ws.append([code, title, 'Abhängig von der Serienausstattung'] + sales_versions['PKGPrice'].apply(lambda x: x.split('/')[0] if x != '' else '').tolist())
