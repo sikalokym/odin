@@ -97,7 +97,8 @@ def prepare_sheet(ws, df_sales_versions, title):
 
     for col in range(1,max_c+1):
         cell = ws.cell(row=1, column=col)
-        cell.fill = fill
+        if col != max_c:
+            cell.fill = fill
 
     # Formatting of second row
     ws['A2'].alignment = Alignment(horizontal='center', vertical='center',wrap_text=True)
@@ -197,24 +198,28 @@ def prepare_sheet(ws, df_sales_versions, title):
         row = next_row
     
     # Formatting of gap to extra section
-    ws.column_dimensions[get_column_letter(max_c + 1)].width = 1
+    ws.column_dimensions[get_column_letter(max_c - 1)].width = 1
+
+    # iterate the column cells and set the border left and right
+    for row in range(1, ws.max_row +1):
+        ws.cell(row=row, column=max_c - 1).border = Border(left=Side(style='thin'),
+                                                            right=Side(style='thin'))
 
     # Formatting of extra section
-    cat_col = max_c + 2  # Two columns after max_c
-    ws.cell(row=1, column=cat_col).value = "Kategorie"
+    ws.cell(row=1, column=max_c).value = "Kategorie"
 
-    ws.column_dimensions[get_column_letter(cat_col)].width = 25
+    ws.column_dimensions[get_column_letter(max_c)].width = 25
     
-    cat_cell = ws.cell(row=1, column=cat_col)
+    cat_cell = ws.cell(row=1, column=max_c)
     cat_cell.font = Font(name='Arial', size=10, bold=True, color="FFFFFF")
     cat_cell.alignment = Alignment(horizontal='center', vertical='center')
     cat_cell.fill = fill
 
     for row in range(3, max_r + 1, 2):
-        ws.merge_cells(start_row=row, end_row=row + 1, start_column=cat_col, end_column=cat_col)
+        ws.merge_cells(start_row=row, end_row=row + 1, start_column=max_c, end_column=max_c)
 
     for row in range(3, max_r + 1):
-        cell = ws.cell(row=row, column=cat_col)
+        cell = ws.cell(row=row, column=max_c)
         cell.border = Border(bottom=Side(style='thin'),
                             left=Side(style='thin'),
                             top=Side(style='thin'),
