@@ -1,9 +1,8 @@
 from io import BytesIO
 import numpy as np
-import pandas as pd
 from openpyxl import Workbook
 from src.database.db_operations import DBOperations
-from src.export.variant_binder import prices_sheet, options_sheet, upholstery_colors_sheet, packages_sheet, sales_versions_sheet
+from src.export.variant_binder import prices_sheet, options_sheet, upholstery_colors_sheet, packages_sheet, sales_versions_sheet, tiers_sheet
 from src.utils.db_utils import filter_df_by_timestamp, get_model_year_from_date
 
 
@@ -34,28 +33,31 @@ def extract_variant_binder(country, model, engines_types, time):
         DBOperations.instance.logger.error(f"Error creating sheet: {e}")
     try:
         ws_2 = wb.create_sheet("Serienausstattung")
-        sales_versions_sheet.get_sheet(ws_2, sales_versions, title, country, time)
+        sales_versions_sheet.get_sheet(ws_2, sales_versions.copy(), title, country, time)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error creating sheet: {e}")
     try:
         ws_3 = wb.create_sheet("Pakete")
-        packages_sheet.get_sheet(ws_3, sales_versions, title, time)
+        packages_sheet.get_sheet(ws_3, sales_versions.copy(), title, time)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error creating sheet: {e}")
     try:
-        ws_4 = wb.create_sheet("Optionen")
-        options_sheet.get_sheet(ws_4, sales_versions.copy(), title, time)
+        ws_4 = wb.create_sheet("Polster & Farben")
+        upholstery_colors_sheet.get_sheet(ws_4, sales_versions.copy(), title, time)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error creating sheet: {e}")
     try:
-        ws_5 = wb.create_sheet("Polster & Farben")
-        upholstery_colors_sheet.get_sheet(ws_5, sales_versions.copy(), title, time)
+        ws_5 = wb.create_sheet("Optionen")
+        df_rad = options_sheet.get_sheet(ws_5, sales_versions.copy(), title, time)
+        ws_6 = wb.create_sheet("Räder")
+        tiers_sheet.get_sheet(ws_6, sales_versions.copy(), title, df_rad)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error creating sheet: {e}")
+
     model_year = get_model_year_from_date(time)
     time = str(time)
-    vb_title = f"{title.replace(' ', '')}_VB_{engines_types} - {time[:4]}w{time[4:]}.xlsx"
-    wb.save(vb_title)
+    vb_title = f"{title.replace(' ', '')}_VB_{engines_types}_{model_year}_{time[:4]}w{time[4:]}.xlsx"
+    # wb.save(vb_title)
     output = BytesIO()
     wb.save(output)
     output.seek(0)
@@ -90,6 +92,9 @@ def get_sales_versions(country, pnos, time):
 
     df_allowed_sv['SalesVersionPrice'] = df_allowed_sv['ID'].map(df_pno_price.set_index('RelationID')['Price'])
     df_allowed_sv = df_allowed_sv[['ID', 'SalesVersion', 'SalesVersionName', 'SalesVersionPrice']]
+
+    # sort the sales versions by price
+    df_allowed_sv = df_allowed_sv.sort_values('SalesVersionPrice', ascending=True)
 
     # group by SalesVersionName name's first word and represent each group with its maximum price and sort on price ascending and return the names and prices
     df_allowed_sv['SalesVersionNameGroup'] = df_allowed_sv['SalesVersionName'].str.split().str[0]
