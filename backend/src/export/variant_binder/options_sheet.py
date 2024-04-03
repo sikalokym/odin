@@ -3,6 +3,7 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill, Border, Alignment, Side
 
 from openpyxl.utils import get_column_letter
+import pandas as pd
 from src.database.db_operations import DBOperations
 from src.utils.db_utils import filter_df_by_timestamp, format_float_string
 
@@ -29,7 +30,7 @@ def get_sheet(ws, sales_versions, title, time):
         None
     """
 
-    df_res = fetch_options_data(sales_versions, time)
+    df_rad, df_res = fetch_options_data(sales_versions, time)
 
     # Calculate the number of empty rows to append
     num_empty_rows = 2 - len(ws['A'])
@@ -42,17 +43,19 @@ def get_sheet(ws, sales_versions, title, time):
     for _, row in df_res.iterrows():
         svs = [row[sv] if row[sv] != '' and row[sv] is not None and row[sv] is not np.nan else '-' for sv in sales_versions['SalesVersion']]
         if row['Price'] == 'Pack Only'or row['Price'] == 'Serie':
-            ws.append([row['Code'], row['CustomName'], row['Price']] + svs)
+            ws.append([row['Code'], row['CustomName'], row['Price']] + svs + ['', row['CustomCategory']])
             ws.append([])
         else:
             prices = row['Price'].split('/')
             if len(prices) > 1:
-                ws.append([row['Code'], row['CustomName'], prices[0]] + svs)
+                ws.append([row['Code'], row['CustomName'], prices[0]] + svs + ['', row['CustomCategory']])
                 ws.cell(row=ws.max_row, column=3).alignment = Alignment(horizontal='center', vertical='bottom')
                 ws.append(['', '', prices[1]] + svs) 
                 ws.cell(row=ws.max_row, column=3).alignment = Alignment(horizontal='center', vertical='top')
 
     prepare_sheet(ws, sales_versions, title)
+
+    return df_rad
 
 def prepare_sheet(ws, df_sales_versions, title):
     # Finding of the last columns and rows with content for border lines
@@ -220,53 +223,119 @@ def prepare_sheet(ws, df_sales_versions, title):
     ws.sheet_view.showGridLines = False
 
 def fetch_options_data(sales_versions, time):
-    df_pno_option_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'OPT_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax', 'CustomName'])
-    df_pno_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'OPT'), columns=['ID', 'PNOID', 'Code', 'RuleName', 'StartDate', 'EndDate'])
+    pno_ids = sales_versions.ID.unique().tolist()
+    conditions = []
+    if len(pno_ids) == 1:
+        conditions.append(f"PNOID = '{pno_ids[0]}'")
+    else:
+        conditions.append(f"PNOID in {tuple(pno_ids)}")
+    df_pno_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'OPT'), columns=['ID', 'PNOID', 'Code', 'RuleName', 'StartDate', 'EndDate'], conditions=conditions)
     df_pno_options = filter_df_by_timestamp(df_pno_options, time)
     df_pno_options.drop(columns=['StartDate', 'EndDate'], inplace=True)
+    rel_codes = df_pno_options.ID.unique().tolist()
+    pno_option_price_conditions = []
+    if len(rel_codes) == 1:
+        pno_option_price_conditions.append(f"RelationID = '{rel_codes[0]}'")
+    else:
+        pno_option_price_conditions.append(f"RelationID in {tuple(rel_codes)}")
+    df_pno_option_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'OPT_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax', 'CustomName'], conditions=pno_option_price_conditions)
+    
+    df_pno_options_with_price = df_pno_options.merge(df_pno_option_price, left_on='ID', right_on='RelationID', how='left')
+    df_pno_options_with_price['OptCode'] = df_pno_options_with_price['Code'].apply(lambda x: x.lstrip('0') if x.isnumeric() else x)
+    opt_codes = df_pno_options_with_price['OptCode'].unique().tolist()
+    pno_features_conditions = conditions.copy() + ["Reference != ''"]
+    if len(opt_codes) == 1:
+        pno_features_conditions.append(f"Reference = '{opt_codes[0]}'")
+    else:
+        pno_features_conditions.append(f"Reference in {tuple(opt_codes)}")
+    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Reference', 'RuleName as FeatRule', 'CustomName as FeatName', 'CustomCategory'], conditions=pno_features_conditions)
+    df_pno_features.drop_duplicates(inplace=True)
+
+    df_pno_options_with_feat_ref = df_pno_options_with_price[~df_pno_options_with_price['RelationID'].isna()]
+    df_pno_options_without_feat_ref = df_pno_options_with_price[df_pno_options_with_price['RelationID'].isna()]
+    df_pno_options_without_feat_ref['Reference'] = df_pno_options_without_feat_ref['Code']
+
+    df_pno_options_feat_merged = df_pno_features.merge(df_pno_options_with_feat_ref, 
+                                      how='left',
+                                      left_on=['PNOID', 'Reference'],
+                                      right_on=['PNOID', 'OptCode'])
+    
+    df_pno_options_merged = pd.concat([df_pno_options_feat_merged, df_pno_options_without_feat_ref], ignore_index=True)
     
     sales_versions.rename(columns={'ID': 'TmpCode'}, inplace=True)
-    df_pno_options = df_pno_options.merge(sales_versions[['TmpCode', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='TmpCode', how='left')
-    df_pno_options.drop(columns='TmpCode', inplace=True)
-    df_pno_options_with_sv = df_pno_options[df_pno_options['SalesVersion'].notna()]
-    # Replace ID with Price from df_pno_option_price
-    df_pno_options_with_price = df_pno_options_with_sv.merge(df_pno_option_price, left_on='ID', right_on='RelationID', how='left')
+    df_pno_options_merged = df_pno_options_merged.merge(sales_versions[['TmpCode', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='TmpCode', how='left')
+    df_pno_options_merged['CustomName'] = df_pno_options_merged['CustomName'].combine_first(df_pno_options_merged['FeatName'])
+    df_pno_options_merged['RuleName'] = df_pno_options_merged['RuleName'].combine_first(df_pno_options_merged['FeatRule'])
+    df_pno_options_merged.drop(columns=['PNOID', 'OptCode', 'Code', 'RelationID', 'ID', 'TmpCode', 'FeatRule', 'FeatName'], inplace=True)
+    df_pno_options_merged.drop_duplicates()
+    # append zeros to the reference column
+    df_pno_options_merged['Reference'] = df_pno_options_merged['Reference'].apply(lambda x: x.zfill(6) if x.isnumeric() else x)
 
     def get_prices(row):
         if row['RuleName'] == 'P':
             # Get all rows with the same code that are not 'P'
-            rows = df_pno_options_with_price[(df_pno_options_with_price['Code'] == row['Code']) & (df_pno_options_with_price['RuleName'] != 'P')]
+            rows = df_pno_options_merged[(df_pno_options_merged['Reference'] == row['Reference']) & (df_pno_options_merged['RuleName'] != 'P')]
             # If there are no other rows with the same code, return 'Pack Only'
             if rows.empty:
                 return ['Pack Only']
             # return a list of all prices
+            if not rows['RuleName'].str.contains('O').any():
+                return ['Pack Only']
         
-        if row['RuleName'] == '%':
-            # Get all rows with the same code that are not 'P'
-            rows = df_pno_options_with_price[(df_pno_options_with_price['Code'] == row['Code']) & (df_pno_options_with_price['RuleName'] != '%')]
-            # If there are no other rows with the same code, return 'Pack Only'
+        elif row['RuleName'] == '%':
+            # Get all rows with the same code that are not '%'
+            rows = df_pno_options_merged[(df_pno_options_merged['Reference'] == row['Reference']) & (df_pno_options_merged['RuleName'] != '%')]
+            # If there are no other rows with the same code, return 'Serie'
             if rows.empty:
                 return ['Serie']
 
-            return '/'.join([f"{r['Price']}/{r['PriceBeforeTax']}" for _, r in rows.iterrows()])
+            return ['/'.join([f"{r['Price']}/{r['PriceBeforeTax']}" for _, r in rows.iterrows()])]
+        
+        elif row['RuleName'] == 'S':
+            # Get all rows with the same code that are not 'S'
+            rows = df_pno_options_merged[(df_pno_options_merged['Reference'] == row['Reference']) & (df_pno_options_merged['RuleName'] != 'S')]
+            # If there are no other rows with the same code, return 'Serie'
+            if rows.empty:
+                # Should not happen since this would be a feature and not an option
+                return ['Serie']
+            
+            if not rows['RuleName'].str.contains('O').any():
+                return ['Pack Only']
+            
+            rows.drop_duplicates(subset=['Price', 'PriceBeforeTax'], inplace=True)
+            
+            # get a list of all prices in those rows
+            prices = [f"{r['Price']}/{r['PriceBeforeTax']}" for _, r in rows.iterrows()]
+            return prices
+
         return [f"{row['Price']}/{row['PriceBeforeTax']}"]
-    
+
     # format prices to float using format_float_string
-    df_pno_options_with_price['Price'] = df_pno_options_with_price['Price'].apply(format_float_string)
-    df_pno_options_with_price['PriceBeforeTax'] = df_pno_options_with_price['PriceBeforeTax'].apply(format_float_string)
+    df_pno_options_merged['Price'] = df_pno_options_merged['Price'].apply(format_float_string)
+    df_pno_options_merged['PriceBeforeTax'] = df_pno_options_merged['PriceBeforeTax'].apply(format_float_string)
     
     # Concatenate Price and PriceBeforeTax
-    df_pno_options_with_price['Price'] = df_pno_options_with_price.apply(lambda x: get_prices(x), axis=1)
-    df_pno_options_with_price = df_pno_options_with_price.explode('Price')
+    df_pno_options_merged['Price'] = df_pno_options_merged.apply(lambda x: get_prices(x), axis=1)
+    df_pno_options_merged.drop(['PriceBeforeTax'], axis=1, inplace=True)
+    df_pno_options_merged = df_pno_options_merged.explode('Price')
     
+    # group by Reference, Price, RuleName, SalesVersion and SalesVersionName and aggregate the CustomName column by concatinating the values with a newline separator if they differ and not null nan or empty and the CustomCategory column by concatinating the values with a comma separator if they differ
+    df_pno_options_merged = df_pno_options_merged.groupby(['Reference', 'Price', 'RuleName', 'SalesVersion', 'SalesVersionName']).agg({'CustomName': lambda x: '\n'.join(x.dropna().unique()), 'CustomCategory': lambda x: ', '.join(x.dropna().unique())}).reset_index()
     # Create the pivot table
-    pivot_df = df_pno_options_with_price.pivot_table(index=['Code', 'Price'], columns='SalesVersion', values='RuleName', aggfunc='first')
+    pivot_df = df_pno_options_merged.pivot_table(index=['Reference', 'Price'], columns='SalesVersion', values='RuleName', aggfunc='first')
 
     # Drop the now unneeded columns and duplicates
-    df_pno_options_with_price.drop(['ID', 'PNOID', 'RelationID', 'RuleName', 'SalesVersion', 'SalesVersionName', 'PriceBeforeTax'], axis=1, inplace=True)
-    df_pno_options_with_price.drop_duplicates(inplace=True)
+    df_pno_options_merged.drop(['RuleName', 'SalesVersion', 'SalesVersionName'], axis=1, inplace=True)
+    df_pno_options_merged.drop_duplicates(inplace=True)
 
     # Join the pivoted DataFrame with the original one. sort after code ascending
-    df_result = df_pno_options_with_price.join(pivot_df, on=['Code', 'Price']).sort_values(by='Code')
+    df_result = df_pno_options_merged.join(pivot_df, on=['Reference', 'Price']).sort_values(by='Reference')
 
-    return df_result
+    # rename Reference to Code
+    df_result.rename(columns={'Reference': 'Code'}, inplace=True)
+
+    # split the df after the CustomCategory column where it is equal Räder and return the two dataframes
+    df_rader = df_result[df_result['CustomCategory'] == 'Räder']
+    df_result = df_result[df_result['CustomCategory'] != 'Räder']
+    
+    return df_rader, df_result
