@@ -365,7 +365,7 @@ def format_float_string(float_string):
     try:
         # Convert string to float to ensure correct handling
         float_value = float(float_string)
-        if not float_value or np.isnan(float_value):
+        if np.isnan(float_value):
             return 'Not Assigned. Check Visa File'
     except ValueError:
         return 'Not Assigned. Check Visa File'
