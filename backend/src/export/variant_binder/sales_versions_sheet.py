@@ -1,7 +1,5 @@
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
-from openpyxl.utils import get_column_letter
 from src.database.db_operations import DBOperations
-from src.utils.db_utils import filter_df_by_timestamp
 import pandas as pd
 
 all_border = Border(top=Side(style='thin', color='000000'),
@@ -11,7 +9,7 @@ all_border = Border(top=Side(style='thin', color='000000'),
 
 fill = PatternFill(start_color='000080', end_color='000080', fill_type='solid')
 
-def get_sheet(ws, sales_versions, title, country, time):
+def get_sheet(ws, sales_versions, title):
     """
     Fetches options data and inserts it into the specified worksheet.
 
@@ -23,12 +21,14 @@ def get_sheet(ws, sales_versions, title, country, time):
     Returns:
         None
     """
-    df_sales_versions = fetch_sales_version_data(sales_versions, country, time)
+    df_sales_versions = fetch_sales_version_data(sales_versions)
 
-    # Write the title
+    # Write the headers
     ws['A1'] = title
+    ws.append(['Feature Code (Reference)', 'Serienausstattung'])
+    ws.append([])
     ws['A1'].font = Font(size=16, bold=True)
-    ws.merge_cells('A1:F1')
+    ws.merge_cells('A1:B1')
     ws['A1'].alignment = Alignment(horizontal='center')
     ws.freeze_panes = ws['A2']
 
@@ -49,39 +49,61 @@ def get_sheet(ws, sales_versions, title, country, time):
     # Formatting of second row
     ws['A2'].alignment = Alignment(horizontal='center', vertical='center',wrap_text=True)
     ws['A2'].font = Font(size=10, bold=True)
-    ws['B2'].alignment = Alignment(horizontal='center', vertical='center')
+    ws['B2'].alignment = Alignment(horizontal='left', vertical='center')
     ws['B2'].font = Font(size=10, bold=True)
 
-    # Write the headers
-    ws.append(['Feature Code (Reference)', 'Serienausstattung'])
-    ws.append([])
-
+    prev_svn = None
     for (sv, svn), group in df_sales_versions.groupby(['SalesVersion', 'SalesVersionName']):
         group.drop(columns=['SalesVersion', 'SalesVersionName'], inplace=True)
-        df_options = group.sort_values(by='CustomName', ascending=True)
+        df_options = group.sort_values(by=['CustomCategory', 'CustomName'], ascending=True)
 
         # Write the data to the worksheet
-        ws.append([sv, svn])
+        svn_with_name = f"{svn} (zusätzlich bzw. abweichend zu {prev_svn})" if prev_svn else svn
+        prev_svn = svn
+        ws.append([''])
+        ws.append([sv, svn_with_name])
         # format the row in gray
         for cell in ws[len(ws["A"])]:
             cell.fill = PatternFill(start_color='BFBFBF', end_color='BFBFBF', fill_type='solid')
-
+        prev_custom_category = None
         for _, row in df_options.iterrows():
+            current_custom_category = row['CustomCategory']
+            if prev_custom_category != current_custom_category:
+                ws.append([''])
+                ws.append(['', row['CustomCategory']])
+                # format the text in bold
+                for cell in ws[len(ws["A"])]:
+                    cell.font = Font(bold=True)
+                prev_custom_category = current_custom_category
             ws.append([row['Code'], row['CustomName']])
+
+    for col in range(1, 3):
+        cell = ws.cell(row=ws.max_row, column=col)
+        if col == 1:
+            cell.border = Border(bottom=Side(style='medium'),
+                                right=Side(style='thin'))
+        else:
+            cell.border = Border(bottom=Side(style='medium'),
+                                right=Side(style='medium'))
             
-def fetch_sales_version_data(df_sales_versions, country, time):
+    for row in range(1, ws.max_row):
+        cell = ws.cell(row=row, column=1)
+        cell.border = Border(bottom=Side(style='thin'),
+                            right=Side(style='thin'))
+        cell = ws.cell(row=row, column=2)
+        cell.border = Border(bottom=Side(style='thin'),
+                            right=Side(style='medium'))
+    
+            
+def fetch_sales_version_data(df_sales_versions):
     pno_ids = df_sales_versions.ID.unique().tolist()
-    conditions = []
+    # filter where code starts with X
+    conditions = [f"Code not like 'X%'"]
     if len(pno_ids) == 1:
         conditions.append(f"PNOID = '{pno_ids[0]}'")
     else:
         conditions.append(f"PNOID in {tuple(pno_ids)}")
-    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Code', 'Reference', 'Options', 'CustomName'], conditions=conditions)
-    df_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'FEA'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
-    df_features = filter_df_by_timestamp(df_features, time)
-    df_features.drop(columns=['StartDate', 'EndDate'], inplace=True)
-    df_features.drop_duplicates(subset=['Code'], keep='first', inplace=True)
-
+    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Code', 'Reference', 'Options', 'CustomName', 'CustomCategory'], conditions=conditions)
     sv_correct_order = df_sales_versions.SalesVersion.unique().tolist()
 
     df_pno_features_sv = df_pno_features.merge(df_sales_versions[['ID', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='ID', how='inner')
@@ -89,9 +111,8 @@ def fetch_sales_version_data(df_sales_versions, country, time):
     df_pno_features_sv.sort_values(by='SalesVersion', inplace=True)
     df_pno_features_sv.drop_duplicates('Code', keep='first', inplace=True)
 
-    df_merged = df_pno_features_sv.merge(df_features, on=['Code'], how='left')
-    df_merged['CustomName'] = df_merged['CustomName'].combine_first(df_merged['MarketText'])
-    df_merged.drop(columns=['MarketText', 'ID', 'PNOID'], inplace=True)
+    df_pno_features_sv.drop(columns=['ID', 'PNOID'], inplace=True)
 
-    # df_merged['Code'] = df_pno_features['Code'].apply(lambda x: f'{x}({df_pno_features["Reference"]})')
+    df_pno_features_sv = df_pno_features_sv.dropna(subset=['CustomName'])
+
     return df_pno_features_sv
