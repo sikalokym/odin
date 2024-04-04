@@ -64,7 +64,6 @@ def prepare_sheet(ws, title, max_code_length):
 
 def create_title(ws, title, max_code_length):
     ws.row_dimensions[1].height = 40
-    # get letter from number
     letter = get_column_letter(max_code_length + 1)
     ws.merge_cells(f'A1:{letter}1')
     ws.cell(row=1, column=1, value=title)
@@ -94,9 +93,9 @@ def insert_table(ws, df_price, df_sv, df_gb, df_en, curr_row):
             group = df[(df['Engine'] == en) & (df['Gearbox'] == gb)]
             gb_name = df_gb[df_gb['Code'] == gb].iloc[0]['MarketText']
             en_name = df_en[df_en['Code'] == en].iloc[0]['MarketText']
-            horsepower = ''
+            en_performance = df_en[df_en['Code'] == en].iloc[0]['Performance']
             values = get_price_column(group, df_sv)
-            col = [en_name, gb_name, horsepower] + values + [en, gb]
+            col = [en_name, gb_name, en_performance] + values + [en, gb]
             curr_col, curr_row_end = insert_column(ws, col, curr_row, curr_col)
     insert_mwst_line(ws, mwst_row, curr_col -1)
     for i in [mwst_row+1, mwst_row+2, mwst_row+3]:
