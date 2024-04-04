@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "serve -s dist",
+    "start": "node server.js",
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
@@ -13,6 +13,7 @@
     "@primer/css": "^21.2.0",
     "axios": "^0.28.0",
     "core-js": "^3.8.3",
+    "express": "^4.19.2",
     "file-saver": "^2.0.5",
     "notyf": "^3.10.0",
     "pinia": "^2.1.7",
