@@ -1,9 +1,9 @@
-import numpy as np
-import openpyxl
 from openpyxl.styles import Font, PatternFill, Border, Alignment, Side
-
 from openpyxl.utils import get_column_letter
+
 import pandas as pd
+import numpy as np
+
 from src.database.db_operations import DBOperations
 from src.utils.db_utils import filter_df_by_timestamp, format_float_string
 
@@ -16,6 +16,7 @@ all_border = Border(top=Side(style='thin', color='000000'),
 
 white_border = Border(right=Side(style='thin', color="FFFFFF"))
 fill = PatternFill(start_color='000080', end_color='000080', fill_type='solid')
+white_fill = PatternFill(start_color='FFFFFF', end_color='FFFFFF', fill_type='solid')
 
 def get_sheet(ws, sales_versions, title, time):
     """
@@ -27,7 +28,7 @@ def get_sheet(ws, sales_versions, title, time):
         title (str): The title of the sheet.
 
     Returns:
-        None
+        df_rad (DataFrame): The dataframe containing the tiers data for the next sheet.
     """
 
     df_rad, df_res = fetch_options_data(sales_versions, time)
@@ -97,9 +98,11 @@ def prepare_sheet(ws, df_sales_versions, title):
 
     for col in range(1,max_c+1):
         cell = ws.cell(row=1, column=col)
-        if col != max_c:
+        if col != max_c-1:
             cell.fill = fill
-
+        else:
+            cell.fill = white_fill
+ 
     # Formatting of second row
     ws['A2'].alignment = Alignment(horizontal='center', vertical='center',wrap_text=True)
     ws['A2'].font = Font(size=10, bold=True)
@@ -138,9 +141,9 @@ def prepare_sheet(ws, df_sales_versions, title):
         cell.border = Border(top=Side(style='medium'),
                             right=Side(style='thin'))
 
-    for row in range(3, max_r + 1):
+    for row in range(2, max_r + 1):
         cell = ws.cell(row=row, column=max_c)
-        cell.border = Border(right=Side(style='medium'),
+        cell.border = Border(right=Side(style='thin'),
                             bottom=Side(style='thin'))
 
     for col in range(1, max_c + 1):
@@ -179,20 +182,20 @@ def prepare_sheet(ws, df_sales_versions, title):
         current_code = ws[f"A{row}"].value
 
         # Search for next different code
-        next_row = row + 2  # Skip one row
+        next_row = row + 2
         while next_row <= ws.max_row:
             next_code = ws[f"A{next_row}"].value
             if next_code != current_code:
                 break
-            next_row += 2  # Skip one row
+            next_row += 2
 
         # Merging in columns A & B if codes have duplicates
         if next_row - row > 2:
-            ws.merge_cells(start_row=row, end_row=next_row-1, start_column=1, end_column=1)  # Merge column A
-            ws.merge_cells(start_row=row, end_row=next_row-1, start_column=2, end_column=2)  # Merge column B
+            ws.merge_cells(start_row=row, end_row=next_row-1, start_column=1, end_column=1)
+            ws.merge_cells(start_row=row, end_row=next_row-1, start_column=2, end_column=2)
         else:
-            ws.merge_cells(start_row=row, end_row=row+1, start_column=1, end_column=1)  # Merge column A
-            ws.merge_cells(start_row=row, end_row=row+1, start_column=2, end_column=2)  # Merge column B
+            ws.merge_cells(start_row=row, end_row=row+1, start_column=1, end_column=1)
+            ws.merge_cells(start_row=row, end_row=row+1, start_column=2, end_column=2)
 
         # Set next row as first row of new control circle
         row = next_row
@@ -209,11 +212,6 @@ def prepare_sheet(ws, df_sales_versions, title):
     ws.cell(row=1, column=max_c).value = "Kategorie"
 
     ws.column_dimensions[get_column_letter(max_c)].width = 25
-    
-    cat_cell = ws.cell(row=1, column=max_c)
-    cat_cell.font = Font(name='Arial', size=10, bold=True, color="FFFFFF")
-    cat_cell.alignment = Alignment(horizontal='center', vertical='center')
-    cat_cell.fill = fill
 
     for row in range(3, max_r + 1, 2):
         ws.merge_cells(start_row=row, end_row=row + 1, start_column=max_c, end_column=max_c)

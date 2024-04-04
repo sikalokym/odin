@@ -34,8 +34,15 @@ def get_sheet(ws, sales_versions, title, time):
     df_packages = fetch_package_data(sales_versions, time)
 
     for (code, title), group in df_packages.groupby(['Code', 'Title']):
+        def get_price(x):
+            if 'B' in group[x].values:
+                return group[group[x] == 'B']['Price'].values[0]
+            elif all(value == 'S' for value in group[x].values):
+                return 'S'
+            else:
+                return ''
 
-        sales_versions['PKGPrice'] = sales_versions['SalesVersion'].apply(lambda x: group[group[x] == 'B']['Price'].values[0] if 'B' in group[x].values else '')
+        sales_versions['PKGPrice'] = sales_versions['SalesVersion'].apply(get_price)
         group.drop(columns=['Code', 'Title', 'Price'], inplace=True)
         # combine lines on column RuleCode by keeping the first non NaN value in the sales versions columns
         group = group.groupby('RuleCode').first().reset_index()
@@ -48,14 +55,14 @@ def get_sheet(ws, sales_versions, title, time):
                 df_options[col] = ''
 
         # Write the data to the worksheet
-        prices = sales_versions[sales_versions['PKGPrice'] != '']['PKGPrice'].unique().tolist()
+        prices = sales_versions[(sales_versions['PKGPrice'] != '') & (sales_versions['PKGPrice'] != 'S')]['PKGPrice'].unique().tolist()
 
         if len(prices) == 1:
             prices = prices[0].split('/')
-            ws.append([code, title, prices[0]] + sales_versions['PKGPrice'].map(lambda x: cell_values['B'] if len(x) and x[0].isnumeric() else '').tolist())
+            ws.append([code, title, prices[0]] + sales_versions['PKGPrice'].map(lambda x: cell_values['B'] if len(x) and x[0].isnumeric() else cell_values[x]).tolist())
             ws.append(['', '', prices[1]])
         else:
-            ws.append([code, title, 'Abhängig von der Serienausstattung'] + sales_versions['PKGPrice'].apply(lambda x: x.split('/')[0] if x != '' else '').tolist())
+            ws.append([code, title, 'Abhängig von der Serienausstattung'] + sales_versions['PKGPrice'].apply(lambda x: x.split('/')[0] if len(x) and x[0].isnumeric() else cell_values[x]).tolist())
             ws.append(['', '', ''] + sales_versions['PKGPrice'].apply(lambda x: x.split('/')[1] if len(x.split('/')) != 1 else '').tolist())
             
         for col in range(1, len(sales_versions) + 4):
@@ -109,6 +116,7 @@ def prepare_sheet(ws, df_sales_versions, title):
 
     ws.column_dimensions['A'].width = 11
     ws.column_dimensions['B'].width = 65
+    ws.column_dimensions['C'].width = 40
     for col in range(3, max_c + 1):
         ws.column_dimensions[get_column_letter(col)].width = 25
 
@@ -138,13 +146,13 @@ def format_sheet(ws, max_c):
     # add right border to the last column
     for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=max_c, max_col=max_c):
         for cell in row:
-            cell.border = Border(left=Side(style='thick', color='000000'))
+            cell.border = Border(left=Side(style='thin', color='000000'))
 
     max_r = ws.max_row + 1
     # add bottom border to the last row
-    for row in ws.iter_rows(min_row=max_r, max_row=max_r, min_col=1, max_col=max_c):
+    for row in ws.iter_rows(min_row=max_r, max_row=max_r, min_col=1, max_col=max_c-1):
         for cell in row:
-            cell.border = Border(top=Side(style='thick', color='000000'))
+            cell.border = Border(top=Side(style='thin', color='000000'))
 
 def fetch_package_data(sales_versions, time):
     pno_ids = sales_versions.ID.unique().tolist()
