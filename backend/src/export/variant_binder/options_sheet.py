@@ -1,8 +1,6 @@
 from openpyxl.styles import Font, PatternFill, Border, Alignment, Side
 from openpyxl.utils import get_column_letter
-
 import pandas as pd
-import numpy as np
 
 from src.database.db_operations import DBOperations
 from src.utils.db_utils import filter_df_by_timestamp, format_float_string
@@ -11,6 +9,15 @@ cell_values = {
     'S': '•',
     'O': 'o',
     '': '-'
+}
+
+rule_texts = {
+    'OFO': 'Nicht in Verbindung mit der Option',
+    'OFU': 'Nicht in Verbindung mit dem Polster',
+    'OFC': 'Nicht in Verbindung mit der Farbe',
+    'ORO': 'Nur in Verbindung mit der Option',
+    'ORU': 'Nur in Verbindung mit dem Polster',
+    'ORC': 'Nur in Verbindung mit der Farbe'
 }
 
 #General formating of border lines & cell colours in excel spreadsheet
@@ -49,12 +56,12 @@ def get_sheet(ws, sales_versions, title, time):
     for _, row in df_res.iterrows():
         svs = [cell_values.get(row[sv], row[sv]) for sv in sales_versions['SalesVersion']]
         if row['Price'] == 'Pack Only'or row['Price'] == 'Serie':
-            ws.append([row['Code'], row['CustomName'], row['Price']] + svs + ['', row['CustomCategory']])
+            ws.append([row['Code'], row['CustomName'], row['Price']] + svs + ['', row['CustomCategory'], row['Rules']])
             ws.append([])
         else:
             prices = row['Price'].split('/')
             if len(prices) > 1:
-                ws.append([row['Code'], row['CustomName'], prices[0]] + svs + ['', row['CustomCategory']])
+                ws.append([row['Code'], row['CustomName'], prices[0]] + svs + ['', row['CustomCategory'], row['Rules']])
                 ws.cell(row=ws.max_row, column=3).alignment = Alignment(horizontal='center', vertical='bottom')
                 ws.append(['', '', prices[1]] + svs) 
                 ws.cell(row=ws.max_row, column=3).alignment = Alignment(horizontal='center', vertical='top')
@@ -83,6 +90,7 @@ def prepare_sheet(ws, df_sales_versions, title):
     for idx, row in df_sales_versions.iterrows():
         ws.cell(row=1, column=idx+4, value=f'{row["SalesVersionName"]}\nSV {row["SalesVersion"]}')
 
+
     #Definition of column widths & row heights
     ws.column_dimensions['A'].width = 11
     ws.column_dimensions['B'].width = 65
@@ -96,14 +104,14 @@ def prepare_sheet(ws, df_sales_versions, title):
     ws['A1'].font = Font(name='Arial', size=16, bold=True, color="FFFFFF")
     ws['A1'].alignment = Alignment(horizontal='left', vertical='center')
 
-    for col in range(3, 20):
+    for col in range(3, max_c+1):
         cell = ws.cell(row=1, column=col)
         cell.font = Font(name='Arial', size=10, bold=True, color='FFFFFF')
         cell.alignment = Alignment(horizontal='center', vertical='center',wrap_text=True)
 
     for col in range(1,max_c+1):
         cell = ws.cell(row=1, column=col)
-        if col != max_c-1:
+        if col != max_c-2:
             cell.fill = fill
         else:
             cell.fill = white_fill
@@ -208,20 +216,29 @@ def prepare_sheet(ws, df_sales_versions, title):
         row = next_row
     
     # Formatting of gap to extra section
-    ws.column_dimensions[get_column_letter(max_c - 1)].width = 1
+    ws.column_dimensions[get_column_letter(max_c - 2)].width = 1
 
     # iterate the column cells and set the border left and right
     for row in range(1, ws.max_row +1):
-        ws.cell(row=row, column=max_c - 1).border = Border(left=Side(style='thin'),
+        ws.cell(row=row, column=max_c - 2).border = Border(left=Side(style='thin'),
                                                             right=Side(style='thin'))
 
     # Formatting of extra section
-    ws.cell(row=1, column=max_c).value = "Kategorie"
+    ws.cell(row=1, column=max_c -1).value = "Kategorie"
+    ws.column_dimensions[get_column_letter(max_c-1)].width = 25
 
+    # copy the merge range in column A to the new column
+
+    for row in range(3, max_r + 1):
+        cell = ws.cell(row=row, column=max_c-1)
+        cell.border = Border(bottom=Side(style='thin'),
+                            left=Side(style='thin'),
+                            top=Side(style='thin'),
+                            right=Side(style='thin'))
+    
+    # Formatting of extra section
+    ws.cell(row=1, column=max_c).value = "Bemerkungen"
     ws.column_dimensions[get_column_letter(max_c)].width = 25
-
-    for row in range(3, max_r + 1, 2):
-        ws.merge_cells(start_row=row, end_row=row + 1, start_column=max_c, end_column=max_c)
 
     for row in range(3, max_r + 1):
         cell = ws.cell(row=row, column=max_c)
@@ -239,7 +256,8 @@ def fetch_options_data(sales_versions, time):
         conditions.append(f"PNOID = '{pno_ids[0]}'")
     else:
         conditions.append(f"PNOID in {tuple(pno_ids)}")
-    df_pno_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'OPT'), columns=['ID', 'PNOID', 'Code', 'RuleName', 'StartDate', 'EndDate'], conditions=conditions)
+    opt_conds = conditions.copy() + ["Code not like 'A%'"]
+    df_pno_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'OPT'), columns=['ID', 'PNOID', 'Code', 'RuleName', 'StartDate', 'EndDate'], conditions=opt_conds)
     df_pno_options = filter_df_by_timestamp(df_pno_options, time)
     df_pno_options.drop(columns=['StartDate', 'EndDate'], inplace=True)
     rel_codes = df_pno_options.ID.unique().tolist()
@@ -348,6 +366,38 @@ def fetch_options_data(sales_versions, time):
     for sv in sales_versions['SalesVersion']:
         df_result[sv] = df_result[sv].fillna('-')
 
+    # get the df with the rules for the options
+    opt_codes = df_result['Code'].unique().tolist()
+    rules_conditions = conditions.copy() + ["RuleCode LIKE 'O%'"]
+    if len(opt_codes) == 1:
+        rules_conditions.append(f"ItemCode = '{opt_codes[0]}'")
+    else:
+        rules_conditions.append(f"ItemCode in {tuple(opt_codes)}")
+    df_rules = DBOperations.instance.get_table_df(DBOperations.instance.config.get('DEPENDENCIES', 'OFO'), columns=['RuleCode', 'ItemCode', 'FeatureCode'], conditions=rules_conditions)
+    df_rules = df_rules.drop_duplicates()
+    
+    df_result['Rules'] = ''
+    if df_rules.empty:
+        df_rader = df_result[df_result['CustomCategory'] == 'Räder']
+        df_result = df_result[df_result['CustomCategory'] != 'Räder']
+        
+        return df_rader, df_result
+
+    # strip the whitespace from the ItemCode and FeatureCode columns
+    df_rules['ItemCode'] = df_rules['ItemCode'].str.strip()
+    df_rules['FeatureCode'] = df_rules['FeatureCode'].str.strip()
+    
+    for rule, group in df_rules.groupby('RuleCode'):
+        group = group.groupby('ItemCode').agg({'FeatureCode': lambda x: rule_texts[rule] + ' ' + ', '.join(list(x))}).reset_index()
+        group.rename(columns={'FeatureCode': rule}, inplace=True)
+        df_result = pd.merge(df_result, group, left_on='Code', right_on='ItemCode', how='left')
+        df_result.drop(columns=['ItemCode'], inplace=True)
+        # accumulate the rules in the Rules column with a new line separator
+        df_result['Rules'] = df_result.apply(lambda row: row['Rules'] + '\n' + row[rule] if pd.notnull(row[rule]) else row['Rules'], axis=1)
+        df_result.drop(columns=[rule], inplace=True)
+    
+    # remove the first new line separator
+    df_result['Rules'] = df_result['Rules'].apply(lambda x: x[1:] if x.startswith('\n') else x)
     # split the df after the CustomCategory column where it is equal Räder and return the two dataframes
     df_rader = df_result[df_result['CustomCategory'] == 'Räder']
     df_result = df_result[df_result['CustomCategory'] != 'Räder']

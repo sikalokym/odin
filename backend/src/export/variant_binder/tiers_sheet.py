@@ -1,5 +1,4 @@
 from openpyxl.styles import PatternFill, Border, Alignment, Side
-import numpy as np
 import src.export.variant_binder.options_sheet as options_sheet
 
 cell_values = {
@@ -41,14 +40,18 @@ def get_sheet(ws, sales_versions, title, df_res):
     for _, row in df_res.iterrows():
         svs = [cell_values.get(row[sv], row[sv]) for sv in sales_versions['SalesVersion']]
         if row['Price'] == 'Pack Only'or row['Price'] == 'Serie':
-            ws.append([row['Code'], row['CustomName'], row['Price']] + svs + ['', row['CustomCategory']])
+            ws.append([row['Code'], row['CustomName'], row['Price']] + svs + ['', row['CustomCategory'], row['Rules']])
             ws.append([])
         else:
             prices = row['Price'].split('/')
             if len(prices) > 1:
-                ws.append([row['Code'], row['CustomName'], prices[0]] + svs + ['', row['CustomCategory']])
+                ws.append([row['Code'], row['CustomName'], prices[0]] + svs + ['', row['CustomCategory'], row['Rules']])
                 ws.cell(row=ws.max_row, column=3).alignment = Alignment(horizontal='center', vertical='bottom')
                 ws.append(['', '', prices[1]] + svs) 
                 ws.cell(row=ws.max_row, column=3).alignment = Alignment(horizontal='center', vertical='top')
 
     options_sheet.prepare_sheet(ws, sales_versions, f'{title} - Räder')
+
+    # remove before last column with content
+    ws.delete_cols(ws.max_column - 1)
+    
