@@ -7,6 +7,11 @@ import numpy as np
 from src.database.db_operations import DBOperations
 from src.utils.db_utils import filter_df_by_timestamp, format_float_string
 
+cell_values = {
+    'S': '•',
+    'O': 'o',
+    '': '-'
+}
 
 #General formating of border lines & cell colours in excel spreadsheet
 all_border = Border(top=Side(style='thin', color='000000'),
@@ -42,7 +47,7 @@ def get_sheet(ws, sales_versions, title, time):
 
     # insert data into the sheet ab row 3
     for _, row in df_res.iterrows():
-        svs = [row[sv] if row[sv] != '' and row[sv] is not None and row[sv] is not np.nan else '-' for sv in sales_versions['SalesVersion']]
+        svs = [cell_values.get(row[sv], row[sv]) for sv in sales_versions['SalesVersion']]
         if row['Price'] == 'Pack Only'or row['Price'] == 'Serie':
             ws.append([row['Code'], row['CustomName'], row['Price']] + svs + ['', row['CustomCategory']])
             ws.append([])
@@ -54,7 +59,7 @@ def get_sheet(ws, sales_versions, title, time):
                 ws.append(['', '', prices[1]] + svs) 
                 ws.cell(row=ws.max_row, column=3).alignment = Alignment(horizontal='center', vertical='top')
 
-    prepare_sheet(ws, sales_versions, title)
+    prepare_sheet(ws, sales_versions, f'{title} - Optionen')
 
     return df_rad
 
@@ -70,7 +75,7 @@ def prepare_sheet(ws, df_sales_versions, title):
 
     # Content of Row 1 & 2
     ws.merge_cells('A1:B1')
-    ws['A1'] = f'{title} - Optionen'
+    ws['A1'] = title
     ws['C1'] = 'EUR inkl. 19 % MwSt.\n EUR ohne MwSt.'
     ws['A2'] = 'Code (ab Werk)\n + VCG Paket'
     ws['B2'] = 'Beschreibung'
@@ -104,9 +109,9 @@ def prepare_sheet(ws, df_sales_versions, title):
             cell.fill = white_fill
  
     # Formatting of second row
-    ws['A2'].alignment = Alignment(horizontal='center', vertical='center',wrap_text=True)
+    ws['A2'].alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
     ws['A2'].font = Font(size=10, bold=True)
-    ws['B2'].alignment = Alignment(horizontal='center', vertical='center')
+    ws['B2'].alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
     ws['B2'].font = Font(size=10, bold=True)
 
     # Formatting of first row border lines
@@ -122,9 +127,11 @@ def prepare_sheet(ws, df_sales_versions, title):
 
     for row in range(3, max_r + 1):
         for col in range(4, max_c + 1):
-            ws.cell(row=row, column=col).alignment = Alignment(horizontal='center', vertical='center')
+            ws.cell(row=row, column=col).alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        cell = ws.cell(row=row, column=2)
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
         cell = ws.cell(row=row, column=1)
-        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
         cell = ws[f'C{row}']
         if row % 2 != 0:
            cell.font = Font(bold=True)
@@ -256,7 +263,7 @@ def fetch_options_data(sales_versions, time):
 
     df_pno_options_with_feat_ref = df_pno_options_with_price[~df_pno_options_with_price['RelationID'].isna()]
     df_pno_options_without_feat_ref = df_pno_options_with_price[df_pno_options_with_price['RelationID'].isna()]
-    df_pno_options_without_feat_ref['Reference'] = df_pno_options_without_feat_ref['Code']
+    df_pno_options_without_feat_ref.loc[:, 'Reference'] = df_pno_options_without_feat_ref['Code']
 
     df_pno_options_feat_merged = df_pno_features.merge(df_pno_options_with_feat_ref, 
                                       how='left',
@@ -336,6 +343,10 @@ def fetch_options_data(sales_versions, time):
 
     # rename Reference to Code
     df_result.rename(columns={'Reference': 'Code'}, inplace=True)
+
+    # fill df_res columns for sv in sales_versions['SalesVersion'] with '-' if nan
+    for sv in sales_versions['SalesVersion']:
+        df_result[sv] = df_result[sv].fillna('-')
 
     # split the df after the CustomCategory column where it is equal Räder and return the two dataframes
     df_rader = df_result[df_result['CustomCategory'] == 'Räder']

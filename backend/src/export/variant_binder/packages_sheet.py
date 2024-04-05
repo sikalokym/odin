@@ -10,7 +10,7 @@ all_border = Border(top=Side(style='thin', color='000000'),
                     right=Side(style='thin', color='000000'))
 
 fill = PatternFill(start_color='000080', end_color='000080', fill_type='solid')
-# Swap S and B and empty for dot and circle and dash for availability
+
 cell_values = {
     'S': '•',
     'B': 'o',
@@ -70,7 +70,7 @@ def get_sheet(ws, sales_versions, title, time):
             cell.fill = PatternFill(start_color='BFBFBF', end_color='BFBFBF', fill_type='solid')
             cell.font = Font(name='Arial', size=12, bold=True)
             alig = 'center' if cell.column > 2 else 'left'
-            cell.alignment = Alignment(horizontal=alig, vertical='center')
+            cell.alignment = Alignment(horizontal=alig, vertical='center', wrap_text=True)
 
         # merge the cells of the 2 rows vertically besides in column C
         for col in range(1, len(sales_versions) + 4):
@@ -94,8 +94,9 @@ def get_sheet(ws, sales_versions, title, time):
             ws.append([row['RuleCode'], row['CustomName'], row['RuleBase']] + [cell_values[row[sv]] for sv in sales_versions['SalesVersion']])
             for cell in ws[len(ws["A"])]:
                 if cell.column > 2:
-                    cell.alignment = Alignment(horizontal='center', vertical='center')
+                    cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
                 else: 
+                    cell.alignment = Alignment(horizontal='left', vertical='center', wrap_text=True)
                     cell.border = all_border
     format_sheet(ws, len(sales_versions) + 4)
 
@@ -238,7 +239,7 @@ def fetch_package_data(sales_versions, time):
 
     # Drop the now unneeded columns and duplicates
     df_pno_package_final = df_pno_package_with_price[['Code', 'Price', 'RuleCode', 'RuleBase', 'Title', 'CustomName']]
-    df_pno_package_final.drop_duplicates(inplace=True)
+    df_pno_package_final = df_pno_package_final.drop_duplicates()
 
     # Join the pivoted DataFrame with the original one. sort after code ascending
     df_result = df_pno_package_final.join(pivot_df, on=['Code', 'Price', 'RuleCode', 'RuleBase']).sort_values(by='Code')
