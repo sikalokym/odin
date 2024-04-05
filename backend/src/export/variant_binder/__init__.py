@@ -25,7 +25,7 @@ def extract_variant_binder(country, model, engines_types, time):
     if valid_pnos.empty or sales_versions.empty or valid_engines.empty:
         DBOperations.instance.logger.info(f"No data found for model {model} and engine category {engines_types} at time {time}")
         return None
-
+    
     try:
         ws_1 = wb.create_sheet("Preise")
         prices_sheet.get_sheet(ws_1, valid_pnos, sales_versions.copy(), title, time, valid_engines, country)
@@ -70,7 +70,7 @@ def get_model_name(country, model, time):
     # filter models where StartDate and End Data wrap the current time for the given model
     df_model = filter_df_by_timestamp(models, time)
     
-    df_model['Title'] = df_model['CustomName'].combine_first(df_model['MarketText'])
+    df_model.loc[:, 'Title'] = df_model['CustomName'].combine_first(df_model['MarketText'])
 
     title = df_model.iloc[0]['Title']
     if title:
