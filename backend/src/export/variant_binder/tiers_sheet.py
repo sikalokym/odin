@@ -2,6 +2,12 @@ from openpyxl.styles import PatternFill, Border, Alignment, Side
 import numpy as np
 import src.export.variant_binder.options_sheet as options_sheet
 
+cell_values = {
+    'S': '•',
+    'O': 'o',
+    '': '-'
+}
+
 #General formating of border lines & cell colours in excel spreadsheet
 all_border = Border(top=Side(style='thin', color='000000'),
                     bottom=Side(style='thin', color='000000'),
@@ -33,7 +39,7 @@ def get_sheet(ws, sales_versions, title, df_res):
 
     # insert data into the sheet ab row 3
     for _, row in df_res.iterrows():
-        svs = [row[sv] if row[sv] != '' and row[sv] is not None and row[sv] is not np.nan else '-' for sv in sales_versions['SalesVersion']]
+        svs = [cell_values.get(row[sv], row[sv]) for sv in sales_versions['SalesVersion']]
         if row['Price'] == 'Pack Only'or row['Price'] == 'Serie':
             ws.append([row['Code'], row['CustomName'], row['Price']] + svs + ['', row['CustomCategory']])
             ws.append([])
@@ -45,4 +51,4 @@ def get_sheet(ws, sales_versions, title, df_res):
                 ws.append(['', '', prices[1]] + svs) 
                 ws.cell(row=ws.max_row, column=3).alignment = Alignment(horizontal='center', vertical='top')
 
-    options_sheet.prepare_sheet(ws, sales_versions, title)
+    options_sheet.prepare_sheet(ws, sales_versions, f'{title} - Räder')
