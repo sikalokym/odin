@@ -17,7 +17,7 @@
     <label class="engine" style="width: 180px;">Engine Category</label><br>
     <select name="engine" id="engine" v-model="engine" style="width:180px; height:30px; position: absolute; margin-left: -90px;">
       <option disabled value="">Please Select Engine...</option>
-      <option value="">All</option>
+      <option value="all">All</option>
       <option v-for="engine in engine_cats" :key="engine" :value="engine">{{ engine }}</option>
     </select>
     <br><br>
