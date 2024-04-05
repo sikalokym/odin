@@ -287,6 +287,8 @@ def filter_df_by_timestamp(df, timestamp):
         pandas.DataFrame: The filtered DataFrame.
 
     """
+    if df.empty:
+        return df
     return df[(df['StartDate'] <= timestamp) & (df['EndDate'] >= timestamp)]
 
 def filter_df_by_model_year(df, model_year):

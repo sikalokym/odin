@@ -12,8 +12,8 @@ def is_valid_year(year, spec_market):
     Returns:
         bool: True if year is valid, False otherwise
     """
-    years = get_model_years(spec_market)['Years']
-    return year in years if years else 'CPAM internal error'
+    years = get_model_years(spec_market)
+    return year in years['Years'] if years else 'CPAM internal error'
 
 def is_valid_car_type(car_type, year, country_code):
     """Check if car type is valid.
@@ -25,9 +25,9 @@ def is_valid_car_type(car_type, year, country_code):
     Returns:
         bool: True if car type is valid, False otherwise
     """
-    car_types = get_car_types(year, country_code)['DataRows']
+    car_types = get_car_types(year, country_code)
     
-    return car_type in [car['Type'] for car in car_types] if car_types else 'CPAM internal error'
+    return car_type in [car['Type'] for car in car_types['DataRows']] if car_types else 'CPAM internal error'
 
 def is_valid_engine_category(engine_category, year, country_code, model):
     """Check if engine category is valid.

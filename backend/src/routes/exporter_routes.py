@@ -1,6 +1,6 @@
 from flask import Blueprint, request, send_file
 from src.export.variant_binder import extract_variant_binder
-from src.utils.ingest_utils import is_valid_car_type, is_valid_engine_category
+from src.utils.ingest_utils import is_valid_engine_category
 
 
 bp_exporter = Blueprint('export', __name__, url_prefix='/api/<country>/export')
@@ -18,8 +18,6 @@ def variant_binder(country):
     
     if not model:
         return 'Model is required', 400
-    elif not is_valid_car_type(model, time[:4], country):
-        return 'Invalid car type', 400
     
     if not engines_types and engines_types != '':
         return 'Engine category is required', 400
