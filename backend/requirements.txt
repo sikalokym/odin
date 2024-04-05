@@ -4,8 +4,9 @@ python-dotenv==1.0.1
 configparser==6.0.0
 requests==2.31.0
 openpyxl==3.1.2
-pyodbc==5.0.1
+pyarrow==15.0.2
 pandas==2.2.0
+pyodbc==5.0.1
 numpy==1.26.3
 lxml==5.1.0
 xlrd==2.0.1
