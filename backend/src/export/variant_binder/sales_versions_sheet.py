@@ -53,7 +53,7 @@ def get_sheet(ws, sales_versions, title):
     ws['B2'].font = Font(size=10, bold=True)
 
     prev_svn = None
-    for (sv, svn), group in df_sales_versions.groupby(['SalesVersion', 'SalesVersionName']):
+    for (sv, svn), group in df_sales_versions.groupby(['SalesVersion', 'SalesVersionName'], observed=False):
         group.drop(columns=['SalesVersion', 'SalesVersionName'], inplace=True)
         df_options = group.sort_values(by=['CustomCategory', 'CustomName'], ascending=True)
 
@@ -90,15 +90,18 @@ def get_sheet(ws, sales_versions, title):
         cell = ws.cell(row=row, column=1)
         cell.border = Border(bottom=Side(style='thin'),
                             right=Side(style='thin'))
+        cell.alignment = Alignment(horizontal='left', vertical='center', wrap_text=True)
+
         cell = ws.cell(row=row, column=2)
         cell.border = Border(bottom=Side(style='thin'),
                             right=Side(style='medium'))
+        cell.alignment = Alignment(horizontal='left', vertical='center', wrap_text=True)
     
             
 def fetch_sales_version_data(df_sales_versions):
     pno_ids = df_sales_versions.ID.unique().tolist()
     # filter where code starts with X
-    conditions = [f"Code not like 'X%'"]
+    conditions = [f"Code not like 'X%'", "RuleName = 'S'"]
     if len(pno_ids) == 1:
         conditions.append(f"PNOID = '{pno_ids[0]}'")
     else:
