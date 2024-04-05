@@ -52,8 +52,12 @@ def get_model_years(spec_market, start_model_year=''):
     logger.debug(req)
 
     response = requests.post(API_URL, headers=HEADERS, data=req)
-    logger.debug('Model years fetched from CPAM')
 
+    if response.status_code > 500:
+        logger.error('Error fetching model years from CPAM')
+        return []
+    
+    logger.debug('Model years fetched from CPAM')
     return parse_xml(response.text, model_year_resp_template)
 
 def get_car_types(model_year, spec_market):
@@ -70,8 +74,12 @@ def get_car_types(model_year, spec_market):
     logger.debug(req)
 
     response = requests.post(API_URL, headers=HEADERS, data=req)
-    logger.debug('Car types fetched from CPAM')
+
+    if response.status_code > 500:
+        logger.error('Error fetching car types from CPAM')
+        return []
     
+    logger.debug('Car types fetched from CPAM')
     return parse_xml(response.text, car_types_resp_template)
 
 def get_dictionary(model_year, car_type, spec_market, market_auth_flag='', start_week=''):
@@ -91,8 +99,12 @@ def get_dictionary(model_year, car_type, spec_market, market_auth_flag='', start
     logger.debug(req)
 
     response = requests.post(API_URL, headers=HEADERS, data=req)
-    logger.debug('Dictionary fetched from CPAM')
     
+    if response.status_code > 500:
+        logger.error('Error fetching dictionary from CPAM')
+        return []
+    
+    logger.debug('Dictionary fetched from CPAM')
     return parse_xml(response.text, dictionary_resp_template)
 
 def get_authorization(model_year, car_type, spec_market, market_auth_flag='', start_week=''):
@@ -112,8 +124,12 @@ def get_authorization(model_year, car_type, spec_market, market_auth_flag='', st
     logger.debug(req)
 
     response = requests.post(API_URL, headers=HEADERS, data=req)
-    logger.debug('Authorization fetched from CPAM')
     
+    if response.status_code > 500:
+        logger.error('Error fetching authorization from CPAM')
+        return []
+    
+    logger.debug('Authorization fetched from CPAM')
     return parse_xml(response.text, authorization_resp_template)
 
 def get_packages(model_year, car_type, spec_market, market_auth_flag='', start_week=''):
@@ -133,8 +149,12 @@ def get_packages(model_year, car_type, spec_market, market_auth_flag='', start_w
     logger.debug(req)
 
     response = requests.post(API_URL, headers=HEADERS, data=req)
-    logger.debug('Packages fetched from CPAM')
     
+    if response.status_code > 500:
+        logger.error('Error fetching packages from CPAM')
+        return []
+    
+    logger.debug('Packages fetched from CPAM')
     return parse_xml(response.text, packages_resp_template)
 
 def get_dependency_rules(model_year, car_type, spec_market, market_auth_flag='', start_week=''):
@@ -154,8 +174,12 @@ def get_dependency_rules(model_year, car_type, spec_market, market_auth_flag='',
     logger.debug(req)
 
     response = requests.post(API_URL, headers=HEADERS, data=req)
-    logger.debug('Dependency rules fetched from CPAM')
     
+    if response.status_code > 500:
+        logger.error('Error fetching dependency rules from CPAM')
+        return []
+    
+    logger.debug('Dependency rules fetched from CPAM')
     return parse_xml(response.text, dependency_rules_resp_template)
 
 def get_features(model_year, car_type, spec_market, market_auth_flag='', start_week=''):
@@ -175,6 +199,10 @@ def get_features(model_year, car_type, spec_market, market_auth_flag='', start_w
     logger.debug(req)
 
     response = requests.post(API_URL, headers=HEADERS, data=req)
-    logger.debug('Features fetched from CPAM')
     
+    if response.status_code > 500:
+        logger.error('Error fetching features from CPAM')
+        return []
+    
+    logger.debug('Features fetched from CPAM')
     return parse_xml(response.text, features_resp_template)
