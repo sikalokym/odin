@@ -15,13 +15,18 @@ def refresh_all_cpam_data(country):
 @bp_ingest.route('/cpam/<year>/<car_type>', methods=['GET'])
 def refresh_cpam_data(country, year, car_type):
     
-    if not is_valid_year(year, country):
+    is_valid = is_valid_year(year, country)
+    if isinstance(is_valid, str):
+        return jsonify({'error': is_valid}), 500
+    if not is_valid:
         return jsonify({'error': 'Invalid year'}), 400
     
     if not is_valid_car_type(car_type, year, country):
         return jsonify({'error': 'Invalid car type'}), 400
-    
-    ingest_cpam_data(year, car_type, country, 'M', '')
+    try:
+        ingest_cpam_data(year, car_type, country, 'M', '')
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @bp_ingest.route('/visa', methods=['GET'])
 def refresh_visa_data(country):

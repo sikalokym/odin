@@ -84,8 +84,14 @@ def ingest_cpam_data(year, car_type, spec_market, maf, sw):
     Raises:
         ValueError: If the year or car type is invalid.
     """
-    
     logger.info(f'Processing car type: {car_type}')
+
+    is_valid = is_valid_year(year, spec_market)
+    if isinstance(is_valid, str):
+        raise ValueError(is_valid)
+    elif not is_valid:
+        raise ValueError('Invalid year')
+    
     new_entities = DBOperations.instance.collect_entity(cpam.get_dictionary(year, car_type, spec_market, maf, sw)['DataRows'], spec_market)
     if not new_entities:
         return
