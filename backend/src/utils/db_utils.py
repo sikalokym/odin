@@ -144,15 +144,15 @@ def sort_df_empty_to_filled(df):
         pandas.DataFrame: The sorted DataFrame.
 
     Example:
-        >>> df = pd.DataFrame({'A': ['', 'value1', 'value2'],
-        ...                    'B': ['-', 'value3', 'value4'],
-        ...                    'C': ['--', 'value5', 'value6']})
+        >>> df = pd.DataFrame({'A': ['', '--', 'value1'],
+        ...                    'B': ['-', 'value2', 'value3'],
+        ...                    'C': ['value4', 'value5', 'value6']})
         >>> sorted_df = sort_df_empty_to_filled(df)
         >>> print(sorted_df)
               A       B       C
-        0    --       -        
-        1          value3  value5
-        2  value1  value4  value6
+        0                  value4
+        1          value2  value5
+        2  value1  value3  value6
     """
     
     df.replace(['', '-', '--'], None, inplace=True)
