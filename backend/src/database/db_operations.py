@@ -111,21 +111,6 @@ class DBOperations:
             params = list(df.itertuples(index=False, name=None))
             cursor.executemany(sql, params)
 
-    def log_change_from_staging(self, target_table_name):
-        try:
-            with self.get_cursor() as cursor:
-                changelog_table_name = f"{target_table_name}_ChangeLog"
-                cursor.execute(f"""
-                    INSERT INTO {changelog_table_name} (Code, StartDate, OldSpecial, NewSpecial, ChangeDate)
-                    SELECT TARGET.Code, TARGET.StartDate, TARGET.Special, SOURCE.Special, CURRENT_TIMESTAMP
-                    FROM {target_table_name} AS TARGET
-                    JOIN #tmp_staging_{target_table_name} AS SOURCE
-                    ON TARGET.Code = SOURCE.Code AND TARGET.StartDate = SOURCE.StartDate
-                    WHERE TARGET.Special <> SOURCE.Special;
-                """)
-        except Exception as e:
-            self.logger.error(f"Error merging data from temporary staging table: {e}")
-
     def merge_data_from_staging(self, target_table_name, all_columns, conditional_columns):
         try:
             with self.get_cursor() as cursor:

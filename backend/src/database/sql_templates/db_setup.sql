@@ -12,6 +12,7 @@ VALUES ('231', 'Germany');
 -- Create the Model table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Model')
 CREATE TABLE Model (
+    ID UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
     Code VARCHAR(12),
     Special CHAR(1),
     ShortText VARCHAR(255),
@@ -26,6 +27,7 @@ CREATE TABLE Model (
 -- Create the Engine table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Engine')
 CREATE TABLE Engine (
+    ID UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
     Code VARCHAR(12),
     Special CHAR(1),
     ShortText VARCHAR(255),
@@ -43,6 +45,7 @@ CREATE TABLE Engine (
 -- Create the SalesVersion table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'SalesVersion')
 CREATE TABLE SalesVersion (
+    ID UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
     Code VARCHAR(12),
     Special CHAR(1),
     ShortText VARCHAR(255),
@@ -57,6 +60,7 @@ CREATE TABLE SalesVersion (
 -- Create the Gearbox table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Gearbox')
 CREATE TABLE Gearbox (
+    ID UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
     Code VARCHAR(12),
     Special CHAR(1),
     ShortText VARCHAR(255),
@@ -70,6 +74,7 @@ CREATE TABLE Gearbox (
 -- Create the Steering table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Steering')
 CREATE TABLE Steering (
+    ID UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
     Code VARCHAR(12),
     Special CHAR(1),
     ShortText VARCHAR(255),
@@ -82,6 +87,7 @@ CREATE TABLE Steering (
 -- Create the MarketCode table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'MarketCode')
 CREATE TABLE MarketCode (
+    ID UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
     Code VARCHAR(12),
     Special CHAR(1),
     ShortText VARCHAR(255),
@@ -94,6 +100,7 @@ CREATE TABLE MarketCode (
 -- Create the Body table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Body')
 CREATE TABLE Body (
+    ID UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
     Code VARCHAR(12),
     Special CHAR(1),
     ShortText VARCHAR(255),
@@ -255,6 +262,19 @@ CREATE TABLE PNOFeature (
     FOREIGN KEY (PNOID) REFERENCES PNO(ID)
 );
 
+-- Create the PNOCustomFeature table
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PNOCustomFeature')
+CREATE TABLE PNOCustomFeature (
+    ID UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+    PNOID UNIQUEIDENTIFIER,
+    Code VARCHAR(12),
+    CustomName NVARCHAR(MAX),
+    CustomCategory VARCHAR(255),
+    StartDate INT,
+    EndDate INT,
+    FOREIGN KEY (PNOID) REFERENCES PNO(ID)
+);
+
 -- Create the custom table of PNOs
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PNOCustom')
 CREATE TABLE PNOCustom (
@@ -349,4 +369,18 @@ CREATE TABLE VisaFilesPrices (
     Package VARCHAR(12),
     Price DECIMAL(19,2),
     PriceBeforeTax DECIMAL(19,2),
+);
+
+-- Create the change log table
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ChangeLog')
+CREATE TABLE ChangeLog (
+    ID UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+    CountryCode VARCHAR(12),
+    ChangeCode VARCHAR(128),
+    ChangeTable VARCHAR(128),
+    ChangeDate DATETIME, 
+    ChangeType VARCHAR(100), -- Add, Update, Delete
+    ChangeField VARCHAR(100),
+    ChangeFrom NVARCHAR(MAX),
+    ChangeTo NVARCHAR(MAX)
 );

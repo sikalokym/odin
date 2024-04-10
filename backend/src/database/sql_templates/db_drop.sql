@@ -1,4 +1,34 @@
--- VisaFilesPrices
+-- Drop triggers for the first batch of tables
+DROP TRIGGER IF EXISTS [dbo].[trg_Model_InsertUpdate];
+DROP TRIGGER IF EXISTS [dbo].[trg_SalesVersion_InsertUpdate];
+DROP TRIGGER IF EXISTS [dbo].[trg_Gearbox_InsertUpdate];
+
+-- Drop triggers for the second batch of tables
+DROP TRIGGER IF EXISTS [dbo].[trg_Steering_InsertUpdate];
+DROP TRIGGER IF EXISTS [dbo].[trg_MarketCode_InsertUpdate];
+DROP TRIGGER IF EXISTS [dbo].[trg_Body_InsertUpdate];
+DROP TRIGGER IF EXISTS [dbo].[trg_Color_InsertUpdate];
+DROP TRIGGER IF EXISTS [dbo].[trg_Upholstery_InsertUpdate];
+DROP TRIGGER IF EXISTS [dbo].[trg_Options_InsertUpdate];
+DROP TRIGGER IF EXISTS [dbo].[trg_Package_InsertUpdate];
+DROP TRIGGER IF EXISTS [dbo].[trg_Feature_InsertUpdate];
+
+-- Specific triggers mentioned
+DROP TRIGGER IF EXISTS [dbo].[trg_Engine_InsertUpdate];
+DROP TRIGGER IF EXISTS [dbo].[trg_PNO_InsertUpdate];
+DROP TRIGGER IF EXISTS [dbo].[trg_CustomFeature_InsertUpdate];
+DROP TRIGGER IF EXISTS [dbo].[trg_PNOCustomFeature_InsertUpdate];
+DROP TRIGGER IF EXISTS [dbo].[trg_PNOFeature_InsertUpdate];
+
+-- Drop triggers for the custom tables
+DROP TRIGGER IF EXISTS [dbo].[trg_PNOCustom_InsertUpdate];
+DROP TRIGGER IF EXISTS [dbo].[trg_PNOColorCustom_InsertUpdate];
+DROP TRIGGER IF EXISTS [dbo].[trg_PNOUpholsteryCustom_InsertUpdate];
+DROP TRIGGER IF EXISTS [dbo].[trg_PNOOptionsCustom_InsertUpdate];
+DROP TRIGGER IF EXISTS [dbo].[trg_PNOPackageCustom_InsertUpdate];
+GO
+
+-- Drop all tables in the database
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'VisaFilesPrices')
 DROP TABLE VisaFilesPrices
 
@@ -16,6 +46,10 @@ GO
 
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'PNOColorCustom')
 DROP TABLE [dbo].[PNOColorCustom]
+GO
+
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'PNOPackageCustom')
+DROP TABLE [dbo].[PNOPackageCustom]
 GO
 
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'PNOCustom')
@@ -44,6 +78,10 @@ GO
 
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'PNOFeature')
 DROP TABLE [dbo].[PNOFeature]
+GO
+
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'PNOCustomFeature')
+DROP TABLE [dbo].[PNOCustomFeature]
 GO
 
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'OptionForbiddsOption')
@@ -120,4 +158,8 @@ GO
 
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'SupportedCountry')
 DROP TABLE [dbo].[SupportedCountry]
+GO
+
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'ChangeLog')
+DROP TABLE [dbo].[ChangeLog]
 GO

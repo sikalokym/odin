@@ -15,7 +15,7 @@ def get_available_model_years(country):
 
 @bp_settings.route('/supported_countries', methods=['GET'])
 def get_supported_countries():
-    countries = DBOperations.instance.get_table_df(DBOperations.instance.config.get('Settings', 'CountryCodes'), columns=['Code', 'CountryName'])
+    countries = DBOperations.instance.get_table_df(DBOperations.instance.config.get('SETTINGS', 'CountryCodes'), columns=['Code', 'CountryName'])
     countries = countries.to_dict(orient='records')
 
     return jsonify(countries)
