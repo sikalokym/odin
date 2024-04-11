@@ -335,6 +335,10 @@ def get_features(country, model_year):
     df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['Code', 'CustomName', 'CustomCategory'], conditions=conditions)
     df_pno_features['Code'] = df_pno_features['Code'].str.strip()
     df_pno_features['MarketText'] = df_pno_features['Code'].map(df_features.set_index('Code')['MarketText'])
+    df_pno_custom_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'CFEAT'), columns=['Code', 'CustomName', 'CustomCategory'], conditions=conditions)
+    df_pno_custom_features['Code'] = df_pno_custom_features['Code'].str.strip()
+
+    df_pno_features = pd.concat([df_pno_features, df_pno_custom_features], ignore_index=True)
 
     df_pno_features = df_pno_features.sort_values(by='Code', ascending=True)
     df_pno_features.drop_duplicates(inplace=True)

@@ -101,12 +101,18 @@ def get_sheet(ws, sales_versions, title):
 def fetch_sales_version_data(df_sales_versions):
     pno_ids = df_sales_versions.ID.unique().tolist()
     # filter where code starts with X
-    conditions = [f"Code not like 'X%'", "RuleName = 'S'"]
+    conditions = []
     if len(pno_ids) == 1:
         conditions.append(f"PNOID = '{pno_ids[0]}'")
     else:
         conditions.append(f"PNOID in {tuple(pno_ids)}")
-    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Code', 'Reference', 'Options', 'CustomName', 'CustomCategory'], conditions=conditions)
+    features_conditions = conditions.copy() + [f"Code not like 'X%'", "RuleName = 'S'"]
+    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Code', 'Reference', 'CustomName', 'CustomCategory'], conditions=features_conditions)
+    df_pno_custom_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'CFEAT'), columns=['PNOID', 'Code', 'CustomName', 'CustomCategory'], conditions=conditions)
+    # Code should have (reference) appendend to it, if Reference is not null and not empty
+    df_pno_features['Code'] = df_pno_features.apply(lambda x: f"{x['Code']} ({x['Reference']})" if x['Reference'] else x['Code'], axis=1)
+    df_pno_features = df_pno_features.drop(columns=['Reference'])
+    df_pno_features = pd.concat([df_pno_features, df_pno_custom_features])
     sv_correct_order = df_sales_versions.SalesVersion.unique().tolist()
 
     df_pno_features_sv = df_pno_features.merge(df_sales_versions[['ID', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='ID', how='inner')
