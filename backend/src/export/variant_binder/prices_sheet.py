@@ -31,8 +31,7 @@ def get_sheet(ws, df_valid_pnos, df_sales_versions, title, time, df_engines_type
     """
     df_price, df_gb, df_en, gb_ids = fetch_vb_price_data(country, df_valid_pnos, time)
     
-    #get length of the code column, where code is an array and we want the max length of any array in the Code column
-    max_code_length = df_engines_types['Code'].apply(lambda x: len(x)).max()
+    max_code_length = df_engines_types['Code'].apply(lambda x: len(set(x))).max()
     prepare_sheet(ws, title, max_code_length)
     curr_row = 3
     for _, row in df_engines_types.iterrows():
@@ -90,7 +89,7 @@ def insert_table(ws, df_price, df_sv, df_gb, df_en, curr_row):
     ws.row_dimensions[curr_row].height = 24
 
     curr_col = 2
-    for en in df.Engine.unique():
+    for en in df_en.Code.unique():
         for gb in df[df['Engine'] == en].Gearbox.unique():
             group = df[(df['Engine'] == en) & (df['Gearbox'] == gb)]
             gb_name = df_gb[df_gb['Code'] == gb].iloc[0]['MarketText']
@@ -206,7 +205,7 @@ def fetch_vb_price_data(country, df_valid_pnos, time):
         conditions.append(f'Code in {tuple(en_codes)}')
     df_en = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), conditions=conditions)
     df_en = filter_df_by_timestamp(df_en, time)
-    
+
     # sort Code by en_codes
     df_en['Code'] = pd.Categorical(df_en['Code'], en_codes)
     df_en.sort_values(by='Code', inplace=True)
