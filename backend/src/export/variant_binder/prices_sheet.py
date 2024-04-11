@@ -29,7 +29,7 @@ def get_sheet(ws, df_valid_pnos, df_sales_versions, title, time, df_engines_type
     Returns:
         None
     """
-    df_price, df_gb, df_en = fetch_vb_price_data(country, df_valid_pnos, time)
+    df_price, df_gb, df_en, gb_ids = fetch_vb_price_data(country, df_valid_pnos, time)
     
     #get length of the code column, where code is an array and we want the max length of any array in the Code column
     max_code_length = df_engines_types['Code'].apply(lambda x: len(x)).max()
@@ -50,6 +50,8 @@ def get_sheet(ws, df_valid_pnos, df_sales_versions, title, time, df_engines_type
         curr_row = insert_engines_type_title(ws, type, curr_row)
         curr_row = insert_table(ws, group, df_sales_versions, df_group_gb, df_group_en, curr_row)
         curr_row += 1
+    
+    return gb_ids
 
 def prepare_sheet(ws, title, max_code_length):
     ws.sheet_view.showGridLines = False
@@ -193,12 +195,23 @@ def fetch_vb_price_data(country, df_valid_pnos, time):
     df_gb = df_gb[df_gb['Code'].isin(df_price['Gearbox'].tolist())]
     df_gb = filter_df_by_timestamp(df_gb, time)
     df_gb['CustomName'] = df_gb['CustomName'].combine_first(df_gb['MarketText'])
+    gb_ids = df_gb['ID'].unique().tolist() 
     df_gb = df_gb[['Code', 'CustomName']]
 
-    df_en = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), conditions=[f'CountryCode = {country}'])
-    df_en = df_en[df_en['Code'].isin(df_price['Engine'].tolist())]
+    en_codes = df_price['Engine'].unique().tolist()
+    conditions = [f'CountryCode = {country}']
+    if len(en_codes) == 1:
+        conditions.append(f'Code = {en_codes[0]}')
+    else:
+        conditions.append(f'Code in {tuple(en_codes)}')
+    df_en = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), conditions=conditions)
     df_en = filter_df_by_timestamp(df_en, time)
+    
+    # sort Code by en_codes
+    df_en['Code'] = pd.Categorical(df_en['Code'], en_codes)
+    df_en.sort_values(by='Code', inplace=True)
+
     df_en['CustomName'] = df_en['CustomName'].combine_first(df_en['MarketText'])
     df_en = df_en[['Code', 'CustomName', 'Performance']]
 
-    return df_price, df_gb, df_en
+    return df_price, df_gb, df_en, gb_ids
