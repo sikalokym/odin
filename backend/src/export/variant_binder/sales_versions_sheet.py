@@ -41,11 +41,9 @@ def get_sheet(ws, sales_versions, title):
     # Formatting of first row
     ws['A1'].font = Font(name='Arial', size=16, bold=True, color="FFFFFF")
     ws['A1'].alignment = Alignment(horizontal='left', vertical='center')
+    ws['A1'].fill = fill
+    ws['B1'].fill = fill
     
-    for col in range(1,2):
-        cell = ws.cell(row=1, column=col)
-        cell.fill = fill
-
     # Formatting of second row
     ws['A2'].alignment = Alignment(horizontal='center', vertical='center',wrap_text=True)
     ws['A2'].font = Font(size=10, bold=True)
