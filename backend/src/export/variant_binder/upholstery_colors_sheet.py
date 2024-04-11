@@ -117,7 +117,7 @@ def foramt_row(ws, row1, row2):
     for col in range(1, ws.max_column+1):
         if col != 3:
             cell = ws.cell(row=row1, column=col)
-            alig = 'center' if col != 2 else 'left'
+            alig = 'center' if col > 2 else 'left'
             cell.alignment = Alignment(horizontal=alig, vertical='center', wrap_text=True)
             cell.border = all_border
             cell.font = Font(name='Arial', size=10)

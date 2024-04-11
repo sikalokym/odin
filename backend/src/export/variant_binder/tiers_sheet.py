@@ -54,4 +54,3 @@ def get_sheet(ws, sales_versions, title, df_res):
 
     # remove before last column with content
     ws.delete_cols(ws.max_column - 1)
-    

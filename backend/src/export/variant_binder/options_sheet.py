@@ -137,9 +137,9 @@ def prepare_sheet(ws, df_sales_versions, title):
         for col in range(4, max_c + 1):
             ws.cell(row=row, column=col).alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
         cell = ws.cell(row=row, column=2)
-        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        cell.alignment = Alignment(horizontal='left', vertical='center', wrap_text=True)
         cell = ws.cell(row=row, column=1)
-        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        cell.alignment = Alignment(horizontal='left', vertical='center', wrap_text=True)
         cell = ws[f'C{row}']
         if row % 2 != 0:
            cell.font = Font(bold=True)

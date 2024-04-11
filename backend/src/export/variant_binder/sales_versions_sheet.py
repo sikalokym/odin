@@ -26,7 +26,6 @@ def get_sheet(ws, sales_versions, title):
     # Write the headers
     ws['A1'] = title
     ws.append(['Feature Code (Reference)', 'Serienausstattung'])
-    ws.append([])
     ws['A1'].font = Font(size=16, bold=True)
     ws.merge_cells('A1:B1')
     ws['A1'].alignment = Alignment(horizontal='center')

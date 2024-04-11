@@ -231,7 +231,7 @@ def fetch_package_data(sales_versions, time):
     df_pno_package_with_price['Price'] = df_pno_package_with_price.apply(lambda x: f"{x['Price']}/{x['PriceBeforeTax']}" if x['RuleName'] != '%' else '%', axis=1)
 
     # Title is custom name if available, else Title
-    df_pno_package_with_price['Title'] = df_pno_package_with_price.apply(lambda x: f"CPAM - {x['PCustomName']}" if x['PCustomName'] and x['CustomName'] != '' else x['Title'], axis=1)
+    df_pno_package_with_price['Title'] = df_pno_package_with_price['PCustomName'].combine_first(df_pno_package_with_price['Title'])
     df_pno_package_with_price.drop(columns=['ID', 'RelationID', 'PriceBeforeTax', 'PCustomName'], inplace=True)
 
     # Create the pivot table
