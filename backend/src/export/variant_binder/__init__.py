@@ -55,7 +55,7 @@ def extract_variant_binder(country, model, engines_types, time):
     try:
         ws_7 = wb.create_sheet("Änderungen", 0)
         entities_ids_dict = {'Typ': [model_id], 'SV': sales_versions.SVID.unique().tolist(), 'En': valid_engines.ID.explode().unique().tolist(), 'G': gb_ids}
-        change_log.get_sheet(ws_7, entities_ids_dict, valid_pnos.ID.unique().tolist(), title, time, country)
+        change_log.get_sheet(ws_7, entities_ids_dict, valid_pnos.ID.unique().tolist(), [], title, time, country)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error creating sheet: {e}")
 

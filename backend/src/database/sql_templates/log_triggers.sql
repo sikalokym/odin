@@ -403,7 +403,7 @@ BEGIN
     BEGIN
         INSERT INTO ChangeLog (CountryCode, ChangeCode, ChangeTable, ChangeDate, ChangeType, ChangeField, ChangeFrom, ChangeTo)
         SELECT '''',
-            ID, 
+            PNOID, 
             ''' + @tableName + ''', 
             GETDATE(), 
             ''Insert'',
@@ -417,10 +417,10 @@ BEGIN
     ELSE IF EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted)
     BEGIN
         INSERT INTO ChangeLog (CountryCode, ChangeCode, ChangeTable, ChangeDate, ChangeType, ChangeField, ChangeFrom, ChangeTo)
-        SELECT '''', CAST(inserted.ID AS VARCHAR(128)), ''' + @tableName + ''', GETDATE(), ''Update'', ''RuleName'', deleted.RuleName, inserted.RuleName
+        SELECT '''', CAST(inserted.PNOID AS VARCHAR(128)), ''' + @tableName + ''', GETDATE(), ''Update'', ''RuleName'', deleted.RuleName, inserted.RuleName
         FROM inserted JOIN deleted ON inserted.ID = deleted.ID WHERE ISNULL(deleted.RuleName, 0.00) <> ISNULL(inserted.RuleName, 0.00)
         UNION ALL
-        SELECT '''', CAST(inserted.ID AS VARCHAR(128)), ''' + @tableName + ''', GETDATE(), ''Update'', ''EndDate'', CAST(deleted.EndDate AS VARCHAR), CAST(inserted.EndDate AS VARCHAR)
+        SELECT '''', CAST(inserted.PNOID AS VARCHAR(128)), ''' + @tableName + ''', GETDATE(), ''Update'', ''EndDate'', CAST(deleted.EndDate AS VARCHAR), CAST(inserted.EndDate AS VARCHAR)
         FROM inserted JOIN deleted ON inserted.ID = deleted.ID WHERE deleted.EndDate <> inserted.EndDate;
     END
 END';

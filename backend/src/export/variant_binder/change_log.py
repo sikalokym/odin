@@ -30,17 +30,19 @@ def get_sheet(ws, entities_ids_dict, pnos_ids, relations_ids, title, time, count
     pno_tables = ['COL', 'UPH', 'OPT', 'PKG', 'FEAT', 'CFEAT']
     conditions = []
     if len(pnos_ids) == 1:
-        conditions.append(f"PNOID = '{pnos_ids[0]}'")
+        conditions.append(f"ChangeCode = '{pnos_ids[0]}'")
     else:
-        conditions.append(f"PNOID in {tuple(pnos_ids)}")
-    or_conditions = [ f"ChangeTable = '{table}'" for table in pno_tables]
+        conditions.append(f"ChangeCode in {tuple(pnos_ids)}")
+    or_conditions = [ f"ChangeTable = '{DBOperations.instance.config.get('AUTH', table)}'" for table in pno_tables]
     or_cond = '(' + ' OR '.join(or_conditions) + ')' if len(or_conditions) != 0 else ''
     conditions.append(f"CAST(ChangeDate AS DATE) < '{date}'")
     conditions.append(or_cond)
 
     df_pno_change_log = DBOperations.instance.get_table_df(DBOperations.instance.config.get('DQ', 'CL'), conditions=conditions)
 
-    relations_tables = ['PNO_Custom', 'PNOColorCustom', 'PNOOptionsCustom', 'PNOUpholsteryCustom', 'PNOPackageCustom']
+    df_change_log = pd.concat([df_change_log, df_pno_change_log])
+
+    # relations_tables = ['PNO_Custom', 'PNOColorCustom', 'PNOOptionsCustom', 'PNOUpholsteryCustom', 'PNOPackageCustom']
 
     # Write the headers
     ws['A1'] = f'{title} - Änderungen'
