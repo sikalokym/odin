@@ -2,7 +2,7 @@ from io import BytesIO
 import numpy as np
 from openpyxl import Workbook
 from src.database.db_operations import DBOperations
-from src.export.variant_binder import prices_sheet, options_sheet, upholstery_colors_sheet, packages_sheet, sales_versions_sheet, tiers_sheet
+from src.export.variant_binder import prices_sheet, options_sheet, upholstery_colors_sheet, packages_sheet, sales_versions_sheet, tiers_sheet, change_log
 from src.utils.db_utils import filter_df_by_timestamp, get_model_year_from_date
 
 
@@ -17,7 +17,7 @@ def extract_variant_binder(country, model, engines_types, time):
         valid_engines = get_valid_engines(country, engines_types, time)
         valid_pnos = get_valid_pnos(country, model, time, valid_engines)
         sales_versions = get_sales_versions(country, valid_pnos, time)
-        title = get_model_name(country, model, time)
+        title, model_id = get_model_name(country, model, time)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error getting VB Data: {e}")
         raise Exception(f"Error getting VB Data: {e}")
@@ -25,10 +25,9 @@ def extract_variant_binder(country, model, engines_types, time):
     if valid_pnos.empty or sales_versions.empty or valid_engines.empty:
         DBOperations.instance.logger.info(f"No data found for model {model} and engine category {engines_types} at time {time}")
         return None
-    
     try:
         ws_1 = wb.create_sheet("Preise")
-        prices_sheet.get_sheet(ws_1, valid_pnos, sales_versions.copy(), title, time, valid_engines, country)
+        gb_ids = prices_sheet.get_sheet(ws_1, valid_pnos, sales_versions.copy(), title, time, valid_engines, country)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error creating sheet: {e}")
     try:
@@ -53,6 +52,12 @@ def extract_variant_binder(country, model, engines_types, time):
         tiers_sheet.get_sheet(ws_6, sales_versions.copy(), title, df_rad)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error creating sheet: {e}")
+    try:
+        ws_7 = wb.create_sheet("Änderungen", 0)
+        entities_ids_dict = {'Typ': [model_id], 'SV': sales_versions.SVID.unique().tolist(), 'En': valid_engines.ID.explode().unique().tolist(), 'G': gb_ids}
+        change_log.get_sheet(ws_7, entities_ids_dict, valid_pnos.ID.unique().tolist(), title, time, country)
+    except Exception as e:
+        DBOperations.instance.logger.error(f"Error creating sheet: {e}")
 
     model_year = get_model_year_from_date(time)
     time = str(time)
@@ -65,16 +70,16 @@ def extract_variant_binder(country, model, engines_types, time):
     return output, vb_title
     
 def get_model_name(country, model, time):
-    models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), ['MarketText', 'CustomName', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f'Code = {model}'])
+    models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), ['ID', 'MarketText', 'CustomName', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f'Code = {model}'])
 
     # filter models where StartDate and End Data wrap the current time for the given model
     df_model = filter_df_by_timestamp(models, time)
     
     df_model.loc[:, 'Title'] = df_model['CustomName'].combine_first(df_model['MarketText'])
 
-    title = df_model.iloc[0]['Title']
-    if title:
-        return title
+    first_row = df_model.iloc[0]
+    if not first_row.empty:
+        return first_row['Title'], first_row['ID']
     else:
         raise Exception(f"No model found for model {model}")
 
@@ -84,14 +89,14 @@ def get_sales_versions(country, pnos, time):
     if df_pno_price.empty:
         raise Exception("No price data found")
     df_sv = filter_df_by_timestamp(df_sv, time)
-    df_sv.rename(columns={'Code': 'TmpCode'}, inplace=True)
+    df_sv.rename(columns={'Code': 'TmpCode', 'ID': 'SVID'}, inplace=True)
 
-    df_allowed_sv = pnos.merge(df_sv[['TmpCode', 'MarketText', 'CustomName']], left_on='SalesVersion', right_on='TmpCode', how='left')
+    df_allowed_sv = pnos.merge(df_sv[['SVID', 'TmpCode', 'MarketText', 'CustomName']], left_on='SalesVersion', right_on='TmpCode', how='left')
     df_allowed_sv['SalesVersionName'] = df_allowed_sv['CustomName'].combine_first(df_allowed_sv['MarketText'])
     df_allowed_sv.drop_duplicates(subset='SalesVersion', keep='first', inplace=True)
 
     df_allowed_sv['SalesVersionPrice'] = df_allowed_sv['ID'].map(df_pno_price.set_index('RelationID')['Price'])
-    df_allowed_sv = df_allowed_sv[['ID', 'SalesVersion', 'SalesVersionName', 'SalesVersionPrice']]
+    df_allowed_sv = df_allowed_sv[['ID', 'SalesVersion', 'SalesVersionName', 'SalesVersionPrice', 'SVID']]
 
     # sort the sales versions by price
     df_allowed_sv = df_allowed_sv.sort_values('SalesVersionPrice', ascending=True)
@@ -131,7 +136,7 @@ def get_valid_engines(country, engine_cat, time):
     df_engines['EngineType'] = df_engines['EngineType'].replace('', np.nan).fillna(df_engines['EngineCategory'])
     
     # group by the new column and return the list of engines for each group
-    return df_engines.groupby('EngineType').agg({'Code': list, 'CustomName': list, 'Performance': list}).reset_index()
+    return df_engines.groupby('EngineType').agg({'Code': list, 'CustomName': list, 'Performance': list, 'ID': list}).reset_index()
 
 def get_valid_pnos(country, model, time, engines_types):
     conditions=[f'CountryCode = {country}', f'Model = {model}', f'Steering = 1']
