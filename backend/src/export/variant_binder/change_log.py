@@ -54,7 +54,7 @@ def get_sheet(ws, entities_ids_dict, pnos_ids, relations_ids, title, time, count
 
     ws.column_dimensions['A'].width = 10
     ws.column_dimensions['B'].width = 47
-    ws.column_dimensions['C'].width = 50
+    ws.column_dimensions['C'].width = 75
 
     ws.row_dimensions[1].height = 45
     ws.row_dimensions[2].height = 35
