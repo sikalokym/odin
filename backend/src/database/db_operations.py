@@ -57,7 +57,8 @@ class DBOperations:
             cursor.execute(f"SELECT {columns} FROM {table_name} WHERE {conditions};")
             data = cursor.fetchall()
             if not data:
-                return pd.DataFrame()
+                columns = [column.strip() for column in columns.split(',')]
+                return pd.DataFrame([], columns=columns)
             columns = [column[0] for column in data[0].cursor_description]
             data = [list(row) for row in data]
             df = pd.DataFrame(data, columns=columns)
@@ -82,17 +83,16 @@ class DBOperations:
             self.logger.error(f"Error creating temporary staging table: {e}")
             raise e
 
-    def insert_data_into_staging(self, target_table_name, df, columns, conditional_columns=None):
+    def insert_data_into_staging(self, target_table_name, df, columns, conditional_columns):
         # Ensure the DataFrame is not empty
         if df.empty:
             self.logger.error("The DataFrame is empty. No data to insert.")
             return
         
-        if not conditional_columns:
-            conditional_columns = ['Code', 'StartDate']
         df.drop_duplicates(subset=conditional_columns, inplace=True)
 
         with self.get_cursor() as cursor:
+            # Causing errors in PROD
             cursor.fast_executemany = False
 
             # Convert the list of columns into a comma-separated string
