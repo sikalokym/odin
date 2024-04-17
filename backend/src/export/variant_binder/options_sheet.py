@@ -349,13 +349,16 @@ def fetch_options_data(sales_versions, time):
     
     # group by Reference, Price, RuleName, SalesVersion and SalesVersionName and aggregate the CustomName column by concatinating the values with a newline separator if they differ and not null nan or empty and the CustomCategory column by concatinating the values with a comma separator if they differ
     df_pno_options_merged = df_pno_options_merged.groupby(['Reference', 'Price', 'RuleName', 'SalesVersion', 'SalesVersionName']).agg({'CustomName': lambda x: '\n'.join(x.dropna().unique()), 'CustomCategory': lambda x: ', '.join(x.dropna().unique())}).reset_index()
+    
     # Create the pivot table
     pivot_df = df_pno_options_merged.pivot_table(index=['Reference', 'Price'], columns='SalesVersion', values='RuleName', aggfunc='first')
 
     # Drop the now unneeded columns and duplicates
     df_pno_options_merged.drop(['RuleName', 'SalesVersion', 'SalesVersionName'], axis=1, inplace=True)
-    df_pno_options_merged.drop_duplicates(inplace=True)
-
+    # df_pno_options_merged['length'] = df_pno_options_merged['CustomName'].str.len()
+    # df_pno_options_merged = df_pno_options_merged.sort_values('length', ascending=False)
+    df_pno_options_merged = df_pno_options_merged.drop_duplicates(['Reference', 'Price', 'CustomCategory'], keep='first')
+    # df_pno_options_merged = df_pno_options_merged.drop('length', axis=1)
     # Join the pivoted DataFrame with the original one. sort after code ascending
     df_result = df_pno_options_merged.join(pivot_df, on=['Reference', 'Price']).sort_values(by='Reference')
 
