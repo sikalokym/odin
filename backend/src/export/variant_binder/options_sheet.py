@@ -279,8 +279,8 @@ def fetch_options_data(sales_versions, time):
     df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Reference', 'RuleName as FeatRule', 'CustomName as FeatName', 'CustomCategory'], conditions=pno_features_conditions)
     df_pno_features.drop_duplicates(inplace=True)
 
-    df_pno_options_with_feat_ref = df_pno_options_with_price[~df_pno_options_with_price['RelationID'].isna()]
-    df_pno_options_without_feat_ref = df_pno_options_with_price[df_pno_options_with_price['RelationID'].isna()]
+    df_pno_options_with_feat_ref = df_pno_options_with_price[~df_pno_options_with_price['RelationID'].isna()].copy()
+    df_pno_options_without_feat_ref = df_pno_options_with_price[df_pno_options_with_price['RelationID'].isna()].copy()
     df_pno_options_without_feat_ref.loc[:, 'Reference'] = df_pno_options_without_feat_ref['Code']
 
     df_pno_options_feat_merged = df_pno_features.merge(df_pno_options_with_feat_ref, 

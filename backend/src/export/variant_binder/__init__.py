@@ -74,10 +74,9 @@ def get_model_name(country, model, time):
 
     # filter models where StartDate and End Data wrap the current time for the given model
     df_model = filter_df_by_timestamp(models, time)
-    
-    df_model.loc[:, 'Title'] = df_model['CustomName'].combine_first(df_model['MarketText'])
 
-    first_row = df_model.iloc[0]
+    first_row = df_model.iloc[0].copy()
+    first_row['Title'] = first_row['CustomName'] if first_row['CustomName'] else first_row['MarketText']
     if not first_row.empty:
         return first_row['Title'], first_row['ID']
     else:
