@@ -268,7 +268,7 @@ BEGIN
     ELSE IF EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted)
     BEGIN
         INSERT INTO ChangeLog (CountryCode, ChangeCode, ChangeTable, ChangeDate, ChangeType, ChangeField, ChangeFrom, ChangeTo)
-        SELECT '', CAST(inserted.ID AS VARCHAR(128)), 'PNOPackage', GETDATE(), 'Update', 'Title', deleted.Title, inserted.Title
+        SELECT '', CAST(inserted.ID AS VARCHAR(128)), 'PNOFeature', GETDATE(), 'Update', 'Title', deleted.Title, inserted.Title
         FROM inserted JOIN deleted ON inserted.ID = deleted.ID WHERE ISNULL(deleted.Title, '') <> ISNULL(inserted.Title, '')
         UNION ALL
         SELECT '', CAST(inserted.ID AS VARCHAR(128)), 'PNOFeature', GETDATE(), 'Update', 'RuleCode', deleted.RuleCode, inserted.RuleCode
@@ -283,7 +283,7 @@ BEGIN
         SELECT '', CAST(inserted.ID AS VARCHAR(128)), 'PNOFeature', GETDATE(), 'Update', 'RuleBase', deleted.RuleBase, inserted.RuleBase
         FROM inserted JOIN deleted ON inserted.ID = deleted.ID WHERE ISNULL(deleted.RuleBase, '') <> ISNULL(inserted.RuleBase, '')
         UNION ALL
-        SELECT '', CAST(inserted.ID AS VARCHAR(128)), 'PNOPackage', GETDATE(), 'Update', 'EndDate', CONVERT(VARCHAR, deleted.EndDate, 120), CONVERT(VARCHAR, inserted.EndDate, 120)
+        SELECT '', CAST(inserted.ID AS VARCHAR(128)), 'PNOFeature', GETDATE(), 'Update', 'EndDate', CONVERT(VARCHAR, deleted.EndDate, 120), CONVERT(VARCHAR, inserted.EndDate, 120)
         FROM inserted JOIN deleted ON inserted.ID = deleted.ID WHERE deleted.EndDate <> inserted.EndDate;
     END
 END
