@@ -76,4 +76,4 @@ def get_sheet(ws, entities_ids_dict, pnos_ids, relations_ids, title, time, count
     ws['C2'].font = Font(size=10, bold=True)
 
     for change in df_change_log.itertuples():
-       ws.append([change.ChangeDate.strftime("%Y-%m-%d"), f'{change.ChangeTable} mit ID {change.ChangeCode}', f'{change.ChangeField} hat sich geändert: {change.ChangeFrom} -> {change.ChangeTo}'])
+       ws.append([change.ChangeDate.strftime("%Y-%m-%d"), f'{change.ChangeTable}', f'{change.ChangeField} hat sich geändert: {change.ChangeFrom} -> {change.ChangeTo}'])
