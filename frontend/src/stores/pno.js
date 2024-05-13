@@ -9,6 +9,8 @@ export const usePNOStore = defineStore({
     pnosColors: [],
     pnosOptions: [],
     pnosUpholstery: [],
+    pnosPackages: [],
+    pnosChangelog: [],
     supported_countries: [],
     available_model_years: [],
     engine_cats: [],
@@ -121,6 +123,22 @@ export const usePNOStore = defineStore({
         console.log(error)
       })
     },
+    async fetchPnosPackages(model, engine, salesversion, gearbox) {
+      let path = `/db/${this.country}/${this.model_year}/packages?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
+      return await index.get(path).then((response) => {
+        this.pnosPackages = response.data
+      }).catch((error) => {
+        console.log(error)
+      })
+    },
+    async fetchPnosChangelog(model, engine, salesversion, gearbox) {
+      let path = `/db/${this.country}/${this.model_year}/changelog?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
+      return await index.get(path).then((response) => {
+        this.pnosChangelog = response.data
+      }).catch((error) => {
+        console.log(error)
+      })
+    },
     // PNO-speficic updates
     async pushUpdateFeature(model, feature, translation, category) {
       let updates = {
@@ -130,6 +148,18 @@ export const usePNOStore = defineStore({
           CustomCategory: category
       }
       let path = `/db/${this.country}/${this.model_year}/write/features`
+      return index.post(path, updates);
+    },
+    async pushNewCustomFeature(model, feature, translation, category, startDate, endDate) {
+      let updates = {
+          Model: model,
+          Code: feature,
+          CustomName: translation,
+          CustomCategory: category,
+          StartDate: startDate,
+          EndDate: endDate
+      }
+      let path = `/db/${this.country}/${this.model_year}/write/customfeatures`
       return index.post(path, updates);
     },
     async pushUpdateOption(model, option, translation) {
@@ -157,6 +187,15 @@ export const usePNOStore = defineStore({
           CustomName: translation
       }
       let path = `/db/${this.country}/${this.model_year}/write/upholstery`
+      return index.post(path, updates);
+    },
+    async pushUpdatePackage(model, packagecode, translation) {
+      let updates = {
+          Model: model,
+          Code: packagecode,
+          CustomName: translation
+      }
+      let path = `/db/${this.country}/${this.model_year}/write/packages`
       return index.post(path, updates);
     },
     // General Setup

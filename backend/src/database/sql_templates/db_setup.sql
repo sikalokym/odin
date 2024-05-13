@@ -306,6 +306,7 @@ CREATE TABLE PNOUpholsteryCustom (
     Price DECIMAL(19,2),
     PriceBeforeTax DECIMAL(19,2),
     CustomName NVARCHAR(MAX),
+    CustomCategory VARCHAR(255),
     StartDate INT,
     EndDate INT,
     FOREIGN KEY (RelationID) REFERENCES PNOUpholstery(ID)
@@ -323,7 +324,7 @@ CREATE TABLE PNOOptionsCustom (
     FOREIGN KEY (RelationID) REFERENCES PNOOptions(ID)
 );
 
--- Create the custom table of PNOPackageCustom table
+-- Create the custom table of PNOPackage table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PNOPackageCustom')
 CREATE TABLE PNOPackageCustom (
     RelationID UNIQUEIDENTIFIER,

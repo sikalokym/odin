@@ -12,6 +12,7 @@
       <router-link to="/" active-class="active-link">Home</router-link>
       <router-link to="/database" active-class="active-link">Database</router-link>
       <router-link to="/documents" active-class="active-link">Export</router-link>
+      <router-link to="/reports" active-class="active-link">Reports</router-link>
     </ul>
 </div>
   </nav>
