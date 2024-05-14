@@ -15,6 +15,7 @@ def write_models(country, model_year):
     
     # Create a DataFrame from the list of JSON objects
     df_models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), conditions=[f'CountryCode = {country}'])
+    df_models = filter_df_by_model_year(df_models, model_year)
     update_columns = ['CustomName']
 
     # Update the columns in the df_models DataFrame
@@ -34,6 +35,7 @@ def write_engines(country, model_year):
     
     # Create a DataFrame from the list of JSON objects
     df_engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), conditions=[f'CountryCode = {country}'])
+    df_engines = filter_df_by_model_year(df_engines, model_year)
     update_columns = ['CustomName', 'Performance', 'EngineCategory', 'EngineType']
 
     # Update the columns in the df_engines DataFrame
@@ -53,6 +55,7 @@ def write_sales_versions(country, model_year):
     
     # Create a DataFrame from the list of JSON objects
     df_sales_versions = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), conditions=[f'CountryCode = {country}'])
+    df_sales_versions = filter_df_by_model_year(df_sales_versions, model_year)
     update_columns = ['CustomName']
 
     # Update the columns in the df_sales_versions DataFrame
@@ -72,6 +75,7 @@ def write_gearboxes(country, model_year):
     
     # Create a DataFrame from the list of JSON objects
     df_gearboxes = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'G'), conditions=[f'CountryCode = {country}'])
+    df_gearboxes = filter_df_by_model_year(df_gearboxes, model_year)
     update_columns = ['CustomName']
 
     # Update the columns in the df_gearboxes DataFrame
@@ -170,11 +174,14 @@ def write_options(country, model_year):
         conditions.append(f"PNOID in {tuple(ids)}")
 
     df_pno_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'OPT'), conditions=conditions)
-    df_pno_options['CustomName'] = data['CustomName']
+    rel_ids = df_pno_options['ID'].tolist()
+    options_conditions = []
+    if len(rel_ids) == 1:
+        options_conditions.append(f"RelationID = '{rel_ids[0]}'")
+    else:
+        options_conditions.append(f"RelationID in {tuple(rel_ids)}")
 
-    df_pno_options_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'OPT_Custom'))
-
-    df_pno_options_relations = df_pno_options_relations[df_pno_options_relations['RelationID'].isin(df_pno_options['ID'])]
+    df_pno_options_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'OPT_Custom'), conditions=options_conditions)
 
     update_columns = ['CustomName']
 
@@ -207,11 +214,14 @@ def write_colors(country, model_year):
         conditions.append(f"PNOID in {tuple(ids)}")
 
     df_pno_colors = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'COL'), conditions=conditions)
-    df_pno_colors['CustomName'] = data['CustomName']
+    rel_ids = df_pno_colors['ID'].tolist()
+    colors_conditions = []
+    if len(rel_ids) == 1:
+        colors_conditions.append(f"RelationID = '{rel_ids[0]}'")
+    else:
+        colors_conditions.append(f"RelationID in {tuple(rel_ids)}")
 
-    df_pno_colors_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'COL_Custom'))
-
-    df_pno_colors_relations = df_pno_colors_relations[df_pno_colors_relations['RelationID'].isin(df_pno_colors['ID'])]
+    df_pno_colors_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'COL_Custom'), conditions=colors_conditions)
 
     update_columns = ['CustomName']
 
@@ -244,11 +254,14 @@ def write_upholstery(country, model_year):
         conditions.append(f"PNOID in {tuple(ids)}")
 
     df_pno_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'UPH'), conditions=conditions)
-    df_pno_upholstery['CustomName'] = data['CustomName']
+    rel_ids = df_pno_upholstery['ID'].tolist()
+    upholstery_conditions = []
+    if len(rel_ids) == 1:
+        upholstery_conditions.append(f"RelationID = '{rel_ids[0]}'")
+    else:
+        upholstery_conditions.append(f"RelationID in {tuple(rel_ids)}")
 
-    df_pno_upholstery_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'))
-
-    df_pno_upholstery_relations = df_pno_upholstery_relations[df_pno_upholstery_relations['RelationID'].isin(df_pno_upholstery['ID'])]
+    df_pno_upholstery_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), conditions=upholstery_conditions)
 
     update_columns = ['CustomName']
 
