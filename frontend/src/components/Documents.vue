@@ -1,6 +1,17 @@
 <template>
   <aside class="sidebar">
     <span class="title" style="font-size: 32px;">Specifications</span>
+    <div style="margin-top: 10px;">
+    <button 
+      v-on:click="showFilters = 'VariantBinder'; console.log(showFilters)" 
+      :class="{ 'highlighted': showFilters === 'VariantBinder' }">Variant Binder</button>
+    <button 
+      v-on:click="showFilters = 'Pricelist'; console.log(showFilters)" 
+      style="margin-left: 10px;" 
+      :class="{ 'highlighted': showFilters === 'Pricelist' }">Pricelist
+    </button>
+  </div>
+  <div v-if="showFilters === 'VariantBinder'">
     <!-- Filter for model years -->
     <label class="modelyear" style="width: 180px;">Model Year</label><br>
     <select name="model_year" id="model_year" v-model="model_year" @change="refreshModelyear" style="width:180px; height:30px; position: absolute;">
@@ -36,11 +47,47 @@
 
     <!-- Export Variant Binder Button -->
     <button style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translateX(-50%); margin-top: 64px;" @click="exportVariantBinder" :disabled="this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === ''">Export Variant Binder</button>
-    <!-- Export Changelog Button --> 
-    <!-- <button style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translateX(-50%); margin-top: 120px;" :disabled="this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === ''">Export Changelog</button> -->
+  </div>
+  <div v-else-if="showFilters === 'Pricelist'">
+    <!-- Filter for model years -->
+    <label class="modelyear" style="width: 180px;">Model Year</label><br>
+    <select name="model_year" id="model_year" v-model="model_year" @change="refreshModelyear" style="width:180px; height:30px; position: absolute;">
+      <option disabled value="0">Please select Model Year...</option>
+      <option v-for="model_year in model_years" :key="model_year" :value="model_year">{{ model_year }}</option>
+    </select>
+    <!-- Filter for models -->
+    <label class="model" style="width: 180px;">Model</label><br>
+    <select name="model" id="model" v-model="model"  @change="refreshEnginecats" style="width:180px; height:30px; position: absolute;">
+      <option disabled value="">Please Select Model...</option>
+      <option value="0">All</option>
+      <option v-for="model in models" :key="model" :value="model">{{ model }}</option>
+    </select>
+    <!-- Filter for type of export -->
+    <label class="engine" style="width: 180px;">Export Type</label><br>
+    <select name="engine" id="engine" v-model="engine" style="width:180px; height:30px; position: absolute; margin-left: -90px;">
+      <option disabled value="">Please Select Export...</option>
+      <option value="all">Single File</option>
+      <option value="model">Multiple Files</option>
+    </select>
+    <br><br>
+    <!-- Filter for validity date of the Variant Binder export -->
+    <label class="validity_date" style="width: 180px;">Validity Date</label>
+    <div class="validity" style="display: flex; gap: 10px; position:absolute; left: 50%; transform: translateX(-50%);">
+      <select name="validity_year" id="validity_year" v-model="validity_year" style="width:85px; height:30px;">
+        <option disabled value="">Year</option>
+        <option v-for="validity_year in validity_years" :key="validity_year" :value="validity_year">{{ validity_year }}</option>
+      </select>
+      <select name="validity_week" id="validity_week" v-model="validity_week" style="width:85px; height:30px;">
+        <option disabled value="">Week</option>
+        <option v-for="n in 53" :key="n" :value="String(n).padStart(2, '0')">{{ String(n).padStart(2, '0') }}</option>
+      </select>
+    </div>
 
+    <!-- Export Pricelist Button -->
+    <button style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translateX(-50%); margin-top: 64px;" @click="exportPricelist" :disabled="this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === ''">Export Pricelist</button>
+  </div>
     <!-- Country Select Dropdown Menu -->
-    <div class="country bottom-div">
+    <div class="bottom-div">
       <label for="country" class="countrylabel">Change Country: </label>
       <select v-model="selectedCountry" @change="changeCountry(this.selectedCountry)">
         <option value="231" selected disabled>Germany</option>
@@ -66,6 +113,7 @@ import axios from '../api/index.js'
         validity_year: '',
         validity_week: '',
         engine: '',
+        showFilters: 'VariantBinder',
         pnoStore: usePNOStore(),
         entitiesStore: useEntitiesStore(),
         countries: [],
@@ -94,7 +142,14 @@ import axios from '../api/index.js'
         return;
       }
     return [this.model_year - 1, this.model_year, this.model_year + 1];
-    }
+    },
+    bottomDivStyle() {
+      if (this.showFilters === '') {
+        return { marginTop: '837px' };
+      } else {
+        return { marginTop: '585px' };
+      }
+    },
   },
     
   methods: {
@@ -156,10 +211,17 @@ import axios from '../api/index.js'
 
 .title {
   display: block;
-  margin-bottom: -20px;
+  /* margin-bottom: -20px; */
 }
 
-.model, .modelyear, .engine {
+.modelyear{
+  text-align: left;
+  display: inline-block;
+  width:180px;
+  margin-top: 28px;
+}
+
+.model, .engine {
   text-align: left;
   display: inline-block;
   width:180px;
@@ -174,10 +236,13 @@ import axios from '../api/index.js'
   margin-right: 10px;
 } 
 .bottom-div {
-  margin-top: 591px;
+  margin-top: 599px;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.highlighted {
+  background-color: #f0f0f0;
 }
 </style>

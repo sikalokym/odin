@@ -13,6 +13,7 @@
       <option value="Colors" :disabled="this.pnoStore.model_year === ''">Colors</option>
       <option value="Options" :disabled="this.pnoStore.model_year === ''">Options</option>
       <option value="Upholstery" :disabled="this.pnoStore.model_year === ''">Upholstery</option>
+      <option value="Packages" :disabled="this.pnoStore.model_year === ''">Packages</option>
     </select>
     <!-- Filter for model years -->
     <label class="modelyear" style="width: 180px;">Model Year</label><br>
@@ -23,7 +24,7 @@
     </select>
     <!-- Filter for models -->
     <label class="model" style="width: 180px;">Model</label><br>
-    <select name="model" id="model" v-model="model" @change="fetchPnoSpecifics" style="width:180px; height:30px; position: absolute;" :disabled="!['Model', 'Features', 'Colors', 'Options','Upholstery'].includes(displaytable) || model_year === '0'">
+    <select name="model" id="model" v-model="model" @change="fetchPnoSpecifics" style="width:180px; height:30px; position: absolute;" :disabled="!['Model', 'Features', 'Colors', 'Options','Upholstery','Packages'].includes(displaytable) || model_year === '0'">
       <option value="" :disabled="!['Model', 'Engine', 'SalesVersion', 'Gearbox'].includes(displaytable)">All</option>
       <option v-for="model in models" :key="model" :value="model">{{ model }}</option>
     </select>
@@ -68,14 +69,51 @@
     </div>
   </aside>
   <main class="main-content">
+    <!-- Table Filter -->
+    <div style="display: flex; margin-bottom: 1em;">
+      <input v-if="displaytable !== '' && model_year !== '0' && !customFeatureTable" v-model="searchTerm" type="text" placeholder="Filter" style="margin-right: 1ch;">
+      <button v-if="displaytable === 'Features' && model_year !== '0' && this.model !== '' && !customFeatureTable" @click="showCustomFeatureTable">Add custom feature</button>
+    </div>
     <!-- Model Table -->
     <table v-if="displaytable === 'Model' && model_year !== '0'">
       <thead v-if="model_year !== '0'">
         <tr>
-          <th v-if="model_year === ''">Model Year</th>
-          <th>Model</th>
-          <th>CPAM Text</th>
-          <th>Market Text</th>
+          <th v-if="model_year === ''">
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Model Year
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('model_year', 1)">↑</span>
+                <span @click="sortTable('model_year', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Model
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Code', 1)">↑</span>
+                <span @click="sortTable('Code', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              CPAM Text
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('MarketText', 1)">↑</span>
+                <span @click="sortTable('MarketText', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Market Text
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('CustomName', 1)">↑</span>
+                <span @click="sortTable('CustomName', -1)">↓</span>
+              </div>
+            </div>
+          </th>
           <th></th>
         </tr>
       </thead>
@@ -98,9 +136,33 @@
     <table v-if="displaytable === 'SalesVersion' && model_year !== '0'">
       <thead v-if="model_year !== '0'">
         <tr>
-          <th>Sales Version</th>
-          <th>CPAM Text</th>
-          <th>Market Text</th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Sales Version
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Code', 1)">↑</span>
+                <span @click="sortTable('Code', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              CPAM Text
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('MarketText', 1)">↑</span>
+                <span @click="sortTable('MarketText', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Market Text
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('CustomName', 1)">↑</span>
+                <span @click="sortTable('CustomName', -1)">↓</span>
+              </div>
+            </div>
+          </th>
           <th></th>
         </tr>
       </thead>
@@ -120,12 +182,60 @@
     <table v-if="displaytable === 'Engine' && model_year !== '0'">
       <thead v-if="model_year !== '0'">
         <tr>
-          <th>Engine</th>
-          <th>CPAM Text</th>
-          <th>Market Text</th>
-          <th>Category</th>
-          <th>Type</th>
-          <th>Performance in kW (PS)</th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Engine
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Code', 1)">↑</span>
+                <span @click="sortTable('Code', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              CPAM Text
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('MarketText', 1)">↑</span>
+                <span @click="sortTable('MarketText', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Market Text
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('CustomName', 1)">↑</span>
+                <span @click="sortTable('CustomName', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Category
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('EngineCategory', 1)">↑</span>
+                <span @click="sortTable('EngineCategory', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Type
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('EngineType', 1)">↑</span>
+                <span @click="sortTable('EngineType', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Performance kW(PS)
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Performance', 1)">↑</span>
+                <span @click="sortTable('Performance', -1)">↓</span>
+              </div>
+            </div>
+          </th>
           <th></th>
         </tr>
       </thead>
@@ -154,9 +264,33 @@
     <table v-if="displaytable === 'Gearbox' && model_year !== '0'">
       <thead v-if="model_year !== '0'">
         <tr>
-          <th>Gearbox</th>
-          <th>CPAM Text</th>
-          <th>Market Text</th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Gearbox
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Code', 1)">↑</span>
+                <span @click="sortTable('Code', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              CPAM Text
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('MarketText', 1)">↑</span>
+                <span @click="sortTable('MarketText', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Market Text
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('CustomName', 1)">↑</span>
+                <span @click="sortTable('CustomName', -1)">↓</span>
+              </div>
+            </div>
+          </th>
           <th></th>
         </tr>
       </thead>
@@ -173,13 +307,45 @@
       </tbody>
     </table>
     <!-- Features Table -->
-    <table v-if="displaytable === 'Features' && model_year !== '0' && this.model !== ''">
+    <table v-if="displaytable === 'Features' && model_year !== '0' && this.model !== '' && !customFeatureTable">
       <thead v-if="model_year !== '0'">
         <tr>
-          <th>Feature</th>
-          <th>CPAM Text</th>
-          <th>Market Text</th>
-          <th>Feature Category</th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Feature
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Code', 1)">↑</span>
+                <span @click="sortTable('Code', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              CPAM Text
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('MarketText', 1)">↑</span>
+                <span @click="sortTable('MarketText', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Market Text
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('CustomName', 1)">↑</span>
+                <span @click="sortTable('CustomName', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Feature Category
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('CustomCategory', 1)">↑</span>
+                <span @click="sortTable('CustomCategory', -1)">↓</span>
+              </div>
+            </div>
+          </th>
           <th></th>
         </tr>
       </thead>
@@ -196,13 +362,71 @@
         </tr>
       </tbody>
     </table>
+    <!-- Custom Feature Table -->
+    <table v-if="customFeatureTable">
+      <thead v-if="model_year !== '0'">
+        <tr>
+          <th>Feature</th>
+          <th>Market Text</th>
+          <th>Feature Category</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><input type="text" v-model="newEntry.Code" /></td>
+          <td><input type="text" v-model="newEntry.CustomName"  /></td>
+          <td><input type="text" v-model="newEntry.CustomCategory" /></td>
+          <td><input type="text" v-model="newEntry.StartDate" pattern="\d{4}(0[1-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-3])" /></td>
+          <td><input type="text" v-model="newEntry.EndDate" pattern="\d{4}(0[1-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-3])" /></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="display: flex; justify-content: flex-start;">
+      <!-- Save Custom Feature Button -->
+      <div>
+        <button v-if="customFeatureTable" :disabled="!isFormValid" @click="pushNewCustomFeature(newEntry)" style="margin-left: 5px;">Save custom feature</button>
+      </div>
+      <!-- Return to Features Button -->
+      <div style="margin-left: 10px;">
+        <button v-if="customFeatureTable && model_year !== '0' && this.model !== ''" @click="showCustomFeatureTable">Return to features</button>
+      </div>
+    </div>
+
     <!-- Colors Table -->
     <table v-if="displaytable === 'Colors' && model_year !== '0' && this.model !== ''">
       <thead v-if="model_year !== '0'">
         <tr>
-          <th>Color</th>
-          <th>CPAM Text</th>
-          <th>Market Text</th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Color
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Code', 1)">↑</span>
+                <span @click="sortTable('Code', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              CPAM Text
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('MarketText', 1)">↑</span>
+                <span @click="sortTable('MarketText', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Market Text
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('CustomName', 1)">↑</span>
+                <span @click="sortTable('CustomName', -1)">↓</span>
+              </div>
+            </div>
+          </th>
           <th></th>
         </tr>
       </thead>
@@ -220,17 +444,49 @@
     <table v-if="displaytable === 'Options' && model_year !== '0' && this.model !== ''">
       <thead v-if="model_year !== '0'">
         <tr>
-          <th>Option (Feature)</th>
-          <th>Market Text</th>
-          <th>Feature Category</th>
-          <th>CPAM Text</th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Option (Feature)
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Code', 1)">↑</span>
+                <span @click="sortTable('Code', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Market Text
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('CustomName', 1)">↑</span>
+                <span @click="sortTable('CustomName', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Feature Category
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('CustomCategory', 1)">↑</span>
+                <span @click="sortTable('CustomCategory', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              CPAM Text
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('MarketText', 1)">↑</span>
+                <span @click="sortTable('MarketText', -1)">↓</span>
+              </div>
+            </div>
+          </th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="pno in tableOptions" :key="pno.id" :class="{ 'editing': pno.edited }">
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
-          <td style="background-color: #f4f4f4;">
+          <td style="background-color: #f4f4f4; text-align: left;">
             <input v-if="!pno.hasFeature" v-model="pno.CustomName" type="text" @input="pno.edited = true" @change="pushUpdateOption(pno)" />
             <span v-else>{{ pno.CustomName }}</span>
           </td>
@@ -243,9 +499,42 @@
     <table v-if="displaytable === 'Upholstery' && model_year !== '0' && this.model !== ''">
       <thead v-if="model_year !== '0'">
         <tr>
-          <th>Upholstery</th>
-          <th>CPAM Text</th>
-          <th>Market Text</th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Upholstery
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Code', 1)">↑</span>
+                <span @click="sortTable('Code', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              CPAM Text
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('MarketText', 1)">↑</span>
+                <span @click="sortTable('MarketText', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Market Text
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('CustomName', 1)">↑</span>
+                <span @click="sortTable('CustomName', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Category
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Category', 1)">↑</span>
+                <span @click="sortTable('Category', -1)">↓</span>
+              </div>
+            </div>
+          </th>
           <th></th>
         </tr>
       </thead>
@@ -254,13 +543,64 @@
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
           <td>
-            <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true" @change="pushUpdateUpholstery(pno)" />           
+            <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true" @change="pushUpdateUpholstery(pno)" />               
+          </td>
+          <td>
+            <!-- <input type="UpholsteryCategory" v-model="pno.Category" @input="pno.edited = true" @change="pushUpdateUpholstery(pno)" />    -->
+            <input type="UpholsteryCategory" v-model="pno.Category" @input="pno.edited = true" />   
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <!-- Packages Table -->
+    <table v-if="displaytable === 'Packages' && model_year !== '0' && this.model !== ''">
+      <thead v-if="model_year !== '0'">
+        <tr>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Package
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Code', 1)">↑</span>
+                <span @click="sortTable('Code', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              CPAM Text
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('MarketText', 1)">↑</span>
+                <span @click="sortTable('MarketText', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Market Text
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('CustomName', 1)">↑</span>
+                <span @click="sortTable('CustomName', -1)">↓</span>
+              </div>
+            </div>
+          </th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="pno in tablePackages" :key="pno.id" :class="{ 'editing': pno.edited }">
+          <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
+          <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
+          <td>
+            <!-- <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true" @change="pushUpdatePackage(pno)" /> -->
+            <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true" @change="pushUpdatePackage(pno)"/>
           </td>
         </tr>
       </tbody>
     </table>
   </main>
 </template>
+
+
 
 <script>
 import { usePNOStore } from '../stores/pno.js'
@@ -281,6 +621,17 @@ export default {
       entitiesStore: useEntitiesStore(),
       countries: useEntitiesStore().countries,
       selectedCountry: '231',
+      sortOrder: 1,
+      sortColumn: '',
+      searchTerm: '',
+      customFeatureTable: false,
+      newEntry: {
+        Code: '',
+        CustomName: '',
+        CustomCategory: '',
+        StartDate: '',
+        EndDate: '',
+      },
     }
   },
   async created() {
@@ -311,40 +662,139 @@ export default {
     },
     // Unique values for tables
     tableModels() {
+      let models;
       if (this.model === "") {
-        return this.entitiesStore.models;
+        models = this.entitiesStore.models;
+      } else {
+        models = this.entitiesStore.models.filter(model => model.Code === this.model);
       }
-      return this.entitiesStore.models.filter(model => model.Code === this.model)
+      return models.filter(model =>
+        Object.values(model).some(value =>
+          String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
+        )
+      ).sort((a, b) => {
+        if (a[this.sortColumn] === undefined || a[this.sortColumn] === null) return 1;
+        if (b[this.sortColumn] === undefined || b[this.sortColumn] === null) return -1;
+        if (a[this.sortColumn] < b[this.sortColumn]) return -1 * this.sortOrder;
+        if (a[this.sortColumn] > b[this.sortColumn]) return 1 * this.sortOrder;
+      });
     },
     tableEngines() {
+      let engines;
       if (this.engine === "") {
-        return this.entitiesStore.engines;
+        engines = this.entitiesStore.engines;
+      } else {
+        engines = this.entitiesStore.engines.filter(engine => engine.Code === this.engine);
       }
-      return this.entitiesStore.engines.filter(engine => engine.Code === this.engine)
+      return engines.filter(engine =>
+        Object.values(engine).some(value =>
+          String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
+        )
+      ).sort((a, b) => {
+        if (a[this.sortColumn] === undefined || a[this.sortColumn] === null) return 1;
+        if (b[this.sortColumn] === undefined || b[this.sortColumn] === null) return -1;
+        if (a[this.sortColumn] < b[this.sortColumn]) return -1 * this.sortOrder;
+        if (a[this.sortColumn] > b[this.sortColumn]) return 1 * this.sortOrder;
+      });
     },
     tableSalesversions() {
+      let salesversions;
       if (this.salesversion === "") {
-        return this.entitiesStore.salesversions;
+        salesversions = this.entitiesStore.salesversions;
+      } else {
+        salesversions = this.entitiesStore.salesversions.filter(salesversion => salesversion.Code === this.salesversion);
       }
-      return this.entitiesStore.salesversions.filter(salesversion => salesversion.Code === this.salesversion)
+      return salesversions.filter(salesversion =>
+        Object.values(salesversion).some(value =>
+          String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
+        )
+      ).sort((a, b) => {
+        if (a[this.sortColumn] === undefined || a[this.sortColumn] === null) return 1;
+        if (b[this.sortColumn] === undefined || b[this.sortColumn] === null) return -1;
+        if (a[this.sortColumn] < b[this.sortColumn]) return -1 * this.sortOrder;
+        if (a[this.sortColumn] > b[this.sortColumn]) return 1 * this.sortOrder;
+      });
     },
     tableGearboxes() {
+      let gearboxes;
       if (this.gearbox === "") {
-        return this.entitiesStore.gearboxes;
+        gearboxes = this.entitiesStore.gearboxes;
+      } else {
+        gearboxes = this.entitiesStore.gearboxes.filter(gearbox => gearbox.Code === this.gearbox);
       }
-      return this.entitiesStore.gearboxes.filter(gearbox => gearbox.Code === this.gearbox)
+      return gearboxes.filter(gearbox =>
+        Object.values(gearbox).some(value =>
+          String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
+        )
+      ).sort((a, b) => {
+        if (a[this.sortColumn] === undefined || a[this.sortColumn] === null) return 1;
+        if (b[this.sortColumn] === undefined || b[this.sortColumn] === null) return -1;
+        if (a[this.sortColumn] < b[this.sortColumn]) return -1 * this.sortOrder;
+        if (a[this.sortColumn] > b[this.sortColumn]) return 1 * this.sortOrder;
+      });
     },
     tableFeatures() {
-      return this.pnoStore.pnosFeatures
+      return this.pnoStore.pnosFeatures.filter(feature =>
+        Object.values(feature).some(value =>
+          String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
+        )
+      ).sort((a, b) => {
+        if (a[this.sortColumn] === undefined || a[this.sortColumn] === null) return 1;
+        if (b[this.sortColumn] === undefined || b[this.sortColumn] === null) return -1;
+        if (a[this.sortColumn] < b[this.sortColumn]) return -1 * this.sortOrder;
+        if (a[this.sortColumn] > b[this.sortColumn]) return 1 * this.sortOrder;
+      });
     },
     tableColors() {
-      return this.pnoStore.pnosColors
+      return this.pnoStore.pnosColors.filter(color =>
+        Object.values(color).some(value =>
+          String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
+        )
+      ).sort((a, b) => {
+        if (a[this.sortColumn] === undefined || a[this.sortColumn] === null) return 1;
+        if (b[this.sortColumn] === undefined || b[this.sortColumn] === null) return -1;
+        if (a[this.sortColumn] < b[this.sortColumn]) return -1 * this.sortOrder;
+        if (a[this.sortColumn] > b[this.sortColumn]) return 1 * this.sortOrder;
+      });
     },
     tableUpholstery() {
-      return this.pnoStore.pnosUpholstery
+      return this.pnoStore.pnosUpholstery.filter(upholstery =>
+        Object.values(upholstery).some(value =>
+          String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
+        )
+      ).sort((a, b) => {
+        if (a[this.sortColumn] === undefined || a[this.sortColumn] === null) return 1;
+        if (b[this.sortColumn] === undefined || b[this.sortColumn] === null) return -1;
+        if (a[this.sortColumn] < b[this.sortColumn]) return -1 * this.sortOrder;
+        if (a[this.sortColumn] > b[this.sortColumn]) return 1 * this.sortOrder;
+      });
     },
     tableOptions() {
-      return this.pnoStore.pnosOptions
+      return this.pnoStore.pnosOptions.filter(option =>
+        Object.values(option).some(value =>
+          String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
+        )
+      ).sort((a, b) => {
+        if (a[this.sortColumn] === undefined || a[this.sortColumn] === null) return 1;
+        if (b[this.sortColumn] === undefined || b[this.sortColumn] === null) return -1;
+        if (a[this.sortColumn] < b[this.sortColumn]) return -1 * this.sortOrder;
+        if (a[this.sortColumn] > b[this.sortColumn]) return 1 * this.sortOrder;
+      });
+    },
+    tablePackages() {
+      return this.pnoStore.pnosPackages.filter(pkg =>
+        Object.values(pkg).some(value =>
+          String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
+        )
+      ).sort((a, b) => {
+        if (a[this.sortColumn] === undefined || a[this.sortColumn] === null) return 1;
+        if (b[this.sortColumn] === undefined || b[this.sortColumn] === null) return -1;
+        if (a[this.sortColumn] < b[this.sortColumn]) return -1 * this.sortOrder;
+        if (a[this.sortColumn] > b[this.sortColumn]) return 1 * this.sortOrder;
+      });
+    },
+    isFormValid() {
+      return this.newEntry.Code && this.newEntry.CustomName && this.newEntry.CustomCategory && this.newEntry.StartDate && this.newEntry.EndDate;
     },
   },
 methods: {
@@ -393,6 +843,7 @@ methods: {
   },
 
   async fetchPnoSpecifics() {
+    this.customFeatureTable = false;
     try {
       if (this.displaytable === 'Features' && this.model !== '') {
         await this.pnoStore.fetchPnosFeatures(this.model, this.engine, this.salesversion, this.gearbox);
@@ -410,6 +861,10 @@ methods: {
         await this.pnoStore.fetchPnosUpholstery(this.model, this.engine, this.salesversion, this.gearbox);
         console.log('PNO Upholstery fetched');
       }
+      if (this.displaytable === 'Packages' && this.model !== '') {
+        await this.pnoStore.fetchPnosPackages(this.model, this.engine, this.salesversion, this.gearbox);
+        console.log('PNO Packages fetched');
+      }
     } catch (error) {
       console.error('Error fetching data', error);
     }
@@ -422,6 +877,7 @@ methods: {
     this.salesversion = '';
     this.gearbox = '';
     this.displaytable = '';
+    this.customFeatureTable = false;
     await this.pnoStore.setModelYear('0');
   },
   async displaytablereset() {
@@ -430,6 +886,8 @@ methods: {
     this.engine = '';
     this.salesversion = '';
     this.gearbox = '';
+    this.customFeatureTable = false;
+    this.searchTerm = '';
     await this.pnoStore.setModelYear('0');
   },
   // Non-PNO-specific updates
@@ -465,6 +923,34 @@ methods: {
   pushUpdateUpholstery(pno) {
     this.pnoStore.pushUpdateUpholstery(this.model, pno.Code, pno.CustomName)
     pno.edited = false
+  },
+  pushUpdateOption(pno) {
+    this.pnoStore.pushUpdateOption(this.model, pno.Code, pno.CustomName)
+    pno.edited = false
+  },
+  pushUpdatePackage(pno) {
+    this.pnoStore.pushUpdatePackage(this.model, pno.Code, pno.CustomName)
+    pno.edited = false
+  },
+  // Custom features
+  showCustomFeatureTable() {
+    this.customFeatureTable = !this.customFeatureTable;
+  },
+  pushNewCustomFeature(newEntry) {
+    console.log(newEntry)
+    this.pnoStore.pushNewCustomFeature(this.model, newEntry.Code, newEntry.CustomName, newEntry.CustomCategory, newEntry.StartDate, newEntry.EndDate)
+    this.newEntry = {
+      Code: null,
+      CustomName: null,
+      CustomCategory: null,
+      StartDate: null,
+      EndDate: null,
+    };
+  },
+  //Sorting Functions
+  sortTable(column, sortOrder) {
+    this.sortOrder = sortOrder;
+    this.sortColumn = column;
   },
   // Database updates 
   uploadVisa() {
@@ -537,7 +1023,7 @@ hr.divider {
   margin-right: 10px;
 } 
 .bottom-div {
-  margin-top: 128px;
+  margin-top: 175px;
   width: 100%;
   display: flex;
   align-items: center;

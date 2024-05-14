@@ -74,6 +74,10 @@ class DBOperations:
         try:
             with self.get_cursor() as cursor:
                 cursor.execute(f"""
+                    IF OBJECT_ID('tempdb..#tmp_staging_{target_table_name}') IS NOT NULL
+                        DROP TABLE #tmp_staging_{target_table_name}
+                """)
+                cursor.execute(f"""
                     SELECT {', '.join(cols)} 
                     INTO #tmp_staging_{target_table_name}
                     FROM {target_table_name}

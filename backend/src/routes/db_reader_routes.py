@@ -343,3 +343,98 @@ def get_features(country, model_year):
     df_pno_features.drop_duplicates(inplace=True)
 
     return df_pno_features.to_json(orient='records')
+
+@bp_db_reader.route('/packages', methods=['GET'])
+def get_packages(country, model_year):
+    model = request.args.get('model')
+    engine = request.args.get('engine')
+    sales_version = request.args.get('sales_version')
+    gearbox = request.args.get('gearbox')
+
+    conditions = [f'CountryCode = {country}']
+    if model:
+        conditions.append(f"Model = '{model}'")
+    if engine:
+        conditions.append(f"Engine = '{engine}'")
+    if sales_version:
+        conditions.append(f"SalesVersion = '{sales_version}'")
+    if gearbox:
+        conditions.append(f"Gearbox = '{gearbox}'")
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
+    df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    if df_pnos.empty:
+        return jsonify([])
+    ids = df_pnos['ID'].tolist()
+    conditions = []
+    if len(ids) == 1:
+        conditions.append(f"PNOID = '{ids[0]}'")
+    else:
+        conditions.append(f"PNOID in {tuple(ids)}")
+
+    df_packages = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'PKG'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
+    df_packages = filter_df_by_model_year(df_packages, model_year)
+    df_packages.drop(columns=['StartDate', 'EndDate'], inplace=True)
+    df_packages.drop_duplicates(subset='Code', inplace=True)
+    
+    df_pno_packages = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PKG'), columns=['ID', 'PNOID', 'Code'], conditions=conditions)
+    df_pno_packages.drop_duplicates(inplace=True)
+    
+    df_packages_custom = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'PKG_Custom'), columns=['RelationID', 'CustomName'])
+    if df_packages_custom.empty:
+        df_pno_packages['CustomName'] = ''
+    else:
+        df_pno_packages['CustomName'] = df_pno_packages['ID'].map(df_packages_custom.set_index('RelationID')['CustomName'])
+    
+    df_pno_packages['MarketText'] = df_pno_packages['Code'].map(df_packages.set_index('Code')['MarketText'])
+    df_pno_packages.drop(columns=['ID', 'PNOID'], inplace=True)
+    df_pno_packages.drop_duplicates(inplace=True)
+
+    df_pno_packages = df_pno_packages.sort_values(by='Code', ascending=True)
+    
+    return df_pno_packages.to_json(orient='records')
+
+@bp_db_reader.route('/changelog', methods=['GET'])
+def get_changelog(country, model_year):
+    model = request.args.get('model')
+    engine = request.args.get('engine')
+    sales_version = request.args.get('sales_version')
+    gearbox = request.args.get('gearbox')
+
+    conditions = [f'CountryCode = {country}']
+    if model:
+        conditions.append(f"Model = '{model}'")
+    if engine:
+        conditions.append(f"Engine = '{engine}'")
+    if sales_version:
+        conditions.append(f"SalesVersion = '{sales_version}'")
+    if gearbox:
+        conditions.append(f"Gearbox = '{gearbox}")
+
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
+    df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    if df_pnos.empty:
+        return jsonify([])
+    ids = df_pnos['ID'].tolist()
+    conditions = []
+    if len(ids) == 1:
+        conditions.append(f"CHANGECODE = '{ids[0]}'")
+    else:
+        conditions.append(f"CHANGECODE in {tuple(ids)}")
+
+    # df_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CL'), columns=['ChangeTable', 'ChangeDate', 'ChangeType', 'ChangeField', 'ChangeFrom', 'ChangeTo'], conditions=[f'CountryCode = {country}'])
+    # df_features = filter_df_by_model_year(df_features, model_year)
+    # df_features.drop(columns=['StartDate', 'EndDate'], inplace=True)
+    # df_features['Code'] = df_features['Code'].str.strip()
+    # df_features.drop_duplicates(subset='Code', inplace=True)
+
+    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('DQ', 'CL'), columns=['ChangeTable', 'ChangeDate', 'ChangeType', 'ChangeField', 'ChangeFrom', 'ChangeTo'], conditions=conditions)
+    # df_pno_features['Code'] = df_pno_features['Code'].str.strip()
+    # df_pno_features['MarketText'] = df_pno_features['Code'].map(df_features.set_index('Code')['MarketText'])
+    # df_pno_custom_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'CFEAT'), columns=['Code', 'CustomName', 'CustomCategory'], conditions=conditions)
+
+    # df_pno_features = pd.concat([df_pno_features, df_pno_custom_features], ignore_index=True)
+
+    df_pno_features = df_pno_features.sort_values(by='ChangeDate', ascending=True)
+    # df_pno_features.drop_duplicates(inplace=True)
+
+    return df_pno_features.to_json(orient='records')
