@@ -313,7 +313,7 @@ def get_features(country, model_year):
     if sales_version:
         conditions.append(f"SalesVersion = '{sales_version}'")
     if gearbox:
-        conditions.append(f"Gearbox = '{gearbox}")
+        conditions.append(f"Gearbox = '{gearbox}'")
 
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
@@ -335,9 +335,15 @@ def get_features(country, model_year):
     df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['Code', 'CustomName', 'CustomCategory'], conditions=conditions)
     df_pno_features['Code'] = df_pno_features['Code'].str.strip()
     df_pno_features['MarketText'] = df_pno_features['Code'].map(df_features.set_index('Code')['MarketText'])
+    df_pno_features['Custom'] = False  # Add 'iscustom' column
+
     df_pno_custom_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'CFEAT'), columns=['Code', 'CustomName', 'CustomCategory'], conditions=conditions)
+    df_pno_custom_features['Custom'] = True  # Add 'iscustom' column
 
     df_pno_features = pd.concat([df_pno_features, df_pno_custom_features], ignore_index=True)
+
+    # group by code. if the number of custom names is more than one, change the custom name to 'PMT_MULTIPLE_CUSTOM_NAMES'
+    df_pno_features = df_pno_features.groupby('Code').agg({'MarketText': 'first', 'CustomName': lambda x: 'PMT_MULTIPLE_CUSTOM_NAMES' if len(x.unique()) > 1 else x.unique()[0], 'CustomCategory': 'first', 'Custom': 'first'}).reset_index()
 
     df_pno_features = df_pno_features.sort_values(by='Code', ascending=True)
     df_pno_features.drop_duplicates(inplace=True)

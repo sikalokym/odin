@@ -1,5 +1,7 @@
 from flask import Blueprint, request, jsonify
 import pandas as pd
+import random
+import numpy as np
 
 from src.database.db_operations import DBOperations
 from src.utils.db_utils import filter_df_by_model_year
@@ -102,7 +104,8 @@ def write_features(country, model_year):
     else:
         conditions.append(f"PNOID in {tuple(ids)}")
 
-    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), conditions=conditions)
+    table = DBOperations.instance.config.get('AUTH', 'CFEAT') if data.get('Custom') else DBOperations.instance.config.get('AUTH', 'FEAT')
+    df_pno_features = DBOperations.instance.get_table_df(table, conditions=conditions)
     update_columns = ['CustomName', 'CustomCategory']
 
     # Update the columns in the df_pno_features DataFrame
@@ -111,22 +114,25 @@ def write_features(country, model_year):
     all_columns = df_pno_features.columns.tolist()
     conditional_columns = list(set(all_columns) - set(update_columns))
 
-    DBOperations.instance.upsert_data_from_df(df_pno_features, DBOperations.instance.config.get('AUTH', 'FEAT'), all_columns, conditional_columns)
+    DBOperations.instance.upsert_data_from_df(df_pno_features, table, all_columns, conditional_columns)
     return jsonify({'message': 'Features written successfully'}), 200
 
-@bp_db_writer.route('/customfeatures', methods=['POST'])
-def write_customfeatures(country, model_year):
+@bp_db_writer.route('/update/customfeatures', methods=['POST'])
+def update_customfeatures(country, model_year):
     data = request.get_json()
     if not data:
         return jsonify({'error': 'No data provided'}), 400
     
     model = data['Model']
-    code = data['Code']
 
     # Create a DataFrame from the list of JSON objects
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f"Model = '{model}'"])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     ids = df_pnos['ID'].tolist()
+    code = data.get('Code', None)
+    if code is None:
+        return jsonify({'error': 'No code provided'}), 400
+
     conditions = [f"Code = '{code}'"]
     if len(ids) == 1:
         conditions.append(f"PNOID = '{ids[0]}'")
@@ -134,11 +140,8 @@ def write_customfeatures(country, model_year):
         conditions.append(f"PNOID in {tuple(ids)}")
 
     df_pno_custom_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'CFEAT'), conditions=conditions)
-    df_pno_custom_features = df_pno_custom_features.drop(columns=['*'])
-    update_columns = ['PNOID', 'Code','CustomName', 'CustomCategory', 'StartDate', 'EndDate']
 
-    # Set the PNOID in df_pno_custom_features to be the same as the PNOID determined in the conditions
-    data['PNOID'] = ids if len(ids) > 1 else ids[0]
+    update_columns = ['CustomName', 'CustomCategory']
 
     # Update the columns in the df_pno_features DataFrame
     for col in update_columns:
@@ -148,6 +151,38 @@ def write_customfeatures(country, model_year):
     conditional_columns = list(set(all_columns) - set(update_columns))
 
     DBOperations.instance.upsert_data_from_df(df_pno_custom_features, DBOperations.instance.config.get('AUTH', 'CFEAT'), all_columns, conditional_columns)
+    return jsonify({'message': 'Features written successfully'}), 200
+
+
+@bp_db_writer.route('/insert/customfeatures', methods=['POST'])
+def write_customfeatures(country, model_year):
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
+    model = data['Model']
+
+    # Create a DataFrame from the list of JSON objects
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f"Model = '{model}'"])
+    df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    ids = df_pnos['ID'].tolist()
+
+    df_pno_custom_features_old = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'CFEAT'))
+
+    if df_pno_custom_features_old.empty:
+        custom_code = 'XY0001'
+    else:
+        codes = df_pno_custom_features_old['Code'].unique().tolist()
+        leading_digits = [int(code[-4:]) for code in codes]
+        custom_code = f'XY{str(max(leading_digits) + 1).zfill(4)}'
+        
+    rows = []
+    for id in ids:
+        new_row = {'PNOID': id, 'Code': custom_code, 'CustomName': data['CustomName'], 'CustomCategory': data['CustomCategory'], 'StartDate': data['StartDate'], 'EndDate': data['EndDate']}
+        rows.append(new_row)
+    df_pno_custom_features_new = pd.DataFrame(rows)
+    all_columns = df_pno_custom_features_new.columns.tolist()
+    DBOperations.instance.upsert_data_from_df(df_pno_custom_features_new, DBOperations.instance.config.get('AUTH', 'CFEAT'), all_columns, ['PNOID', 'Code'])
     return jsonify({'message': 'Features written successfully'}), 200
 
 @bp_db_writer.route('/options', methods=['POST'])
@@ -244,13 +279,16 @@ def write_upholstery(country, model_year):
         conditions.append(f"PNOID in {tuple(ids)}")
 
     df_pno_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'UPH'), conditions=conditions)
-    df_pno_upholstery['CustomName'] = data['CustomName']
+    rel_ids = df_pno_upholstery['ID'].unique().tolist()
+    uph_conditions = []
+    if len(rel_ids) == 1:
+        uph_conditions.append(f"RelationID = '{rel_ids[0]}'")
+    else:
+        uph_conditions.append(f"RelationID in {tuple(rel_ids)}")
 
-    df_pno_upholstery_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'))
+    df_pno_upholstery_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), conditions=package_conditions)
 
-    df_pno_upholstery_relations = df_pno_upholstery_relations[df_pno_upholstery_relations['RelationID'].isin(df_pno_upholstery['ID'])]
-
-    update_columns = ['CustomName']
+    update_columns = ['CustomName'] # ['CustomName', 'CustomCategory']
 
     # Update the columns in the df_pno_upholstery_relation DataFrame
     for col in update_columns:
@@ -267,25 +305,31 @@ def write_packages(country, model_year):
     if not data:
         return jsonify({'error': 'No data provided'}), 400
     
-    model = data['Model']
-    code = data['Code']
-
+    model = data.get('Model', None)
+    pnos_conditions = [f'CountryCode = {country}']
+    if model:
+        pnos_conditions.append(f"Model = '{model}'")
     # Create a DataFrame from the list of JSON objects
-    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f"Model = '{model}'"])
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=pnos_conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     ids = df_pnos['ID'].tolist()
+    code = data['Code']
     conditions = [f"Code = '{code}'"]
     if len(ids) == 1:
         conditions.append(f"PNOID = '{ids[0]}'")
     else:
         conditions.append(f"PNOID in {tuple(ids)}")
 
-    df_pno_packages = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PKG'), conditions=conditions)
-    df_pno_packages['CustomName'] = data['CustomName']
+    df_pno_packages = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PKG'), ['ID'], conditions=conditions)
+    
+    rel_ids = df_pno_packages['ID'].unique().tolist()
+    package_conditions = []
+    if len(rel_ids) == 1:
+        package_conditions.append(f"RelationID = '{rel_ids[0]}'")
+    else:
+        package_conditions.append(f"RelationID in {tuple(rel_ids)}")
 
-    df_pno_packages_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'PKG_Custom'))
-
-    df_pno_packages_relations = df_pno_packages_relations[df_pno_packages_relations['RelationID'].isin(df_pno_packages['ID'])]
+    df_pno_packages_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'PKG_Custom'), columns=['RelationID', 'CustomName'], conditions=package_conditions)
 
     update_columns = ['CustomName']
 
