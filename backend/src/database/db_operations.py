@@ -2,8 +2,8 @@ import logging
 import configparser
 from contextlib import contextmanager
 import pandas as pd
+import src.utils.db_utils as utils
 from src.database.db_connection import DatabaseConnection
-from src.utils.db_utils import df_from_datarows, df_from_package_datarows, filter_df_by_model_year, get_pno_ids_from_variants, get_relation_ids, split_df
 
 
 class DBOperations:
@@ -172,7 +172,7 @@ class DBOperations:
         return True
 
     def collect_auth(self, datarows, spec_market):
-        df = df_from_datarows(datarows, ['Code', 'DataType'])
+        df = utils.df_from_datarows(datarows, ['Code', 'DataType'])
 
         df_pno = df[df['DataType'] == 'PNO'].copy()
         df_pno.insert(9, 'CountryCode', spec_market)
@@ -189,7 +189,7 @@ class DBOperations:
             self.logger.info("No existing PNOs found. It doesn't make sense to proceed without PNOs")
             return
 
-        df_assigned, df_unassigned = get_pno_ids_from_variants(df_pnos, df)
+        df_assigned, df_unassigned = utils.get_pno_ids_from_variants(df_pnos, df)
         
         auth_columns = ['PNOID', 'Code', 'RuleName', 'StartDate', 'EndDate']
         auth_conditional_columns = ['PNOID', 'Code', 'StartDate']
@@ -202,7 +202,7 @@ class DBOperations:
         if not datarows:
             self.logger.info('No data to insert')
             return
-        df = df_from_datarows(datarows, ['RuleCode', 'ItemCode', 'FeatureCode'])
+        df = utils.df_from_datarows(datarows, ['RuleCode', 'ItemCode', 'FeatureCode'])
         
         df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f'CountryCode={spec_market}'])
         df_pnos = df_pnos.drop('CountryCode', axis=1)
@@ -210,7 +210,8 @@ class DBOperations:
             self.logger.info("No existing PNOs found. It doesn't make sense to proceed without PNOs")
             return
 
-        df_assigned, df_unassigned = get_pno_ids_from_variants(df_pnos, df, is_relation=False)
+        df_assigned, df_unassigned = utils.get_pno_ids_from_variants(df_pnos, df, is_relation=False)
+        utils.log_df(df_unassigned, 'Packages from CPAM were not assigned to any existing authorized PNOs:', logging.warning)
 
         df_final = df_assigned.explode('FeatureCode')
         df_final.insert(2, 'RuleName', df_final['RuleCode'].map(lambda x: self.config.get('DEPENDENCIES_NAMES', x)))
@@ -225,7 +226,7 @@ class DBOperations:
         if not datarows:
             self.logger.info('No data to insert')
             return
-        df = df_from_datarows(datarows, ['Code', 'Special', 'Reference'])
+        df = utils.df_from_datarows(datarows, ['Code', 'Special', 'Reference'])
         df['Code'] = df['Code'].str.strip()
         df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f'CountryCode={spec_market}'])
         df_pnos = df_pnos.drop('CountryCode', axis=1)
@@ -233,7 +234,9 @@ class DBOperations:
             self.logger.info("No existing PNOs found. It doesn't make sense to proceed without PNOs")
             return
 
-        df_assigned, df_unassigned = get_pno_ids_from_variants(df_pnos, df)
+        df_assigned, df_unassigned = utils.get_pno_ids_from_variants(df_pnos, df)
+        utils.log_df(df_unassigned, 'Feature from CPAM were not assigned to any existing authorized PNOs:', logging.warning)
+
         # column reference might include comma seperated values: split then explode
         df_assigned['Reference'] = df_assigned['Reference'].str.split(',')
         df_assigned = df_assigned.explode('Reference')
@@ -249,7 +252,7 @@ class DBOperations:
             self.logger.info('No data to insert')
             return
         
-        df = df_from_package_datarows(datarows)
+        df = utils.df_from_package_datarows(datarows)
         df['StartDate'] = df['StartDate'].astype(int)
         df['EndDate'] = df['EndDate'].astype(int)
         df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f'CountryCode={spec_market}'])
@@ -258,21 +261,22 @@ class DBOperations:
             self.logger.info("No existing PNOs found. It doesn't make sense to proceed without PNOs")
             return
 
-        df_assigned, df_unassigned = get_pno_ids_from_variants(df_pnos, df)
+        df_assigned, df_unassigned = utils.get_pno_ids_from_variants(df_pnos, df)
+        utils.log_df(df_unassigned, 'Package from CPAM were not assigned to any existing authorized PNOs:', logging.warning)
         
         package_columns = ['PNOID', 'Code', 'Title', 'RuleCode', 'RuleType', 'RuleName', 'RuleBase', 'StartDate', 'EndDate']
         package_conditional_columns = ['PNOID', 'Code', 'RuleCode', 'StartDate']
         self.logger.info('Inserting packages')
         self.upsert_data_from_df(df_assigned, self.config.get('AUTH', 'PKG'), package_columns, package_conditional_columns)
 
-    def assign_prices_from_visa_dataframe(self, spec_market):
-        df_all_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f'CountryCode={spec_market}'])
+    def assign_prices_from_visa_dataframe(self, country_code):
+        df_all_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f'CountryCode={country_code}'])
         df_all_pnos = df_all_pnos.drop('CountryCode', axis=1)
         if df_all_pnos.empty:
             self.logger.info("No existing PNOs found. It doesn't make sense to proceed without PNOs")
             return
         
-        df_visa = self.get_table_df(self.config.get('RELATIONS', 'VISA'), conditions=[f'CountryCode={spec_market}'])
+        df_visa = self.get_table_df(self.config.get('RELATIONS', 'VISA'), conditions=[f'CountryCode={country_code}'])
         if df_visa.empty:
             self.logger.info("No VISA data found")
             return
@@ -282,38 +286,43 @@ class DBOperations:
         for my, group in df_visa.groupby(df_visa['ModelYear']):
             # Drop the 'ModelYear' column from the group
             group = group.drop(columns=['ModelYear'])
-            df_pnos = filter_df_by_model_year(df_all_pnos, my)
+            df_pnos = utils.filter_df_by_model_year(df_all_pnos, my)
 
             # Split the DataFrame into multiple DataFrames
-            df_pno_prices, df_color_pno_prices, df_option_pno_prices, df_upholstery_pno_prices, df_package_pno_prices = split_df(group)
+            df_pno_prices, df_color_pno_prices, df_option_pno_prices, df_upholstery_pno_prices, df_package_pno_prices = utils.split_df(group)
             
             relation_columns = ['RelationID', 'StartDate', 'EndDate', 'Price', 'PriceBeforeTax']
             conditional_columns = ['RelationID', 'StartDate']
 
-            df_pnos_assigned, df_pnos_unassigned = get_pno_ids_from_variants(df_pnos, df_pno_prices, is_relation=True)
+            df_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_pno_prices, is_relation=True)
             df_pnos_assigned.drop_duplicates(subset=['RelationID', 'StartDate'], keep='last', inplace=True)
             self.upsert_data_from_df(df_pnos_assigned, self.config.get('RELATIONS', 'PNO_Custom'), relation_columns, conditional_columns)
+            utils.log_df(df_pnos_unassigned, 'PNOs from Visa file unassigned to CPAM PNOs:', logging.warning)
             
-            df_color_pnos_assigned, df_pnos_unassigned = get_pno_ids_from_variants(df_pnos, df_color_pno_prices, is_relation=False)
+            df_color_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_color_pno_prices, is_relation=False)
             df_color_pnos_assigned.drop_duplicates(subset=['PNOID', 'Code', 'StartDate'], keep='last', inplace=True)
             df_colors = self.get_table_df(self.config.get('AUTH', 'COL'))
-            df_color = get_relation_ids(df_colors, df_color_pnos_assigned)
+            df_color = utils.get_relation_ids(df_colors, df_color_pnos_assigned)
             self.upsert_data_from_df(df_color, self.config.get('RELATIONS', 'COL_Custom'), relation_columns, conditional_columns)
+            utils.log_df(df_pnos_unassigned, 'PNOs from Visa file unassigned to CPAM PNOs:', logging.warning)
 
-            df_option_pnos_assigned, df_pnos_unassigned = get_pno_ids_from_variants(df_pnos, df_option_pno_prices, is_relation=False)
+            df_option_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_option_pno_prices, is_relation=False)
             df_option_pnos_assigned.drop_duplicates(subset=['PNOID', 'Code', 'StartDate'], keep='last', inplace=True)
             df_options = self.get_table_df(self.config.get('AUTH', 'OPT'))
-            df_option = get_relation_ids(df_options, df_option_pnos_assigned)
+            df_option = utils.get_relation_ids(df_options, df_option_pnos_assigned)
             self.upsert_data_from_df(df_option, self.config.get('RELATIONS', 'OPT_Custom'), relation_columns, conditional_columns)
+            utils.log_df(df_pnos_unassigned, 'PNOs from Visa file unassigned to CPAM PNOs:', logging.warning)
 
-            df_upholstery_pnos_assigned, df_pnos_unassigned = get_pno_ids_from_variants(df_pnos, df_upholstery_pno_prices, is_relation=False)
+            df_upholstery_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_upholstery_pno_prices, is_relation=False)
             df_upholstery_pnos_assigned.drop_duplicates(subset=['PNOID', 'Code', 'StartDate'], keep='last', inplace=True)
             df_upholsteries = self.get_table_df(self.config.get('AUTH', 'UPH'))
-            df_upholstery = get_relation_ids(df_upholsteries, df_upholstery_pnos_assigned)
+            df_upholstery = utils.get_relation_ids(df_upholsteries, df_upholstery_pnos_assigned)
             self.upsert_data_from_df(df_upholstery, self.config.get('RELATIONS', 'UPH_Custom'), relation_columns, conditional_columns)
+            utils.log_df(df_pnos_unassigned, 'PNOs from Visa file unassigned to CPAM PNOs:', logging.warning)
 
-            df_package_pnos_assigned, df_pnos_unassigned = get_pno_ids_from_variants(df_pnos, df_package_pno_prices, is_relation=False)
+            df_package_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_package_pno_prices, is_relation=False)
             df_package_pnos_assigned.drop_duplicates(subset=['PNOID', 'Code', 'StartDate'], keep='last', inplace=True)
             df_packages = self.get_table_df(self.config.get('AUTH', 'PKG'))
-            df_package = get_relation_ids(df_packages, df_package_pnos_assigned)
+            df_package = utils.get_relation_ids(df_packages, df_package_pnos_assigned)
             self.upsert_data_from_df(df_package, self.config.get('RELATIONS', 'PKG_Custom'), relation_columns, conditional_columns)
+            utils.log_df(df_pnos_unassigned, 'PNOs from Visa file unassigned to CPAM PNOs:', logging.warning)

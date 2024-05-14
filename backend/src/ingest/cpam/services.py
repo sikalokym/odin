@@ -4,19 +4,20 @@ import configparser
 
 from src.database.db_operations import DBOperations
 import src.ingest.cpam.api as cpam
+from src.ingest.visa_files.services import assign_prices
 from src.utils.ingest_utils import is_valid_car_type, is_valid_year
 
 logger = logging.getLogger(__name__)
 config = configparser.ConfigParser()
 config.read('config/cpam.cfg')
 
-def ingest_all_cpam_data_from(year, spec_market):
+def ingest_all_cpam_data_from(year, country_code):
     """
     Ingests all CPAM data for a specific year and market.
 
     Args:
         year (int): The year for which the data needs to be ingested.
-        spec_market (str): The specific market for which the data needs to be ingested.
+        country_code (str): The specific market for which the data needs to be ingested.
 
     Returns:
         tuple: A tuple containing two lists - `load_successfull` and `load_unsuccessfull`.
@@ -32,10 +33,10 @@ def ingest_all_cpam_data_from(year, spec_market):
         maf = config.get('SETTINGS', 'MARKET_AUTH_FLAG')
         sw = config.get('SETTINGS', 'START_WEEK')
         try:
-            ingest_cpam_data(year, car['Type'], spec_market, maf, sw)
+            ingest_cpam_data(year, car['Type'], country_code, maf, sw)
             load_successfull.append((year, car['Type']))
         except Exception as e:
-            logger.error(f'Error processing car type {car["Type"]}: {e}')
+            logger.error(f'Error processing car type {car["Type"]}: {e}', extra={'country_code': country_code})
             load_unsuccessfull.append((year, car['Type']))
             continue
         end_time = time.perf_counter()
@@ -45,12 +46,12 @@ def ingest_all_cpam_data_from(year, spec_market):
 
 from multiprocessing import Process, Manager
 
-def ingest_cpam_data_wrapper(year, car_type, spec_market, maf, sw, load_successfull, load_unsuccessfull):
+def ingest_cpam_data_wrapper(year, car_type, country_code, maf, sw, load_successfull, load_unsuccessfull):
     try:
-        ingest_cpam_data(year, car_type, spec_market, maf, sw)
+        ingest_cpam_data(year, car_type, country_code, maf, sw)
         load_successfull.append((year, car_type))
     except Exception as e:
-        logger.error(f'Error processing car type {car_type}: {e}')
+        logger.error(f'Error processing car type {car_type}: {e}', extra={'country_code': country_code})
         load_unsuccessfull.append((year, car_type))
 
 def ingest_all_cpam_data(spec_market, year=None, start_model_year=''):
@@ -70,33 +71,36 @@ def ingest_all_cpam_data(spec_market, year=None, start_model_year=''):
             p.join()
         return list(load_successfull), list(load_unsuccessfull)
  
-def ingest_cpam_data(year, car_type, spec_market, maf, sw):
+def ingest_cpam_data(year, car_type, country_code, maf, sw):
     """
     Ingests CPAM data for a specific year, car type, spec market, MAF, and SW.
 
     Args:
         year (int): The year of the data.
         car_type (str): The type of car.
-        spec_market (str): The specific market.
+        country_code (str): The specific market.
         maf (str): The MAF value.
         sw (str): The SW value.
 
     Raises:
         ValueError: If the year or car type is invalid.
     """
-    logger.info(f'Processing car type: {car_type}')
+    logger.info(f'Processing car type: {car_type}', extra={'country_code': country_code})
 
-    is_valid = is_valid_year(year, spec_market)
+    is_valid = is_valid_year(year, country_code)
     if isinstance(is_valid, str):
         raise ValueError(is_valid)
     elif not is_valid:
         raise ValueError('Invalid year')
     
-    new_entities = DBOperations.instance.collect_entity(cpam.get_dictionary(year, car_type, spec_market, maf, sw)['DataRows'], spec_market)
+    new_entities = DBOperations.instance.collect_entity(cpam.get_dictionary(year, car_type, country_code, maf, sw)['DataRows'], country_code)
     if not new_entities:
         return
-    DBOperations.instance.collect_auth(cpam.get_authorization(year, car_type, spec_market, maf, sw)['DataRows'], spec_market)
-    DBOperations.instance.collect_package(cpam.get_packages(year, car_type, spec_market, maf, sw)['PackageDataRows'], spec_market)
-    DBOperations.instance.collect_dependency(cpam.get_dependency_rules(year, car_type, spec_market, maf, sw)['DataRows'], spec_market)
-    DBOperations.instance.collect_feature(cpam.get_features(year, car_type, spec_market, maf, sw)['DataRows'], spec_market)
-    logger.debug('Data insertion completed')
+    DBOperations.instance.collect_auth(cpam.get_authorization(year, car_type, country_code, maf, sw)['DataRows'], country_code)
+    DBOperations.instance.collect_package(cpam.get_packages(year, car_type, country_code, maf, sw)['PackageDataRows'], country_code)
+    DBOperations.instance.collect_dependency(cpam.get_dependency_rules(year, car_type, country_code, maf, sw)['DataRows'], country_code)
+    DBOperations.instance.collect_feature(cpam.get_features(year, car_type, country_code, maf, sw)['DataRows'], country_code)
+    
+    logger.debug('Data insertion completed', extra={'country_code': country_code})
+
+    assign_prices(country_code)

@@ -1,4 +1,3 @@
-import logging
 from flask import Flask, render_template_string
 from flask_cors import CORS
 from src.database.db_connection import DatabaseConnection
@@ -12,12 +11,6 @@ from src.routes.settings_routes import bp_settings
 
 app = Flask(__name__)
 CORS(app)
-
-# Setup logging
-stream_handler = logging.StreamHandler()
-stream_handler.setLevel(logging.INFO)
-app.logger.addHandler(stream_handler)
-app.logger.setLevel(logging.INFO)
 
 app.register_blueprint(bp_settings)
 app.register_blueprint(bp_ingest)

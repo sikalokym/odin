@@ -380,3 +380,14 @@ def format_float_string(float_string):
     formatted_string = formatted_string.replace(",", "X").replace(".", ",").replace("X", ".")
     
     return formatted_string
+
+def log_df(df, msg_prefix, callable_logger):
+    if df.empty:
+        return
+    for _, row in df.iterrows():
+        country_code = row['CountryCode']
+        msg = msg_prefix + ' '
+        for column in df.columns:
+            msg += f'{column}: {row[column]} '
+
+        callable_logger(msg, extra={'country_code': country_code})

@@ -1,7 +1,4 @@
 from lxml import etree
-import logging
-
-logger = logging.getLogger(__name__)
 
 def parse_xml(xml_data, template):
     """

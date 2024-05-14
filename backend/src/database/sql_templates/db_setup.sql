@@ -384,3 +384,13 @@ CREATE TABLE ChangeLog (
     ChangeFrom NVARCHAR(MAX),
     ChangeTo NVARCHAR(MAX)
 );
+
+-- Create the log table
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'DataQualityLog')
+CREATE TABLE DataQualityLog (
+    ID UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+    CountryCode VARCHAR(12),
+    LogDate DATETIME,
+    LogType VARCHAR(100),
+    LogMessage NVARCHAR(MAX)
+);

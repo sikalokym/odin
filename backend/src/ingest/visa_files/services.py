@@ -72,8 +72,8 @@ def ingest_visa_data(spec_markt):
     DBOperations.instance.upsert_data_from_df(df_package, config.get('RELATIONS', 'VISA'), columns, conditional_columns)
     assign_prices(spec_markt)
 
-def assign_prices(spec_markt):
+def assign_prices(country_code):
     """
     Assigns prices from the Visa dataframe using DBOperations instance.
     """
-    DBOperations.instance.assign_prices_from_visa_dataframe(spec_markt)
+    DBOperations.instance.assign_prices_from_visa_dataframe(country_code)
