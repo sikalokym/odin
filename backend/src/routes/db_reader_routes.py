@@ -193,6 +193,14 @@ def get_options(country, model_year):
     df_pno_options_merged['hasFeature'] = df_pno_options_merged['Reference'].apply(lambda x: False if pd.isnull(x) or x == '' else True)
     df_pno_options_merged['CustomName'] = df_pno_options_merged['FeatText'].combine_first(df_pno_options_merged['CustomName'])
 
+    # group by code. if the number of custom names is more than one, change the custom name to '*Model-specific text*'
+    df_pno_options_merged = df_pno_options_merged.groupby('Code').agg({
+        'MarketText': 'first', 
+        'CustomName': lambda x: '*Model-specific text*' if len(x.unique()) > 1 else x.unique()[0],
+        'CustomCategory': 'first',
+        'hasFeature': 'first'
+    }).reset_index()
+
     df_final = df_pno_options_merged.sort_values(by='Code', ascending=True)
     df_final = df_final[['Code', 'MarketText', 'CustomName', 'CustomCategory', 'hasFeature']]
     df_final.drop_duplicates(inplace=True)
@@ -244,6 +252,9 @@ def get_colors(country, model_year):
     df_pno_colors['MarketText'] = df_pno_colors['Code'].map(df_colors.set_index('Code')['MarketText'])
     df_pno_colors.drop(columns=['ID'], inplace=True)
     
+    # group by code. if the number of custom names is more than one, change the custom name to '*Model-specific text*'
+    df_pno_colors = df_pno_colors.groupby('Code').agg({'MarketText': 'first', 'CustomName': lambda x: '*Model-specific text*' if len(x.unique()) > 1 else x.unique()[0]}).reset_index()
+
     df_pno_colors = df_pno_colors.sort_values(by='Code', ascending=True)
     df_pno_colors.drop_duplicates(inplace=True)
     
@@ -284,15 +295,20 @@ def get_upholstery(country, model_year):
     df_pno_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'UPH'), columns=['ID', 'PNOID', 'Code'], conditions=conditions)
     df_pno_upholstery.drop_duplicates(inplace=True)
     
-    df_upholstery_custom = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), columns=['RelationID', 'CustomName'])
+    df_upholstery_custom = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), columns=['RelationID', 'CustomName', 'CustomCategory'])
     if df_upholstery_custom.empty:
         df_pno_upholstery['CustomName'] = ''
+        df_pno_upholstery['CustomCategory'] = ''
     else:
         df_pno_upholstery['CustomName'] = df_pno_upholstery['ID'].map(df_upholstery_custom.set_index('RelationID')['CustomName'])
+        df_pno_upholstery['CustomCategory'] = df_pno_upholstery['ID'].map(df_upholstery_custom.set_index('RelationID')['CustomCategory'])
     
     df_pno_upholstery['MarketText'] = df_pno_upholstery['Code'].map(df_upholstery.set_index('Code')['MarketText'])
     df_pno_upholstery.drop(columns=['ID', 'PNOID'], inplace=True)
     df_pno_upholstery.drop_duplicates(inplace=True)
+
+    # group by code. if the number of custom names is more than one, change the custom name to '*Model-specific text*'
+    df_pno_upholstery = df_pno_upholstery.groupby('Code').agg({'MarketText': 'first', 'CustomName': lambda x: '*Model-specific text*' if len(x.unique()) > 1 else x.unique()[0], 'CustomCategory': 'first'}).reset_index()
 
     df_pno_upholstery = df_pno_upholstery.sort_values(by='Code', ascending=True)
     
@@ -342,8 +358,8 @@ def get_features(country, model_year):
 
     df_pno_features = pd.concat([df_pno_features, df_pno_custom_features], ignore_index=True)
 
-    # group by code. if the number of custom names is more than one, change the custom name to 'PMT_MULTIPLE_CUSTOM_NAMES'
-    df_pno_features = df_pno_features.groupby('Code').agg({'MarketText': 'first', 'CustomName': lambda x: 'PMT_MULTIPLE_CUSTOM_NAMES' if len(x.unique()) > 1 else x.unique()[0], 'CustomCategory': 'first', 'Custom': 'first'}).reset_index()
+    # group by code. if the number of custom names is more than one, change the custom name to '*Model-specific text*'
+    df_pno_features = df_pno_features.groupby('Code').agg({'MarketText': 'first', 'CustomName': lambda x: '*Model-specific text*' if len(x.unique()) > 1 else x.unique()[0], 'CustomCategory': 'first', 'Custom': 'first'}).reset_index()
 
     df_pno_features = df_pno_features.sort_values(by='Code', ascending=True)
     df_pno_features.drop_duplicates(inplace=True)
@@ -395,6 +411,9 @@ def get_packages(country, model_year):
     df_pno_packages.drop(columns=['ID', 'PNOID'], inplace=True)
     df_pno_packages.drop_duplicates(inplace=True)
 
+    # group by code. if the number of custom names is more than one, change the custom name to '*Model-specific text*'
+    df_pno_packages = df_pno_packages.groupby('Code').agg({'MarketText': 'first', 'CustomName': lambda x: '*Model-specific text*' if len(x.unique()) > 1 else x.unique()[0]}).reset_index()
+
     df_pno_packages = df_pno_packages.sort_values(by='Code', ascending=True)
     
     return df_pno_packages.to_json(orient='records')
@@ -402,19 +421,10 @@ def get_packages(country, model_year):
 @bp_db_reader.route('/changelog', methods=['GET'])
 def get_changelog(country, model_year):
     model = request.args.get('model')
-    engine = request.args.get('engine')
-    sales_version = request.args.get('sales_version')
-    gearbox = request.args.get('gearbox')
 
     conditions = [f'CountryCode = {country}']
     if model:
         conditions.append(f"Model = '{model}'")
-    if engine:
-        conditions.append(f"Engine = '{engine}'")
-    if sales_version:
-        conditions.append(f"SalesVersion = '{sales_version}'")
-    if gearbox:
-        conditions.append(f"Gearbox = '{gearbox}")
 
     df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
@@ -427,20 +437,7 @@ def get_changelog(country, model_year):
     else:
         conditions.append(f"CHANGECODE in {tuple(ids)}")
 
-    # df_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CL'), columns=['ChangeTable', 'ChangeDate', 'ChangeType', 'ChangeField', 'ChangeFrom', 'ChangeTo'], conditions=[f'CountryCode = {country}'])
-    # df_features = filter_df_by_model_year(df_features, model_year)
-    # df_features.drop(columns=['StartDate', 'EndDate'], inplace=True)
-    # df_features['Code'] = df_features['Code'].str.strip()
-    # df_features.drop_duplicates(subset='Code', inplace=True)
-
     df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('DQ', 'CL'), columns=['ChangeTable', 'ChangeDate', 'ChangeType', 'ChangeField', 'ChangeFrom', 'ChangeTo'], conditions=conditions)
-    # df_pno_features['Code'] = df_pno_features['Code'].str.strip()
-    # df_pno_features['MarketText'] = df_pno_features['Code'].map(df_features.set_index('Code')['MarketText'])
-    # df_pno_custom_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'CFEAT'), columns=['Code', 'CustomName', 'CustomCategory'], conditions=conditions)
-
-    # df_pno_features = pd.concat([df_pno_features, df_pno_custom_features], ignore_index=True)
-
     df_pno_features = df_pno_features.sort_values(by='ChangeDate', ascending=True)
-    # df_pno_features.drop_duplicates(inplace=True)
 
     return df_pno_features.to_json(orient='records')

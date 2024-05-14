@@ -91,11 +91,15 @@ def write_features(country, model_year):
     if not data:
         return jsonify({'error': 'No data provided'}), 400
     
-    model = data['Model']
     code = data['Code']
 
+    model = data.get('Model', None)
+    pnos_conditions = [f'CountryCode = {country}']
+    if model:
+        pnos_conditions.append(f"Model = '{model}'")
+
     # Create a DataFrame from the list of JSON objects
-    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f"Model = '{model}'"])
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=pnos_conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     ids = df_pnos['ID'].tolist()
     conditions = [f"Code = '{code}'"]
@@ -123,10 +127,14 @@ def update_customfeatures(country, model_year):
     if not data:
         return jsonify({'error': 'No data provided'}), 400
     
-    model = data['Model']
+    model = data.get('Model', None)
+    pnos_conditions = [f'CountryCode = {country}']
+    if model:
+        pnos_conditions.append(f"Model = '{model}'")
+
 
     # Create a DataFrame from the list of JSON objects
-    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f"Model = '{model}'"])
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=pnos_conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     ids = df_pnos['ID'].tolist()
     code = data.get('Code', None)
@@ -191,11 +199,15 @@ def write_options(country, model_year):
     if not data:
         return jsonify({'error': 'No data provided'}), 400
     
-    model = data['Model']
     code = data['Code']
 
+    model = data.get('Model', None)
+    pnos_conditions = [f'CountryCode = {country}']
+    if model:
+        pnos_conditions.append(f"Model = '{model}'")
+
     # Create a DataFrame from the list of JSON objects
-    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f"Model = '{model}'"])
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=pnos_conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     ids = df_pnos['ID'].tolist()
     conditions = [f"Code = '{code}'"]
@@ -228,11 +240,15 @@ def write_colors(country, model_year):
     if not data:
         return jsonify({'error': 'No data provided'}), 400
     
-    model = data['Model']
     code = data['Code']
 
+    model = data.get('Model', None)
+    pnos_conditions = [f'CountryCode = {country}']
+    if model:
+        pnos_conditions.append(f"Model = '{model}'")
+
     # Create a DataFrame from the list of JSON objects
-    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f"Model = '{model}'"])
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=pnos_conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     ids = df_pnos['ID'].tolist()
     conditions = [f"Code = '{code}'"]
@@ -265,11 +281,15 @@ def write_upholstery(country, model_year):
     if not data:
         return jsonify({'error': 'No data provided'}), 400
     
-    model = data['Model']
     code = data['Code']
 
+    model = data.get('Model', None)
+    pnos_conditions = [f'CountryCode = {country}']
+    if model:
+        pnos_conditions.append(f"Model = '{model}'")
+
     # Create a DataFrame from the list of JSON objects
-    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f"Model = '{model}'"])
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=pnos_conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     ids = df_pnos['ID'].tolist()
     conditions = [f"Code = '{code}'"]
@@ -286,7 +306,7 @@ def write_upholstery(country, model_year):
     else:
         uph_conditions.append(f"RelationID in {tuple(rel_ids)}")
 
-    df_pno_upholstery_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), conditions=package_conditions)
+    df_pno_upholstery_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), conditions=uph_conditions)
 
     update_columns = ['CustomName'] # ['CustomName', 'CustomCategory']
 
