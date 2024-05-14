@@ -25,7 +25,7 @@
     <!-- Filter for models -->
     <label class="model" style="width: 180px;">Model</label><br>
     <select name="model" id="model" v-model="model" @change="fetchPnoSpecifics" style="width:180px; height:30px; position: absolute;" :disabled="!['Model', 'Features', 'Colors', 'Options','Upholstery','Packages'].includes(displaytable) || model_year === '0'">
-      <option value="" :disabled="!['Model', 'Engine', 'SalesVersion', 'Gearbox'].includes(displaytable)">All</option>
+      <option value="">All</option>
       <option v-for="model in models" :key="model" :value="model">{{ model }}</option>
     </select>
     <!-- Filter for engines -->
@@ -72,27 +72,19 @@
     <!-- Table Filter -->
     <div style="display: flex; margin-bottom: 1em;">
       <input v-if="displaytable !== '' && model_year !== '0' && !customFeatureTable" v-model="searchTerm" type="text" placeholder="Filter" style="margin-right: 1ch;">
-      <button v-if="displaytable === 'Features' && model_year !== '0' && this.model !== '' && !customFeatureTable" @click="showCustomFeatureTable">Add custom feature</button>
+      <button v-if="displaytable === 'Features' && model_year !== '0' && !customFeatureTable" @click="showCustomFeatureTable">Add custom feature</button>
     </div>
     <!-- Model Table -->
     <table v-if="displaytable === 'Model' && model_year !== '0'">
       <thead v-if="model_year !== '0'">
         <tr>
-          <th v-if="model_year === ''">
-            <div style="display: flex; justify-content: center; align-items: center;">
-              Model Year
-              <div style="margin-left: 1ch;">
-                <span @click="sortTable('model_year', 1)">↑</span>
-                <span @click="sortTable('model_year', -1)">↓</span>
-              </div>
-            </div>
-          </th>
+
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
               Model
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('Code', 1)">↑</span>
-                <span @click="sortTable('Code', -1)">↓</span>
+                <span @click="sortTable('Code', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Code', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -100,8 +92,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               CPAM Text
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('MarketText', 1)">↑</span>
-                <span @click="sortTable('MarketText', -1)">↓</span>
+                <span @click="sortTable('MarketText', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('MarketText', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -109,8 +101,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Market Text
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('CustomName', 1)">↑</span>
-                <span @click="sortTable('CustomName', -1)">↓</span>
+                <span @click="sortTable('CustomName', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('CustomName', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -140,8 +132,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Sales Version
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('Code', 1)">↑</span>
-                <span @click="sortTable('Code', -1)">↓</span>
+                <span @click="sortTable('Code', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Code', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -149,8 +141,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               CPAM Text
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('MarketText', 1)">↑</span>
-                <span @click="sortTable('MarketText', -1)">↓</span>
+                <span @click="sortTable('MarketText', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('MarketText', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -158,8 +150,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Market Text
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('CustomName', 1)">↑</span>
-                <span @click="sortTable('CustomName', -1)">↓</span>
+                <span @click="sortTable('CustomName', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('CustomName', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -186,8 +178,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Engine
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('Code', 1)">↑</span>
-                <span @click="sortTable('Code', -1)">↓</span>
+                <span @click="sortTable('Code', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Code', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -195,8 +187,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               CPAM Text
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('MarketText', 1)">↑</span>
-                <span @click="sortTable('MarketText', -1)">↓</span>
+                <span @click="sortTable('MarketText', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('MarketText', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -204,8 +196,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Market Text
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('CustomName', 1)">↑</span>
-                <span @click="sortTable('CustomName', -1)">↓</span>
+                <span @click="sortTable('CustomName', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('CustomName', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -213,8 +205,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Category
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('EngineCategory', 1)">↑</span>
-                <span @click="sortTable('EngineCategory', -1)">↓</span>
+                <span @click="sortTable('EngineCategory', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('EngineCategory', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -222,8 +214,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Type
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('EngineType', 1)">↑</span>
-                <span @click="sortTable('EngineType', -1)">↓</span>
+                <span @click="sortTable('EngineType', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('EngineType', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -231,8 +223,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Performance kW(PS)
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('Performance', 1)">↑</span>
-                <span @click="sortTable('Performance', -1)">↓</span>
+                <span @click="sortTable('Performance', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Performance', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -268,8 +260,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Gearbox
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('Code', 1)">↑</span>
-                <span @click="sortTable('Code', -1)">↓</span>
+                <span @click="sortTable('Code', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Code', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -277,8 +269,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               CPAM Text
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('MarketText', 1)">↑</span>
-                <span @click="sortTable('MarketText', -1)">↓</span>
+                <span @click="sortTable('MarketText', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('MarketText', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -286,8 +278,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Market Text
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('CustomName', 1)">↑</span>
-                <span @click="sortTable('CustomName', -1)">↓</span>
+                <span @click="sortTable('CustomName', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('CustomName', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -307,15 +299,15 @@
       </tbody>
     </table>
     <!-- Features Table -->
-    <table v-if="displaytable === 'Features' && model_year !== '0' && this.model !== '' && !customFeatureTable">
+    <table v-if="displaytable === 'Features' && model_year !== '0' && !customFeatureTable">
       <thead v-if="model_year !== '0'">
         <tr>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
               Feature
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('Code', 1)">↑</span>
-                <span @click="sortTable('Code', -1)">↓</span>
+                <span @click="sortTable('Code', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Code', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -323,8 +315,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               CPAM Text
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('MarketText', 1)">↑</span>
-                <span @click="sortTable('MarketText', -1)">↓</span>
+                <span @click="sortTable('MarketText', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('MarketText', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -332,8 +324,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Market Text
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('CustomName', 1)">↑</span>
-                <span @click="sortTable('CustomName', -1)">↓</span>
+                <span @click="sortTable('CustomName', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('CustomName', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -341,8 +333,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Feature Category
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('CustomCategory', 1)">↑</span>
-                <span @click="sortTable('CustomCategory', -1)">↓</span>
+                <span @click="sortTable('CustomCategory', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('CustomCategory', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -351,13 +343,17 @@
       </thead>
       <tbody>
         <tr v-for="pno in tableFeatures" :key="pno.id" :class="{ 'editing': pno.edited }">
-          <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
-          <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
-          <td>
-            <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true" @change="pushUpdateFeature(pno)" />
+          <td style="background-color: #f4f4f4;">
+            {{ pno.Code }}
+          </td>
+          <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">
+            {{ pno.MarketText }}
           </td>
           <td>
-            <input type="Category" v-model="pno.CustomCategory" @input="pno.edited = true" @change="pushUpdateFeature(pno)" />
+            <input v-model="pno.CustomName" type="text" @input="pno.edited = true" @change="pushUpdateFeature(pno)" />
+          </td>
+          <td>
+            <input v-model="pno.CustomCategory" type="text" @input="pno.edited = true" @change="pushUpdateFeature(pno)" />
           </td>
         </tr>
       </tbody>
@@ -366,7 +362,6 @@
     <table v-if="customFeatureTable">
       <thead v-if="model_year !== '0'">
         <tr>
-          <th>Feature</th>
           <th>Market Text</th>
           <th>Feature Category</th>
           <th>Start Date</th>
@@ -376,7 +371,6 @@
       </thead>
       <tbody>
         <tr>
-          <td><input type="text" v-model="newEntry.Code" /></td>
           <td><input type="text" v-model="newEntry.CustomName"  /></td>
           <td><input type="text" v-model="newEntry.CustomCategory" /></td>
           <td><input type="text" v-model="newEntry.StartDate" pattern="\d{4}(0[1-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-3])" /></td>
@@ -397,15 +391,15 @@
     </div>
 
     <!-- Colors Table -->
-    <table v-if="displaytable === 'Colors' && model_year !== '0' && this.model !== ''">
+    <table v-if="displaytable === 'Colors' && model_year !== '0'">
       <thead v-if="model_year !== '0'">
         <tr>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
               Color
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('Code', 1)">↑</span>
-                <span @click="sortTable('Code', -1)">↓</span>
+                <span @click="sortTable('Code', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Code', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -413,8 +407,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               CPAM Text
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('MarketText', 1)">↑</span>
-                <span @click="sortTable('MarketText', -1)">↓</span>
+                <span @click="sortTable('MarketText', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('MarketText', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -422,8 +416,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Market Text
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('CustomName', 1)">↑</span>
-                <span @click="sortTable('CustomName', -1)">↓</span>
+                <span @click="sortTable('CustomName', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('CustomName', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -441,15 +435,15 @@
       </tbody>
     </table>
     <!-- Options Table -->
-    <table v-if="displaytable === 'Options' && model_year !== '0' && this.model !== ''">
+    <table v-if="displaytable === 'Options' && model_year !== '0'">
       <thead v-if="model_year !== '0'">
         <tr>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
               Option (Feature)
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('Code', 1)">↑</span>
-                <span @click="sortTable('Code', -1)">↓</span>
+                <span @click="sortTable('Code', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Code', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -457,8 +451,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Market Text
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('CustomName', 1)">↑</span>
-                <span @click="sortTable('CustomName', -1)">↓</span>
+                <span @click="sortTable('CustomName', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('CustomName', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -466,8 +460,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Feature Category
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('CustomCategory', 1)">↑</span>
-                <span @click="sortTable('CustomCategory', -1)">↓</span>
+                <span @click="sortTable('CustomCategory', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('CustomCategory', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -475,8 +469,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               CPAM Text
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('MarketText', 1)">↑</span>
-                <span @click="sortTable('MarketText', -1)">↓</span>
+                <span @click="sortTable('MarketText', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('MarketText', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -496,15 +490,15 @@
       </tbody>
     </table>
     <!-- Upholstery Table -->
-    <table v-if="displaytable === 'Upholstery' && model_year !== '0' && this.model !== ''">
+    <table v-if="displaytable === 'Upholstery' && model_year !== '0'">
       <thead v-if="model_year !== '0'">
         <tr>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
               Upholstery
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('Code', 1)">↑</span>
-                <span @click="sortTable('Code', -1)">↓</span>
+                <span @click="sortTable('Code', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Code', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -512,8 +506,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               CPAM Text
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('MarketText', 1)">↑</span>
-                <span @click="sortTable('MarketText', -1)">↓</span>
+                <span @click="sortTable('MarketText', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('MarketText', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -521,8 +515,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Market Text
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('CustomName', 1)">↑</span>
-                <span @click="sortTable('CustomName', -1)">↓</span>
+                <span @click="sortTable('CustomName', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('CustomName', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -530,8 +524,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Category
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('Category', 1)">↑</span>
-                <span @click="sortTable('Category', -1)">↓</span>
+                <span @click="sortTable('Category', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Category', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -547,21 +541,21 @@
           </td>
           <td>
             <!-- <input type="UpholsteryCategory" v-model="pno.Category" @input="pno.edited = true" @change="pushUpdateUpholstery(pno)" />    -->
-            <input type="UpholsteryCategory" v-model="pno.Category" @input="pno.edited = true" />   
+            <input type="UpholsteryCategory" v-model="pno.CustomCategory" @input="pno.edited = true" @change="pushUpdateUpholstery(pno)" />   
           </td>
         </tr>
       </tbody>
     </table>
     <!-- Packages Table -->
-    <table v-if="displaytable === 'Packages' && model_year !== '0' && this.model !== ''">
+    <table v-if="displaytable === 'Packages' && model_year !== '0'">
       <thead v-if="model_year !== '0'">
         <tr>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
               Package
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('Code', 1)">↑</span>
-                <span @click="sortTable('Code', -1)">↓</span>
+                <span @click="sortTable('Code', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Code', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -569,8 +563,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               CPAM Text
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('MarketText', 1)">↑</span>
-                <span @click="sortTable('MarketText', -1)">↓</span>
+                <span @click="sortTable('MarketText', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('MarketText', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -578,8 +572,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Market Text
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('CustomName', 1)">↑</span>
-                <span @click="sortTable('CustomName', -1)">↓</span>
+                <span @click="sortTable('CustomName', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('CustomName', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -591,7 +585,6 @@
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
           <td>
-            <!-- <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true" @change="pushUpdatePackage(pno)" /> -->
             <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true" @change="pushUpdatePackage(pno)"/>
           </td>
         </tr>
@@ -794,7 +787,7 @@ export default {
       });
     },
     isFormValid() {
-      return this.newEntry.Code && this.newEntry.CustomName && this.newEntry.CustomCategory && this.newEntry.StartDate && this.newEntry.EndDate;
+      return this.newEntry.CustomName && this.newEntry.CustomCategory && this.newEntry.StartDate && this.newEntry.EndDate;
     },
   },
 methods: {
@@ -845,23 +838,23 @@ methods: {
   async fetchPnoSpecifics() {
     this.customFeatureTable = false;
     try {
-      if (this.displaytable === 'Features' && this.model !== '') {
+      if (this.displaytable === 'Features') {
         await this.pnoStore.fetchPnosFeatures(this.model, this.engine, this.salesversion, this.gearbox);
         console.log('PNO Features fetched');
       }
-      if (this.displaytable === 'Colors' && this.model !== '') {
+      if (this.displaytable === 'Colors') {
         await this.pnoStore.fetchPnosColors(this.model, this.engine, this.salesversion, this.gearbox);
         console.log('PNO Colors fetched');
       }
-      if (this.displaytable === 'Options' && this.model !== '') {
+      if (this.displaytable === 'Options') {
         await this.pnoStore.fetchPnosOptions(this.model, this.engine, this.salesversion, this.gearbox);
         console.log('PNO Options fetched');
       }
-      if (this.displaytable === 'Upholstery' && this.model !== '') {
+      if (this.displaytable === 'Upholstery') {
         await this.pnoStore.fetchPnosUpholstery(this.model, this.engine, this.salesversion, this.gearbox);
         console.log('PNO Upholstery fetched');
       }
-      if (this.displaytable === 'Packages' && this.model !== '') {
+      if (this.displaytable === 'Packages') {
         await this.pnoStore.fetchPnosPackages(this.model, this.engine, this.salesversion, this.gearbox);
         console.log('PNO Packages fetched');
       }
@@ -909,26 +902,44 @@ methods: {
   },
   // PNO-specific updates
   pushUpdateFeature(pno) {
-    this.pnoStore.pushUpdateFeature(this.model, pno.Code, pno.CustomName, pno.CustomCategory)
+    if (this.model === '' && (pno.CustomName === '' || pno.CustomName === '*Model-specific text*')) {
+      return;
+    }
+    this.pnoStore.pushUpdateFeature(this.model, pno.Code, pno.CustomName, pno.CustomCategory, pno.Custom)
     pno.edited = false
   },
   pushUpdateOption(pno) {
+    if (this.model === '' && (pno.CustomName === '' || pno.CustomName === '*Model-specific text*')) {
+      return;
+    }
     this.pnoStore.pushUpdateOption(this.model, pno.Code, pno.CustomName)
     pno.edited = false
   },
   pushUpdateColor(pno) {
+    if (this.model === '' && (pno.CustomName === '' || pno.CustomName === '*Model-specific text*')) {
+      return;
+    }
     this.pnoStore.pushUpdateColor(this.model, pno.Code, pno.CustomName)
     pno.edited = false
   },
   pushUpdateUpholstery(pno) {
-    this.pnoStore.pushUpdateUpholstery(this.model, pno.Code, pno.CustomName)
+    if (this.model === '' && (pno.CustomName === '' || pno.CustomName === '*Model-specific text*')) {
+      return;
+    }
+    this.pnoStore.pushUpdateUpholstery(this.model, pno.Code, pno.CustomName, pno.CustomCategory)
     pno.edited = false
   },
   pushUpdateOption(pno) {
+    if (this.model === '' && (pno.CustomName === '' || pno.CustomName === '*Model-specific text*')) {
+      return;
+    }
     this.pnoStore.pushUpdateOption(this.model, pno.Code, pno.CustomName)
     pno.edited = false
   },
   pushUpdatePackage(pno) {
+    if (this.model === '' && (pno.CustomName === '' || pno.CustomName === '*Model-specific text*')) {
+      return;
+    }
     this.pnoStore.pushUpdatePackage(this.model, pno.Code, pno.CustomName)
     pno.edited = false
   },
@@ -938,9 +949,8 @@ methods: {
   },
   pushNewCustomFeature(newEntry) {
     console.log(newEntry)
-    this.pnoStore.pushNewCustomFeature(this.model, newEntry.Code, newEntry.CustomName, newEntry.CustomCategory, newEntry.StartDate, newEntry.EndDate)
+    this.pnoStore.pushNewCustomFeature(this.model, newEntry.CustomName, newEntry.CustomCategory, newEntry.StartDate, newEntry.EndDate)
     this.newEntry = {
-      Code: null,
       CustomName: null,
       CustomCategory: null,
       StartDate: null,

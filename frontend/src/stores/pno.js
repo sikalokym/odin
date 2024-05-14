@@ -134,66 +134,83 @@ export const usePNOStore = defineStore({
     async fetchPnosChangelog(model, engine, salesversion, gearbox) {
       let path = `/db/${this.country}/${this.model_year}/changelog?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
       return await index.get(path).then((response) => {
-        this.pnosChangelog = response.data
+        response.data.forEach(item => {
+          let date = new Date(item.ChangeDate);
+          item.ChangeDate = date.toISOString().replace('T', ' ').substring(0, 19);
+        });
+        this.pnosChangelog = response.data;
       }).catch((error) => {
         console.log(error)
       })
     },
     // PNO-speficic updates
-    async pushUpdateFeature(model, feature, translation, category) {
+    async pushUpdateFeature(model, feature, translation, category, custom) {
       let updates = {
-          Model: model,
           Code: feature,
           CustomName: translation,
           CustomCategory: category
       }
-      let path = `/db/${this.country}/${this.model_year}/write/features`
+      if (model !== '') {
+        updates.Model = model;
+      }
+      let subpath = custom ? 'update/customfeatures' : 'features'
+      let path = `/db/${this.country}/${this.model_year}/write/${subpath}`
       return index.post(path, updates);
     },
-    async pushNewCustomFeature(model, feature, translation, category, startDate, endDate) {
+    async pushNewCustomFeature(model, markettext, category, startDate, endDate) {
       let updates = {
-          Model: model,
-          Code: feature,
-          CustomName: translation,
+          CustomName: markettext,
           CustomCategory: category,
           StartDate: startDate,
           EndDate: endDate
       }
-      let path = `/db/${this.country}/${this.model_year}/write/customfeatures`
+      if (model !== '') {
+        updates.Model = model;
+      }
+      let path = `/db/${this.country}/${this.model_year}/write/insert/customfeatures`
       return index.post(path, updates);
     },
     async pushUpdateOption(model, option, translation) {
       let updates = {
-          Model: model,
           Code: option,
           CustomName: translation
+      }
+      if (model !== '') {
+        updates.Model = model;
       }
       let path = `/db/${this.country}/${this.model_year}/write/options`
       return index.post(path, updates);
     },
     async pushUpdateColor(model, color, translation) {
       let updates = {
-          Model: model,
           Code: color,
           CustomName: translation
+      }
+      if (model !== '') {
+        updates.Model = model;
       }
       let path = `/db/${this.country}/${this.model_year}/write/colors`
       return index.post(path, updates);
     },
-    async pushUpdateUpholstery(model, upholstery, translation) {
+    async pushUpdateUpholstery(model, upholstery, translation, customcategory) {
       let updates = {
-          Model: model,
-          Code: upholstery,
-          CustomName: translation
+        Code: upholstery,
+        CustomName: translation,
+        CustomCategory: customcategory
+      }
+      if (model !== '') {
+        updates.Model = model;
       }
       let path = `/db/${this.country}/${this.model_year}/write/upholstery`
       return index.post(path, updates);
     },
     async pushUpdatePackage(model, packagecode, translation) {
       let updates = {
-          Model: model,
           Code: packagecode,
           CustomName: translation
+      }
+      if (model !== '') {
+        updates.Model = model;
       }
       let path = `/db/${this.country}/${this.model_year}/write/packages`
       return index.post(path, updates);

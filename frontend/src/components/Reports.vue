@@ -73,14 +73,6 @@ export default {
       entitiesStore: useEntitiesStore(),
       countries: useEntitiesStore().countries,
       selectedCountry: '231',
-      customFeatureTable: false,
-      newEntry: {
-        Code: '',
-        CustomName: '',
-        CustomCategory: '',
-        StartDate: '',
-        EndDate: '',
-      },
     }
   },
   async created() {
