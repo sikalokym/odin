@@ -308,7 +308,7 @@ def write_upholstery(country, model_year):
     else:
         conditions.append(f"PNOID in {tuple(ids)}")
 
-    df_pno_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'UPH'), conditions=conditions)
+    df_pno_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'UPH'), ['ID'], conditions=conditions)
     rel_ids = df_pno_upholstery['ID'].unique().tolist()
     uph_conditions = []
     if len(rel_ids) == 1:
@@ -318,7 +318,7 @@ def write_upholstery(country, model_year):
 
     df_pno_upholstery_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), conditions=uph_conditions)
 
-    update_columns = ['CustomName'] # ['CustomName', 'CustomCategory']
+    update_columns = ['CustomName', 'CustomCategory']
 
     # Update the columns in the df_pno_upholstery_relation DataFrame
     for col in update_columns:

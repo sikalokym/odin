@@ -370,6 +370,49 @@ BEGIN
 END
 GO
 
+CREATE TRIGGER [dbo].[trg_PNOUpholsteryCustom_InsertUpdate]
+ON [dbo].[PNOUpholsteryCustom]
+AFTER UPDATE, INSERT
+AS
+BEGIN
+    -- Log Inserts
+    IF EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted)
+    BEGIN
+        INSERT INTO ChangeLog (CountryCode, ChangeCode, ChangeTable, ChangeDate, ChangeType, ChangeField, ChangeFrom, ChangeTo)
+        SELECT '',
+            RelationID, 
+            'PNOUpholsteryCustom', 
+            GETDATE(), 
+            'Insert',
+            'RelationID',
+            '',
+            RelationID
+        FROM inserted;
+    END
+
+    -- Log Updates
+    ELSE IF EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted)
+    BEGIN
+        INSERT INTO ChangeLog (CountryCode, ChangeCode, ChangeTable, ChangeDate, ChangeType, ChangeField, ChangeFrom, ChangeTo)
+        SELECT '', CAST(inserted.RelationID AS VARCHAR(128)), 'PNOUpholsteryCustom', GETDATE(), 'Update', 'Price', CAST(deleted.Price AS VARCHAR), CAST(inserted.Price AS VARCHAR)
+        FROM inserted JOIN deleted ON inserted.RelationID = deleted.RelationID WHERE ISNULL(deleted.Price, 0) <> ISNULL(inserted.Price, 0)
+        UNION ALL
+        SELECT '', CAST(inserted.RelationID AS VARCHAR(128)), 'PNOUpholsteryCustom', GETDATE(), 'Update', 'PriceBeforeTax', CAST(deleted.PriceBeforeTax AS VARCHAR), CAST(inserted.PriceBeforeTax AS VARCHAR)
+        FROM inserted JOIN deleted ON inserted.RelationID = deleted.RelationID WHERE ISNULL(deleted.PriceBeforeTax, 0) <> ISNULL(inserted.PriceBeforeTax, 0)
+        UNION ALL
+        SELECT '', CAST(inserted.RelationID AS VARCHAR(128)), 'PNOUpholsteryCustom', GETDATE(), 'Update', 'CustomName', deleted.CustomName, inserted.CustomName
+        FROM inserted JOIN deleted ON inserted.RelationID = deleted.RelationID WHERE ISNULL(deleted.CustomName, '') <> ISNULL(inserted.CustomName, '')
+        UNION ALL
+        SELECT '', CAST(inserted.RelationID AS VARCHAR(128)), 'PNOUpholsteryCustom', GETDATE(), 'Update', 'CustomCategory', deleted.CustomCategory, inserted.CustomCategory
+        FROM inserted JOIN deleted ON inserted.RelationID = deleted.RelationID WHERE ISNULL(deleted.CustomCategory, '') <> ISNULL(inserted.CustomCategory, '')
+        UNION ALL
+        SELECT '', CAST(inserted.RelationID AS VARCHAR(128)), 'PNOUpholsteryCustom', GETDATE(), 'Update', 'EndDate', CAST(deleted.EndDate AS VARCHAR), CAST(inserted.EndDate AS VARCHAR)
+        FROM inserted JOIN deleted ON inserted.RelationID = deleted.RelationID WHERE deleted.EndDate <> inserted.EndDate;
+
+    END
+END
+GO
+
 -- Declare a variable to hold your dynamic SQL
 DECLARE @sql NVARCHAR(MAX);
 
@@ -447,7 +490,6 @@ INSERT INTO @tables (TableName)
 VALUES 
     ('PNOCustom'), 
     ('PNOColorCustom'), 
-    ('PNOUpholsteryCustom'),
     ('PNOOptionsCustom'), 
     ('PNOPackageCustom');
 
@@ -487,10 +529,10 @@ BEGIN
     ELSE IF EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted)
     BEGIN
         INSERT INTO ChangeLog (CountryCode, ChangeCode, ChangeTable, ChangeDate, ChangeType, ChangeField, ChangeFrom, ChangeTo)
-        SELECT '''', CAST(inserted.RelationID AS VARCHAR(128)), ''' + @tableName + ''', GETDATE(), ''Update'', ''Price'', deleted.Price, inserted.Price
+        SELECT '''', CAST(inserted.RelationID AS VARCHAR(128)), ''' + @tableName + ''', GETDATE(), ''Update'', ''Price'', CAST(deleted.Price AS VARCHAR), CAST(inserted.Price AS VARCHAR)
         FROM inserted JOIN deleted ON inserted.RelationID = deleted.RelationID WHERE ISNULL(deleted.Price, 0) <> ISNULL(inserted.Price, 0)
         UNION ALL
-        SELECT '''', CAST(inserted.RelationID AS VARCHAR(128)), ''' + @tableName + ''', GETDATE(), ''Update'', ''PriceBeforeTax'', deleted.PriceBeforeTax, inserted.PriceBeforeTax
+        SELECT '''', CAST(inserted.RelationID AS VARCHAR(128)), ''' + @tableName + ''', GETDATE(), ''Update'', ''PriceBeforeTax'', CAST(deleted.PriceBeforeTax AS VARCHAR), CAST(inserted.PriceBeforeTax AS VARCHAR)
         FROM inserted JOIN deleted ON inserted.RelationID = deleted.RelationID WHERE ISNULL(deleted.PriceBeforeTax, 0) <> ISNULL(inserted.PriceBeforeTax, 0)
         UNION ALL
         SELECT '''', CAST(inserted.RelationID AS VARCHAR(128)), ''' + @tableName + ''', GETDATE(), ''Update'', ''CustomName'', deleted.CustomName, inserted.CustomName

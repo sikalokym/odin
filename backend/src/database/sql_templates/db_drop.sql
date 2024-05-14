@@ -21,6 +21,7 @@ DROP TRIGGER IF EXISTS [dbo].[trg_PNOCustomFeature_InsertUpdate];
 DROP TRIGGER IF EXISTS [dbo].[trg_PNOFeature_InsertUpdate];
 
 DROP TRIGGER IF EXISTS [dbo].[trg_PNOColor_InsertUpdate];
+DROP TRIGGER IF EXISTS [dbo].[trg_PNOPackage_InsertUpdate];
 DROP TRIGGER IF EXISTS [dbo].[trg_PNOUpholstery_InsertUpdate];
 DROP TRIGGER IF EXISTS [dbo].[trg_PNOOptions_InsertUpdate];
 
