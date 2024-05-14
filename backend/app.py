@@ -7,6 +7,7 @@ from src.routes.db_reader_routes import bp_db_reader
 from src.routes.db_writer_routes import bp_db_writer
 from src.routes.exporter_routes import bp_exporter
 from src.routes.settings_routes import bp_settings
+import src.utils.scheduler as scheduler
 
 
 app = Flask(__name__)
@@ -50,4 +51,5 @@ def welcome():
     return render_template_string(WELCOME_PAGE_TEMPLATE, rules=rules)
 
 if __name__ == "__main__":
+    scheduler.cpam_scheduler.start()
     app.run(debug=True, port=5000)

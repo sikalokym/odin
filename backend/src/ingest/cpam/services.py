@@ -54,21 +54,22 @@ def ingest_cpam_data_wrapper(year, car_type, country_code, maf, sw, load_success
         logger.error(f'Error processing car type {car_type}: {e}', extra={'country_code': country_code})
         load_unsuccessfull.append((year, car_type))
 
-def ingest_all_cpam_data(spec_market, year=None, start_model_year=''):
+def ingest_all_cpam_data(country_code, year=None, start_model_year=''):
     with Manager() as manager:
         load_successfull = manager.list()
         load_unsuccessfull = manager.list()
-        all_years = cpam.get_model_years(spec_market, start_model_year=start_model_year)['Years'] if not year else [year]
+        all_years = cpam.get_model_years(country_code, start_model_year=start_model_year)['Years'] if not year else [year]
         processes = []
         for year in all_years:
-            for car in cpam.get_car_types(year, spec_market)['DataRows']:
+            for car in cpam.get_car_types(year, country_code)['DataRows']:
                 maf = config.get('SETTINGS', 'MARKET_AUTH_FLAG')
                 sw = config.get('SETTINGS', 'START_WEEK')
-                p = Process(target=ingest_cpam_data_wrapper, args=(year, car['Type'], spec_market, maf, sw, load_successfull, load_unsuccessfull))
+                p = Process(target=ingest_cpam_data_wrapper, args=(year, car['Type'], country_code, maf, sw, load_successfull, load_unsuccessfull))
                 p.start()
                 processes.append(p)
         for p in processes:
             p.join()
+        logger.debug('CPAM data update completed', extra={'country_code': country_code})
         return list(load_successfull), list(load_unsuccessfull)
  
 def ingest_cpam_data(year, car_type, country_code, maf, sw):
@@ -104,3 +105,13 @@ def ingest_cpam_data(year, car_type, country_code, maf, sw):
     logger.debug('Data insertion completed', extra={'country_code': country_code})
 
     assign_prices(country_code)
+
+def get_supported_countries():
+    """
+    Gets the list of supported countries.
+
+    Returns:
+        list: A list of supported countries.
+    """
+    countries = DBOperations.instance.get_table_df(DBOperations.instance.config.get('SETTINGS', 'CountryCodes'), columns=['Code', 'CountryName'])
+    return countries

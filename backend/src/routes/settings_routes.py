@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify
 
 from src.database.db_operations import DBOperations
+from src.ingest.cpam.services import get_supported_countries
 from src.utils.db_utils import get_model_year_from_date
 
 
@@ -14,8 +15,8 @@ def get_available_model_years(country):
     return jsonify(model_years)
 
 @bp_settings.route('/supported_countries', methods=['GET'])
-def get_supported_countries():
-    countries = DBOperations.instance.get_table_df(DBOperations.instance.config.get('SETTINGS', 'CountryCodes'), columns=['Code', 'CountryName'])
+def fetch_supported_countries():
+    countries = get_supported_countries()
     countries = countries.to_dict(orient='records')
 
     return jsonify(countries)
