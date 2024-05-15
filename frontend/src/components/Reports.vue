@@ -18,7 +18,7 @@
     <label class="model" style="width: 180px;">Model</label><br>
     <select name="model" id="model" v-model="model" @change="fetchPnoSpecifics" style="width:180px; height:30px; position: absolute;" :disabled="!['Changelog'].includes(displaytable) || model_year === '0'">
       <option value="" :disabled="!['Changelog'].includes(displaytable)">All</option>
-      <option v-for="model in models" :key="model" :value="model">{{ model }}</option>
+      <option v-for="model in models.sort()" :key="model" :value="model">{{ model }}</option>
     </select>
 
     <!-- Filter Reset Button -->

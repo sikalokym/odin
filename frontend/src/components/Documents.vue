@@ -22,14 +22,14 @@
     <label class="model" style="width: 180px;">Model</label><br>
     <select name="model" id="model" v-model="model"  @change="refreshEnginecats" style="width:180px; height:30px; position: absolute;">
       <option disabled value="">Please Select Model...</option>
-      <option v-for="model in models" :key="model" :value="model">{{ model }}</option>
+      <option v-for="model in models.sort()" :key="model" :value="model">{{ model }}</option>
     </select>
     <!-- Filter for engine categories -->
     <label class="engine" style="width: 180px;">Engine Category</label><br>
     <select name="engine" id="engine" v-model="engine" style="width:180px; height:30px; position: absolute; margin-left: -90px;">
       <option disabled value="">Please Select Engine...</option>
       <option value="all">All</option>
-      <option v-for="engine in engine_cats" :key="engine" :value="engine">{{ engine }}</option>
+      <option v-for="engine in engine_cats.sort()" :key="engine" :value="engine">{{ engine }}</option>
     </select>
     <br><br>
     <!-- Filter for validity date of the Variant Binder export -->

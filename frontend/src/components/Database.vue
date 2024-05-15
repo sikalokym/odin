@@ -10,8 +10,8 @@
       <option value="SalesVersion">Sales Version</option> 
       <option value="Gearbox">Gearbox</option>
       <option value="Features" :disabled="this.pnoStore.model_year === ''">Features</option>
-      <option value="Colors" :disabled="this.pnoStore.model_year === ''">Colors</option>
       <option value="Options" :disabled="this.pnoStore.model_year === ''">Options</option>
+      <option value="Colors" :disabled="this.pnoStore.model_year === ''">Colors</option>
       <option value="Upholstery" :disabled="this.pnoStore.model_year === ''">Upholstery</option>
       <option value="Packages" :disabled="this.pnoStore.model_year === ''">Packages</option>
     </select>
@@ -26,25 +26,25 @@
     <label class="model" style="width: 180px;">Model</label><br>
     <select name="model" id="model" v-model="model" @change="fetchPnoSpecifics" style="width:180px; height:30px; position: absolute;" :disabled="!['Model', 'Features', 'Colors', 'Options','Upholstery','Packages'].includes(displaytable) || model_year === '0'">
       <option value="">All</option>
-      <option v-for="model in models" :key="model" :value="model">{{ model }}</option>
+      <option v-for="model in models.sort()" :key="model" :value="model">{{ model }}</option>
     </select>
     <!-- Filter for engines -->
     <label class="engine" style="width: 180px;">Engine</label><br>
     <select name="engine" id="engine" v-model="engine" @change="fetchPnoSpecifics" style="width:180px; height:30px; position: absolute;" :disabled="!['Engine'].includes(displaytable) || model_year === '0'">
       <option value="">All</option>
-      <option v-for="engine in engines" :key="engine" :value="engine">{{ engine }}</option>
+      <option v-for="engine in engines.sort()" :key="engine" :value="engine">{{ engine }}</option>
     </select>
     <!-- Filter for salesversions -->
     <label class="salesversion" style="width: 180px;">Sales Version</label><br>
     <select name="salesversion" id="salesversion" v-model="salesversion" @change="fetchPnoSpecifics" style="width:180px; height:30px; position: absolute;" :disabled="!['SalesVersion'].includes(displaytable) || model_year === '0'">
       <option value="">All</option>
-      <option v-for="salesversion in salesversions" :key="salesversion" :value="salesversion">{{ salesversion }}</option>
+      <option v-for="salesversion in salesversions.sort()" :key="salesversion" :value="salesversion">{{ salesversion }}</option>
     </select>
     <!-- Filter for gearboxes -->
     <label class="gearbox" style="width: 180px;">Gearbox</label><br>
     <select name="gearbox" id="gearbox" v-model="gearbox" @change="fetchPnoSpecifics" style="width:180px; height:30px; display: inline-block; position: absolute;" :disabled="!['Gearbox'].includes(displaytable) || model_year === '0'">
       <option value="">All</option>
-      <option v-for="gearbox in gearboxes" :key="gearbox" :value="gearbox">{{ gearbox }}</option>
+      <option v-for="gearbox in gearboxes.sort()" :key="gearbox" :value="gearbox">{{ gearbox }}</option>
     </select>
 
     <!-- Filter Reset Button -->
@@ -386,7 +386,7 @@
       </div>
       <!-- Return to Features Button -->
       <div style="margin-left: 10px;">
-        <button v-if="customFeatureTable && model_year !== '0' && this.model !== ''" @click="showCustomFeatureTable">Return to features</button>
+        <button v-if="customFeatureTable && model_year !== '0'" @click="showCustomFeatureTable">Return to features</button>
       </div>
     </div>
 
