@@ -1033,11 +1033,13 @@ hr.divider {
   margin-right: 10px;
 } 
 .bottom-div {
-  margin-top: 175px;
+  position: fixed;
+  bottom: 0;
+  left: 0;
   width: 100%;
+  padding: 10px;
   display: flex;
   align-items: center;
-  justify-content: center;
 }
 
 </style>

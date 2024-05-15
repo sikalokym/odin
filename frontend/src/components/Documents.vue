@@ -245,11 +245,13 @@ import axios from '../api/index.js'
   margin-right: 10px;
 } 
 .bottom-div {
-  margin-top: 599px;
+  position: fixed;
+  bottom: 0;
+  left: 0;
   width: 100%;
+  padding: 10px;
   display: flex;
   align-items: center;
-  justify-content: center;
 }
 .highlighted {
   background-color: #f0f0f0;
