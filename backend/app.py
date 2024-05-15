@@ -8,6 +8,7 @@ from src.routes.db_writer_routes import bp_db_writer
 from src.routes.exporter_routes import bp_exporter
 from src.routes.settings_routes import bp_settings
 import src.utils.scheduler as scheduler
+from src.utils.sql_logging_handler import setup_logger_config
 
 
 app = Flask(__name__)
@@ -52,4 +53,5 @@ def welcome():
 
 if __name__ == "__main__":
     scheduler.cpam_scheduler.start()
+    setup_logger_config()
     app.run(debug=True, port=5000)

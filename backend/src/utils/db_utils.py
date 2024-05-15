@@ -270,10 +270,12 @@ def get_relation_ids(df_relation, df_assigned):
     df.insert(0, 'RelationID', '')
     df['RelationID'] = df.apply(lambda row: find_matching_relation_ids(row, df_relation), axis=1)
     filtered_df = df[df['RelationID'].notna()]
+    not_found_df = df[df['RelationID'].isna()]
+    not_found_df.drop('RelationID', axis=1, inplace=True)
     
     expanded_df = filtered_df.explode('RelationID')
     final_df = expanded_df.drop(['PNOID', 'Code'], axis=1)
-    return final_df
+    return final_df, not_found_df
     
 def filter_df_by_timestamp(df, timestamp):
     """
@@ -383,11 +385,15 @@ def format_float_string(float_string):
     
     return formatted_string
 
-def log_df(df, msg_prefix, callable_logger):
+def log_df(df, msg_prefix, callable_logger, country_code=None):
     if df.empty:
         return
+    if country_code is None:
+        try:
+            country_code = df['CountryCode'].iloc[0]
+        except KeyError:
+            return
     for _, row in df.iterrows():
-        country_code = row['CountryCode']
         msg = msg_prefix + ' '
         for column in df.columns:
             msg += f'{column}: {row[column]} '

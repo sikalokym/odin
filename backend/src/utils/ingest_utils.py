@@ -2,7 +2,7 @@ import pandas as pd
 from src.database.services import get_engine_cats
 from src.ingest.cpam.api import get_car_types, get_model_years
 
-def is_valid_year(year, spec_market):
+def is_valid_year(year, country_code):
     """Check if year is valid.
 
     Args:
@@ -12,7 +12,7 @@ def is_valid_year(year, spec_market):
     Returns:
         bool: True if year is valid, False otherwise
     """
-    years = get_model_years(spec_market)
+    years = get_model_years(country_code)
     return year in years['Years'] if years else 'CPAM internal error'
 
 def is_valid_car_type(car_type, year, country_code):

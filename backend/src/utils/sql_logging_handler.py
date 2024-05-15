@@ -23,7 +23,7 @@ class SQLLoggingHandler(logging.Handler):
         try:
             with DBOperations.get_cursor() as cursor:
                 insert_query = '''
-                    INSERT INTO Log (CountryCode, LogDate, LogType, LogMessage)
+                    INSERT INTO DataQualityLog (CountryCode, LogDate, LogType, LogMessage)
                     VALUES (?, ?, ?, ?)
                 '''
                 cursor.execute(insert_query, (
@@ -35,13 +35,20 @@ class SQLLoggingHandler(logging.Handler):
         except Exception as e:
             print(f"Failed to log message to database: {e}")
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-handler = SQLLoggingHandler()
-logger.addHandler(handler)
 
-# Create a handler that saves the logs to a file and saves them for 7 days
-# new_handler = logging.handlers.TimedRotatingFileHandler('logs/app.log', when='D', interval=1, backupCount=7)
-# handler = logging.handlers.TimedRotatingFileHandler('logs/app.log', when='D', interval=1, backupCount=7)
+def setup_logger_config():
+    # Create a handler that saves the logs to a file and saves them for 7 days
+    new_handler = logging.handlers.TimedRotatingFileHandler('logs/app.log', when='D', interval=1, backupCount=7)
+    new_handler.setLevel(logging.DEBUG)
+    new_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    logger.addHandler(new_handler)
+
+    # Create a handler that saves the logs to a database
+    sql_handler = SQLLoggingHandler()
+    sql_handler.setLevel(logging.DEBUG)
+    logger.addHandler(sql_handler)
+
+
+# Configure logging
+logger = logging.getLogger(__name__)
+setup_logger_config()
