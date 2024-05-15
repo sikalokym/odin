@@ -173,7 +173,8 @@ def get_options(country, model_year):
     if df_options_custom.empty:
         df_pno_options['CustomName'] = ''
     else:
-        df_pno_options['CustomName'] = df_pno_options['ID'].map(df_options_custom.set_index('RelationID')['CustomName'])
+        df_pno_options = df_pno_options.merge(df_options_custom, how='inner', left_on='ID', right_on='RelationID')
+        df_pno_options = df_pno_options.drop(columns=['RelationID'])
     
     df_pno_options['MarketText'] = df_pno_options['Code'].map(df_options.set_index('Code')['MarketText'])
     df_pno_options.drop(columns=['ID'], inplace=True)
@@ -247,7 +248,8 @@ def get_colors(country, model_year):
     if df_colors_custom.empty:
         df_pno_colors['CustomName'] = ''
     else:
-        df_pno_colors['CustomName'] = df_pno_colors['ID'].map(df_colors_custom.set_index('RelationID')['CustomName'])
+        df_pno_colors = df_pno_colors.merge(df_colors_custom, how='inner', left_on='ID', right_on='RelationID')
+        df_pno_colors = df_pno_colors.drop(columns=['RelationID'])
     
     df_pno_colors['MarketText'] = df_pno_colors['Code'].map(df_colors.set_index('Code')['MarketText'])
     df_pno_colors.drop(columns=['ID'], inplace=True)
@@ -300,8 +302,8 @@ def get_upholstery(country, model_year):
         df_pno_upholstery['CustomName'] = ''
         df_pno_upholstery['CustomCategory'] = ''
     else:
-        df_pno_upholstery['CustomName'] = df_pno_upholstery['ID'].map(df_upholstery_custom.set_index('RelationID')['CustomName'])
-        df_pno_upholstery['CustomCategory'] = df_pno_upholstery['ID'].map(df_upholstery_custom.set_index('RelationID')['CustomCategory'])
+        df_pno_upholstery = df_pno_upholstery.merge(df_upholstery_custom, how='inner', left_on='ID', right_on='RelationID')
+        df_pno_upholstery = df_pno_upholstery.drop(columns=['RelationID'])
     
     df_pno_upholstery['MarketText'] = df_pno_upholstery['Code'].map(df_upholstery.set_index('Code')['MarketText'])
     df_pno_upholstery.drop(columns=['ID', 'PNOID'], inplace=True)
@@ -405,7 +407,8 @@ def get_packages(country, model_year):
     if df_packages_custom.empty:
         df_pno_packages['CustomName'] = ''
     else:
-        df_pno_packages['CustomName'] = df_pno_packages['ID'].map(df_packages_custom.set_index('RelationID')['CustomName'])
+        df_pno_packages = df_pno_packages.merge(df_packages_custom, how='inner', left_on='ID', right_on='RelationID')
+        df_pno_packages = df_pno_packages.drop(columns=['RelationID'])
     
     df_pno_packages['MarketText'] = df_pno_packages['Code'].map(df_packages.set_index('Code')['MarketText'])
     df_pno_packages.drop(columns=['ID', 'PNOID'], inplace=True)
