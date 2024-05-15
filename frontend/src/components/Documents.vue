@@ -41,7 +41,7 @@
       </select>
       <select name="validity_week" id="validity_week" v-model="validity_week" style="width:85px; height:30px;">
         <option disabled value="">Week</option>
-        <option v-for="n in 53" :key="n" :value="String(n).padStart(2, '0')">{{ String(n).padStart(2, '0') }}</option>
+        <option v-for="n in validity_weeks" :key="n" :value="String(n).padStart(2, '0')">{{ String(n).padStart(2, '0') }}</option>
       </select>
     </div>
 
@@ -79,7 +79,7 @@
       </select>
       <select name="validity_week" id="validity_week" v-model="validity_week" style="width:85px; height:30px;">
         <option disabled value="">Week</option>
-        <option v-for="n in 53" :key="n" :value="String(n).padStart(2, '0')">{{ String(n).padStart(2, '0') }}</option>
+        <option v-for="n in validity_weeks" :key="n" :value="String(n).padStart(2, '0')">{{ String(n).padStart(2, '0') }}</option>
       </select>
     </div>
 
@@ -141,7 +141,16 @@ import axios from '../api/index.js'
       if (this.model_year === '0') {
         return;
       }
-    return [this.model_year - 1, this.model_year, this.model_year + 1];
+    return [this.model_year - 1, this.model_year];
+    },
+    validity_weeks() {
+      if (this.validity_year == this.model_year) {
+        return Array.from({length: 16}, (_, i) => i + 1);
+      } else if (this.validity_year == this.model_year - 1) {
+        return Array.from({length: 36}, (_, i) => i + 17);
+      } else {
+        return [];
+      }
     },
     bottomDivStyle() {
       if (this.showFilters === '') {
