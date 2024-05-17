@@ -1,9 +1,11 @@
-from apscheduler.schedulers.background import BackgroundScheduler
-import atexit
-from pytz import utc
-import logging
-
 from src.ingest.cpam.services import get_supported_countries, ingest_all_cpam_data
+from apscheduler.schedulers.background import BackgroundScheduler
+from pytz import utc
+import configparser
+import logging
+import atexit
+import os
+
 
 def scheduled_task():
     try:
@@ -14,6 +16,14 @@ def scheduled_task():
     except Exception as e:
         logging.error(f"Failed to complete scheduled task: {e}")
 
+config = configparser.ConfigParser()
+config.read('config/cpam.cfg')
+
+env_var_name = config.get('REFRESH_DATE', 'ENV_VAR_NAME')
+separator = config.get('REFRESH_DATE', 'ENV_VAR_NAME_SEPARATOR')
+date = os.getenv('env_var_name', f'sun{separator}12')
+day, hour = date.split(separator)
+hour = int(hour)
 cpam_scheduler = BackgroundScheduler(daemon=True, timezone=utc)
 cpam_scheduler.add_job(scheduled_task, 'cron', day_of_week='sun', hour=12, minute=0)
 
