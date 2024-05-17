@@ -1,7 +1,6 @@
-from flask import Blueprint, request, jsonify
+import uuid
+from flask import Blueprint, request
 import pandas as pd
-import random
-import numpy as np
 
 from src.database.db_operations import DBOperations
 from src.utils.db_utils import filter_df_by_model_year
@@ -13,7 +12,7 @@ bp_db_writer = Blueprint('db_writer', __name__, url_prefix='/api/db/<country>/<m
 def write_models(country, model_year):
     data = request.get_json()
     if not data:
-        return jsonify({'error': 'No data provided'}), 400
+        return 'No data provided', 400
     
     # Create a DataFrame from the list of JSON objects
     df_models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), conditions=[f'CountryCode = {country}'])
@@ -27,13 +26,13 @@ def write_models(country, model_year):
     conditional_columns = list(set(all_columns) - set(update_columns))
 
     DBOperations.instance.upsert_data_from_df(df_models, DBOperations.instance.config.get('TABLES', 'Typ'), all_columns, conditional_columns)
-    return jsonify({'message': 'Models written successfully'}), 200
+    return 'Models written successfully', 200
 
 @bp_db_writer.route('/engines', methods=['POST'])
 def write_engines(country, model_year):
     data = request.get_json()
     if not data:
-        return jsonify({'error': 'No data provided'}), 400
+        return 'No data provided', 400
     
     # Create a DataFrame from the list of JSON objects
     df_engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), conditions=[f'CountryCode = {country}'])
@@ -47,13 +46,13 @@ def write_engines(country, model_year):
     conditional_columns = list(set(all_columns) - set(update_columns))
 
     DBOperations.instance.upsert_data_from_df(df_engines, DBOperations.instance.config.get('TABLES', 'En'), all_columns, conditional_columns)
-    return jsonify({'message': 'Engines written successfully'}), 200
+    return 'Engines written successfully', 200
     
 @bp_db_writer.route('/sales_versions', methods=['POST'])
 def write_sales_versions(country, model_year):
     data = request.get_json()
     if not data:
-        return jsonify({'error': 'No data provided'}), 400
+        return 'No data provided', 400
     
     # Create a DataFrame from the list of JSON objects
     df_sales_versions = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), conditions=[f'CountryCode = {country}'])
@@ -67,13 +66,13 @@ def write_sales_versions(country, model_year):
     conditional_columns = list(set(all_columns) - set(update_columns))
 
     DBOperations.instance.upsert_data_from_df(df_sales_versions, DBOperations.instance.config.get('TABLES', 'SV'), all_columns, conditional_columns)
-    return jsonify({'message': 'Sales Versions written successfully'}), 200
+    return 'Sales Versions written successfully', 200
 
 @bp_db_writer.route('/gearboxes', methods=['POST'])
 def write_gearboxes(country, model_year):
     data = request.get_json()
     if not data:
-        return jsonify({'error': 'No data provided'}), 400
+        return 'No data provided', 400
     
     # Create a DataFrame from the list of JSON objects
     df_gearboxes = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'G'), conditions=[f'CountryCode = {country}'])
@@ -87,13 +86,13 @@ def write_gearboxes(country, model_year):
     conditional_columns = list(set(all_columns) - set(update_columns))
 
     DBOperations.instance.upsert_data_from_df(df_gearboxes, DBOperations.instance.config.get('TABLES', 'G'), all_columns, conditional_columns)
-    return jsonify({'message': 'Gearboxes written successfully'}), 200
+    return 'Gearboxes written successfully', 200
 
 @bp_db_writer.route('/features', methods=['POST'])
 def write_features(country, model_year):
     data = request.get_json()
     if not data:
-        return jsonify({'error': 'No data provided'}), 400
+        return 'No data provided', 400
     
     code = data['Code']
 
@@ -123,13 +122,13 @@ def write_features(country, model_year):
     conditional_columns = list(set(all_columns) - set(update_columns))
 
     DBOperations.instance.upsert_data_from_df(df_pno_features, table, all_columns, conditional_columns)
-    return jsonify({'message': 'Features written successfully'}), 200
+    return 'Features written successfully', 200
 
 @bp_db_writer.route('/update/customfeatures', methods=['POST'])
 def update_customfeatures(country, model_year):
     data = request.get_json()
     if not data:
-        return jsonify({'error': 'No data provided'}), 400
+        return 'No data provided', 400
     
     model = data.get('Model', None)
     pnos_conditions = [f'CountryCode = {country}']
@@ -143,7 +142,7 @@ def update_customfeatures(country, model_year):
     ids = df_pnos['ID'].tolist()
     code = data.get('Code', None)
     if code is None:
-        return jsonify({'error': 'No code provided'}), 400
+        return 'No code provided', 400
 
     conditions = [f"Code = '{code}'"]
     if len(ids) == 1:
@@ -163,14 +162,14 @@ def update_customfeatures(country, model_year):
     conditional_columns = list(set(all_columns) - set(update_columns))
 
     DBOperations.instance.upsert_data_from_df(df_pno_custom_features, DBOperations.instance.config.get('AUTH', 'CFEAT'), all_columns, conditional_columns)
-    return jsonify({'message': 'Features written successfully'}), 200
+    return 'Features written successfully', 200
 
 
 @bp_db_writer.route('/insert/customfeatures', methods=['POST'])
 def write_customfeatures(country, model_year):
     data = request.get_json()
     if not data:
-        return jsonify({'error': 'No data provided'}), 400
+        return 'No data provided', 400
     
     model = data['Model']
 
@@ -195,13 +194,13 @@ def write_customfeatures(country, model_year):
     df_pno_custom_features_new = pd.DataFrame(rows)
     all_columns = df_pno_custom_features_new.columns.tolist()
     DBOperations.instance.upsert_data_from_df(df_pno_custom_features_new, DBOperations.instance.config.get('AUTH', 'CFEAT'), all_columns, ['PNOID', 'Code'])
-    return jsonify({'message': 'Features written successfully'}), 200
+    return 'Features written successfully', 200
 
 @bp_db_writer.route('/options', methods=['POST'])
 def write_options(country, model_year):
     data = request.get_json()
     if not data:
-        return jsonify({'error': 'No data provided'}), 400
+        return 'No data provided', 400
     
     code = data['Code']
 
@@ -239,13 +238,13 @@ def write_options(country, model_year):
     conditional_columns = list(set(all_columns) - set(update_columns))
 
     DBOperations.instance.upsert_data_from_df(df_pno_options_relations, DBOperations.instance.config.get('RELATIONS', 'OPT_Custom'), all_columns, conditional_columns)
-    return jsonify({'message': 'Options written successfully'}), 200
+    return 'Options written successfully', 200
 
 @bp_db_writer.route('/colors', methods=['POST'])
 def write_colors(country, model_year):
     data = request.get_json()
     if not data:
-        return jsonify({'error': 'No data provided'}), 400
+        return 'No data provided', 400
     
     code = data['Code']
 
@@ -283,13 +282,13 @@ def write_colors(country, model_year):
     conditional_columns = list(set(all_columns) - set(update_columns))
 
     DBOperations.instance.upsert_data_from_df(df_pno_colors_relations, DBOperations.instance.config.get('RELATIONS', 'COL_Custom'), all_columns, conditional_columns)
-    return jsonify({'message': 'Colors written successfully'}), 200
+    return 'Colors written successfully', 200
 
 @bp_db_writer.route('/upholstery', methods=['POST'])
 def write_upholstery(country, model_year):
     data = request.get_json()
     if not data:
-        return jsonify({'error': 'No data provided'}), 400
+        return 'No data provided', 400
     
     code = data['Code']
 
@@ -327,13 +326,13 @@ def write_upholstery(country, model_year):
     conditional_columns = list(set(all_columns) - set(update_columns))
 
     DBOperations.instance.upsert_data_from_df(df_pno_upholstery_relations, DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), all_columns, conditional_columns)
-    return jsonify({'message': 'Upholstery written successfully'}), 200
+    return 'Upholstery written successfully', 200
 
 @bp_db_writer.route('/packages', methods=['POST'])
 def write_packages(country, model_year):
     data = request.get_json()
     if not data:
-        return jsonify({'error': 'No data provided'}), 400
+        return 'No data provided', 400
     
     model = data.get('Model', None)
     pnos_conditions = [f'CountryCode = {country}']
@@ -370,4 +369,31 @@ def write_packages(country, model_year):
     conditional_columns = list(set(all_columns) - set(update_columns))
 
     DBOperations.instance.upsert_data_from_df(df_pno_packages_relations, DBOperations.instance.config.get('RELATIONS', 'PKG_Custom'), all_columns, conditional_columns)
-    return jsonify({'message': 'Packages written successfully'}), 200
+    return 'Packages written successfully', 200
+
+@bp_db_writer.route('/contract-partners', methods=['POST'])
+def upsert_contract_partner(country, model_year):
+    data = request.json
+    if not data:
+        return 'No data provided', 400
+    if 'ID' not in data:
+        data['ID'] = str(uuid.uuid4())
+    if 'StartDate' in data:
+        data['StartDate'] = int(data['StartDate'])
+    if 'EndDate' in data:
+        data['EndDate'] = int(data['EndDate'])
+
+    try:
+        # Create a DataFrame with a single row
+        df_new_entry = pd.DataFrame([data])
+
+        # Extract columns for upsert
+        all_columns = df_new_entry.columns.tolist()
+        conditional_columns = ['ID']
+
+        # Perform the upsert
+        DBOperations.instance.upsert_data_from_df(df_new_entry, DBOperations.instance.config.get('TABLES', 'CP'), all_columns, conditional_columns)
+    except Exception as e:
+        return str(e), 500
+    
+    return 'Contract partner created successfully', 200

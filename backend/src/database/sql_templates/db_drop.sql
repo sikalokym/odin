@@ -168,3 +168,6 @@ GO
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'ChangeLog')
 DROP TABLE [dbo].[ChangeLog]
 GO
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ContractPartner')
+DROP TABLE [dbo].[ContractPartner]

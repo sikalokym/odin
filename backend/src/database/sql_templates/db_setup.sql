@@ -372,6 +372,20 @@ CREATE TABLE VisaFilesPrices (
     PriceBeforeTax DECIMAL(19,2),
 );
 
+-- Create the contract partner table
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ContractPartner')
+CREATE TABLE ContractPartner (
+    ID UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+    Code VARCHAR(12),
+    PartnerName NVARCHAR(MAX),
+    Discount VARCHAR(12),
+    Comment NVARCHAR(MAX),
+    CountryCode VARCHAR(12),
+    StartDate INT,
+    EndDate INT,
+    FOREIGN KEY (CountryCode) REFERENCES SupportedCountry(Code)
+);
+
 -- Create the change log table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ChangeLog')
 CREATE TABLE ChangeLog (

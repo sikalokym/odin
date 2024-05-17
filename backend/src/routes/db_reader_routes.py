@@ -1,9 +1,9 @@
 import pandas as pd
-
 from flask import Blueprint, request, jsonify
 
 from src.database.db_operations import DBOperations
 from src.database.services import get_engine_cats
+from src.storage.blob import load_available_visa_files
 from src.utils.db_utils import filter_df_by_model_year, filter_model_year_by_translation
 
 
@@ -444,3 +444,26 @@ def get_changelog(country, model_year):
     df_pno_features = df_pno_features.sort_values(by='ChangeDate', ascending=True)
 
     return df_pno_features.to_json(orient='records')
+
+@bp_db_reader.route('/contract-partners', methods=['GET'])
+def get_contract_partners(country, model_year):
+    df_contract_partners = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CP'), columns=['ID', 'Code', 'PartnerName', 'Discount', 'Comment', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
+    df_contract_partners = filter_df_by_model_year(df_contract_partners, model_year)
+    
+    df_contract_partners = df_contract_partners.sort_values(by='Code', ascending=True)
+
+    return df_contract_partners.to_json(orient='records')
+
+@bp_db_reader.route('/visa-files', methods=['GET'])
+def get_visa_files(country, model_year):
+    try:
+        # Load available Visa files
+        visa_files = load_available_visa_files(country)
+        
+        # Convert list of blob names to records
+        records = [{'file_name': file_name} for file_name in visa_files]
+        
+        # Return the records as a JSON response
+        return jsonify(records), 200
+    except Exception as e:
+        return str(e), 500

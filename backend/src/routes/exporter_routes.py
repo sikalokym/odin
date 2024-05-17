@@ -1,5 +1,12 @@
+import datetime
+import io
+import zipfile
 from flask import Blueprint, request, send_file
+import pandas as pd
+from src.database.db_operations import DBOperations
+from src.export.sap_price_list import get_sap_price_list
 from src.export.variant_binder import extract_variant_binder
+from src.storage.blob import load_available_visa_files
 from src.utils.ingest_utils import is_valid_engine_category
 
 
@@ -29,3 +36,57 @@ def variant_binder(country):
     except Exception as e:
         return str(e), 500
     return send_file(xlsx_file, download_name=title, as_attachment=True), 200
+
+@bp_exporter.route('/sap-price-list', methods=['POST'])
+def sap_price_list(country):
+    data = request.get_json()
+    if not data:
+        return 'Data is required', 400
+    if 'visa_file' not in data:
+        return 'Visa file is required', 400
+    
+    code = data.get('code', 'All')
+    if code != 'All':
+        conditions = [f'CountryCode = {country}', f"Code = '{code}'"]
+        df_code_exists = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CP'), columns=['Code', 'PartnerName', 'Discount', 'Comment', 'StartDate', 'EndDate'], conditions=conditions)
+        if df_code_exists.empty:
+            return 'Invalid code', 400
+
+    visa_file = data['visa_file']
+    visa_files = load_available_visa_files(country)
+    if visa_file not in visa_files and visa_file != 'All':
+        return 'Invalid visa file', 400
+    time = datetime.datetime.now().strftime("%Y%U")
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
+        if visa_file == 'All':
+            for folder_name, blob in visa_files.items():
+                dfs = get_sap_price_list(blob, code, country, time)
+                concatenated_df = pd.concat(dfs)
+
+                for df in dfs:
+                    partner_code, partner_name = df.name.split('+#+')
+                    excel_filename = f'SAP - PL{partner_code} - {partner_name}.xlsx'
+                    excel_buffer = io.BytesIO()
+                    with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                        df.to_excel(writer, index=False)
+                    zip_file.writestr(f'{folder_name}/{excel_filename}', excel_buffer.getvalue())
+
+                concat_excel_buffer = io.BytesIO()
+                with pd.ExcelWriter(concat_excel_buffer, engine='openpyxl') as writer:
+                    concatenated_df.to_excel(writer, index=False)
+                zip_file.writestr(f'{folder_name}/MAWISTA ALL.xlsx', concat_excel_buffer.getvalue())
+        else:
+            dfs = get_sap_price_list(visa_files[visa_file], code, country, time)
+            concatenated_df = pd.concat(dfs)
+            for df in dfs:
+                code, partner_name = df.name.split('+#+')
+                excel_filename = f'SAP - PL{code} - {partner_name}.xlsx'
+                excel_buffer = io.BytesIO()
+                with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                    df.to_excel(writer, index=False)
+                zip_file.writestr(excel_filename, excel_buffer.getvalue())
+
+    zip_buffer.seek(0)
+    return send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='sap_price_list.zip')
