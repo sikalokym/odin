@@ -169,5 +169,14 @@ IF EXISTS (SELECT * FROM sys.tables WHERE name = 'ChangeLog')
 DROP TABLE [dbo].[ChangeLog]
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ContractPartner')
-DROP TABLE [dbo].[ContractPartner]
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'CustomLocalOption')
+DROP TABLE CustomLocalOption
+GO
+
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Discount')
+DROP TABLE Discount
+GO
+
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'SalesChannel')
+DROP TABLE SalesChannel
+GO

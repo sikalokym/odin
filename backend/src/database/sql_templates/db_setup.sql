@@ -372,19 +372,42 @@ CREATE TABLE VisaFilesPrices (
     PriceBeforeTax DECIMAL(19,2),
 );
 
--- Create the contract partner table
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ContractPartner')
-CREATE TABLE ContractPartner (
+-- Create the sales channel table
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'SalesChannel')
+CREATE TABLE SalesChannel (
     ID UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
     Code VARCHAR(12),
-    PartnerName NVARCHAR(MAX),
-    Discount VARCHAR(12),
+    ChannelName NVARCHAR(MAX),
     Comment NVARCHAR(MAX),
     CountryCode VARCHAR(12),
     StartDate INT,
     EndDate INT,
     FOREIGN KEY (CountryCode) REFERENCES SupportedCountry(Code)
 );
+
+-- Create the discounts table
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Discount')
+CREATE TABLE Discount (
+    ID UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+    ChannelID UNIQUEIDENTIFIER,
+    DiscountPercentage DECIMAL(19,2),
+    RetailPrice DECIMAL(19,2),
+    WholesalePrice DECIMAL(19,2),
+    ActiveStatus BIT,
+    EffectedVisaFile NVARCHAR(MAX),
+    FOREIGN KEY (ChannelID) REFERENCES SalesChannel(ID)
+);
+
+-- Create the CustomLocalOption table
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CustomLocalOption')
+CREATE TABLE CustomLocalOption (
+    ID UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+    DiscountID UNIQUEIDENTIFIER,
+    FeatureCode VARCHAR(12),
+    FeaturePrice DECIMAL(19,2),
+    FOREIGN KEY (DiscountID) REFERENCES Discount(ID)
+);
+-- f8c6d0c4-8b29-4163-9ae8-bea5cc491705
 
 -- Create the change log table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ChangeLog')

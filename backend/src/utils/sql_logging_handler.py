@@ -51,4 +51,3 @@ def setup_logger_config():
 
 # Configure logging
 logger = logging.getLogger(__name__)
-setup_logger_config()
