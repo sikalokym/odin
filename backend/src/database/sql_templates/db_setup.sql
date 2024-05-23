@@ -407,7 +407,6 @@ CREATE TABLE CustomLocalOption (
     FeaturePrice DECIMAL(19,2),
     FOREIGN KEY (DiscountID) REFERENCES Discount(ID)
 );
--- f8c6d0c4-8b29-4163-9ae8-bea5cc491705
 
 -- Create the change log table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ChangeLog')

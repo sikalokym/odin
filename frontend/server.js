@@ -8,7 +8,7 @@ const app = express();
 app.use(serveStatic(path.join(__dirname, 'dist')));
 
 // Catch all routes and redirect to the index.html
-app.get('*', function(req, res) {
+app.get('*', function (req, res) {
   res.sendFile(__dirname + '/dist/index.html');
 });
 

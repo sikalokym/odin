@@ -22,44 +22,44 @@ export const usePNOStore = defineStore({
     engines: (state) => [...new Set(state.pnos.map(vehicle => vehicle.Engine))],
     salesversions: (state) => [...new Set(state.pnos.map(vehicle => vehicle.Salesversion))],
     gearboxes: (state) => [...new Set(state.pnos.map(vehicle => vehicle.Gearbox))],
-    
+
     filteredPnos: (state) => (model, engine, salesversion, gearbox) => {
       return state.pnos.filter((pno) => {
         return (model === '' || pno.Model.includes(model)) &&
-              (engine === '' || pno.Engine.includes(engine)) &&
-              (salesversion === '' || pno.SalesVersion.includes(salesversion)) &&
-              (gearbox === '' || pno.Gearbox.includes(gearbox))
+          (engine === '' || pno.Engine.includes(engine)) &&
+          (salesversion === '' || pno.SalesVersion.includes(salesversion)) &&
+          (gearbox === '' || pno.Gearbox.includes(gearbox))
       })
     },
     filteredModels: (state) => (engine, salesversion, gearbox) => {
       let validModels = state.pnos.filter((pno) => {
         return (engine === '' || pno.Engine.includes(engine)) &&
-              (salesversion === '' || pno.SalesVersion.includes(salesversion)) &&
-              (gearbox === '' || pno.Gearbox.includes(gearbox))
+          (salesversion === '' || pno.SalesVersion.includes(salesversion)) &&
+          (gearbox === '' || pno.Gearbox.includes(gearbox))
       })
       return [...new Set(validModels.map(vehicle => vehicle.Model))]
     },
     filteredEngines: (state) => (model, salesversion, gearbox) => {
       let validEngines = state.pnos.filter((pno) => {
         return (model === '' || pno.Model.includes(model)) &&
-              (salesversion === '' || pno.SalesVersion.includes(salesversion)) &&
-              (gearbox === '' || pno.Gearbox.includes(gearbox))
+          (salesversion === '' || pno.SalesVersion.includes(salesversion)) &&
+          (gearbox === '' || pno.Gearbox.includes(gearbox))
       })
       return [...new Set(validEngines.map(vehicle => vehicle.Engine))]
     },
     filteredSalesversions: (state) => (model, engine, gearbox) => {
       let validSalesversions = state.pnos.filter((pno) => {
         return (model === '' || pno.Model.includes(model)) &&
-              (engine === '' || pno.Engine.includes(engine)) &&
-              (gearbox === '' || pno.Gearbox.includes(gearbox))
+          (engine === '' || pno.Engine.includes(engine)) &&
+          (gearbox === '' || pno.Gearbox.includes(gearbox))
       })
       return [...new Set(validSalesversions.map(vehicle => vehicle.SalesVersion))]
     },
     filteredGearboxes: (state) => (model, engine, salesversion) => {
       let validGearboxes = state.pnos.filter((pno) => {
         return (model === '' || pno.Model.includes(model)) &&
-              (engine === '' || pno.Engine.includes(engine)) &&
-              (salesversion === '' || pno.SalesVersion.includes(salesversion))
+          (engine === '' || pno.Engine.includes(engine)) &&
+          (salesversion === '' || pno.SalesVersion.includes(salesversion))
       })
       return [...new Set(validGearboxes.map(vehicle => vehicle.Gearbox))]
     }
@@ -146,9 +146,9 @@ export const usePNOStore = defineStore({
     // PNO-speficic updates
     async pushUpdateFeature(model, feature, translation, category, custom) {
       let updates = {
-          Code: feature,
-          CustomName: translation,
-          CustomCategory: category
+        Code: feature,
+        CustomName: translation,
+        CustomCategory: category
       }
       if (model !== '') {
         updates.Model = model;
@@ -159,10 +159,10 @@ export const usePNOStore = defineStore({
     },
     async pushNewCustomFeature(model, markettext, category, startDate, endDate) {
       let updates = {
-          CustomName: markettext,
-          CustomCategory: category,
-          StartDate: startDate,
-          EndDate: endDate
+        CustomName: markettext,
+        CustomCategory: category,
+        StartDate: startDate,
+        EndDate: endDate
       }
       if (model !== '') {
         updates.Model = model;
@@ -172,8 +172,8 @@ export const usePNOStore = defineStore({
     },
     async pushUpdateOption(model, option, translation) {
       let updates = {
-          Code: option,
-          CustomName: translation
+        Code: option,
+        CustomName: translation
       }
       if (model !== '') {
         updates.Model = model;
@@ -183,8 +183,8 @@ export const usePNOStore = defineStore({
     },
     async pushUpdateColor(model, color, translation) {
       let updates = {
-          Code: color,
-          CustomName: translation
+        Code: color,
+        CustomName: translation
       }
       if (model !== '') {
         updates.Model = model;
@@ -206,8 +206,8 @@ export const usePNOStore = defineStore({
     },
     async pushUpdatePackage(model, packagecode, translation) {
       let updates = {
-          Code: packagecode,
-          CustomName: translation
+        Code: packagecode,
+        CustomName: translation
       }
       if (model !== '') {
         updates.Model = model;

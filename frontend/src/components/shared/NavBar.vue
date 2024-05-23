@@ -7,14 +7,14 @@
     <div class="brand-logo">
       <img src="@/assets/brand_logo.svg" alt="brand-logo">
     </div>
-    <div class="linkcountry">   
-    <ul class="nav-links">
-      <router-link to="/" active-class="active-link">Home</router-link>
-      <router-link to="/database" active-class="active-link">Database</router-link>
-      <router-link to="/documents" active-class="active-link">Export</router-link>
-      <router-link to="/reports" active-class="active-link">Reports</router-link>
-    </ul>
-</div>
+    <div class="linkcountry">
+      <ul class="nav-links">
+        <router-link to="/" active-class="active-link">Home</router-link>
+        <router-link to="/database" active-class="active-link">Database</router-link>
+        <router-link to="/documents" active-class="active-link">Export</router-link>
+        <router-link to="/reports" active-class="active-link">Reports</router-link>
+      </ul>
+    </div>
   </nav>
 </template>
 
@@ -34,7 +34,7 @@ export default {
 }
 
 .name {
-  font-size: 18px;  
+  font-size: 18px;
   color: rgb(0, 0, 0);
   margin-left: 1rem;
   top: 2.4rem;
@@ -47,12 +47,14 @@ export default {
 }
 
 .nav-logo img {
-  height: 3rem; /* Adjust as per your logo's aspect ratio */
+  height: 3rem;
+  /* Adjust as per your logo's aspect ratio */
 }
 
 .linkcountry {
   display: flex;
-  gap: 2rem; /* Adjust as needed */
+  gap: 2rem;
+  /* Adjust as needed */
 }
 
 .nav-links {
@@ -76,7 +78,8 @@ export default {
 }
 
 .brand-logo img {
-  height: 6rem; /* Adjust as per your logo's aspect ratio */
+  height: 6rem;
+  /* Adjust as per your logo's aspect ratio */
   top: -5px;
   left: 50%;
   transform: translate(-50%);
@@ -91,14 +94,13 @@ export default {
 
 @media (max-width: 1100px) {
   .brand-logo img {
-  display: none;
-}
+    display: none;
+  }
 }
 
 @media (max-width: 790px) {
   .name {
-  display: none;
+    display: none;
+  }
 }
-}
-
 </style>
