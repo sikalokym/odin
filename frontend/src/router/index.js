@@ -3,7 +3,7 @@ import Home from '@/components/Home.vue';
 import Database from '@/components/Database.vue';
 import Documents from '@/components/Documents.vue';
 import Reports from '@/components/Reports.vue';
-import { getRoles } from '@/authService';
+import { getRoles, ensureAuthenticated } from '@/authService';
 
 /*
 Routes
@@ -40,17 +40,23 @@ const router = createRouter({
 
 // Global navigation guard for role-based access control
 router.beforeEach(async (to, from, next) => {
-	if (to.matched.some(record => record.meta.requiresRole)) {
+	try {
+	  await ensureAuthenticated();
+	  if (to.matched.some(record => record.meta.requiresRole)) {
 		const roles = await getRoles();
 		const requiredRole = to.meta.requiresRole;
 		if (roles.includes(requiredRole)) {
-			next();
+		  next();
 		} else {
-			next('/');
+		  next('/');
 		}
-	} else {
+	  } else {
 		next();
+	  }
+	} catch (error) {
+	  console.error('Authentication error:', error);
+	  next('/');
 	}
-});
-
-export default router;
+  });
+  
+  export default router;

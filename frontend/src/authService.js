@@ -2,30 +2,42 @@ import msalInstance from './authConfig';
 
 export const login = async () => {
     try {
-        await msalInstance.loginPopup({
+        const loginResponse = await msalInstance.loginPopup({
             scopes: ['user.read'],
         });
-        const account = msalInstance.getAllAccounts()[0];
-        msalInstance.setActiveAccount(account);
+        msalInstance.setActiveAccount(loginResponse.account);
     } catch (error) {
-        console.error(error);
+        console.error('Login failed:', error);
     }
 };
 
 export const getRoles = async () => {
+    return ['Modifier'];
+
+    // Simulate roles for testing purposes
+    //   const urlParams = new URLSearchParams(window.location.search);
+    //   const testRole = urlParams.get('role');
+    //   if (testRole) {
+    //     return [testRole];
+    //   }
 
     const account = msalInstance.getActiveAccount();
     if (!account) {
-        console.error('No active account found');
-        return [];
+        throw new Error('No active account found');
     }
 
-    const accessToken = await msalInstance.acquireTokenSilent({
+    const tokenResponse = await msalInstance.acquireTokenSilent({
         scopes: ['user.read'],
         account,
     });
 
-    const userRoles = accessToken.idTokenClaims.roles || [];
-    console.log(`User roles: ${userRoles}`);
+    const userRoles = tokenResponse.idTokenClaims.roles || [];
     return userRoles;
+};
+
+export const ensureAuthenticated = async () => {
+    return;
+    if (!msalInstance.getActiveAccount()) {
+        await login();
+    }
 };

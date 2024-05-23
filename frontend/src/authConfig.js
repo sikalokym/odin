@@ -2,7 +2,7 @@ import { PublicClientApplication } from '@azure/msal-browser';
 
 let redirectUri = '';
 if (process.env.NODE_ENV === 'development') {
-    redirectUri = 'http://127.0.0.1:8080';
+    redirectUri = 'http://localhost:8080';
 } else {
     redirectUri = 'https://pmt-portal.azurewebsites.net';
 }
@@ -20,5 +20,8 @@ const msalConfig = {
 };
 
 const msalInstance = new PublicClientApplication(msalConfig);
+export const initializeMsal = async () => {
+    await msalInstance.initialize();
+  };
 
 export default msalInstance;
