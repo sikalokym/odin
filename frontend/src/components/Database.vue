@@ -806,8 +806,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Affected Visa Files
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('EffectedVisaFile', 1)" style="cursor: pointer;">↑</span>
-                <span @click="sortTable('EffectedVisaFile', -1)" style="cursor: pointer;">↓</span>
+                <span @click="sortTable('AffectedVisaFile', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('AffectedVisaFile', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -841,7 +841,7 @@
               :disabled="pno.DiscountPercentage !== null && pno.DiscountPercentage !== ''" />
           </td>
           <td>
-            <input type="EffectedVisaFile" v-model="pno.EffectedVisaFile" @input="pno.edited = true"
+            <input type="AffectedVisaFile" v-model="pno.AffectedVisaFile" @input="pno.edited = true"
               @change="pushUpdateDiscount(pno)" />
           </td>
           <td>
@@ -867,7 +867,7 @@
               :disabled="pno.DiscountPercentage !== null && pno.DiscountPercentage !== ''" />
           </td>
           <td>
-            <input type="EffectedVisaFile" v-model="pno.EffectedVisaFile" @input="pno.edited = true" />
+            <input type="AffectedVisaFile" v-model="pno.AffectedVisaFile" @input="pno.edited = true" />
           </td>
           <td>
             <input type="checkbox" v-model="pno.ActiveStatus" @change="pno.edited = true" />
@@ -1418,12 +1418,12 @@ export default {
     },
     // Discounts
     pushupdateDiscount(pno) {
-      this.entitiesStore.pushUpdateDiscount(pno.ID, pno.ChannelID, pno.DiscountPercentage, pno.RetailPrice, pno.WholesalePrice, pno.ActiveStatus, pno.EffectedVisaFile)
+      this.entitiesStore.pushUpdateDiscount(pno.ID, pno.ChannelID, pno.DiscountPercentage, pno.RetailPrice, pno.WholesalePrice, pno.ActiveStatus, pno.AffectedVisaFile)
       pno.edited = false
     },
     createDiscount(pno) {
       pno.ID = null
-      this.entitiesStore.pushUpdateDiscount(pno.ID, this.activeSalesChannel.ChannelID, pno.DiscountPercentage, pno.RetailPrice, pno.WholesalePrice, pno.ActiveStatus, pno.EffectedVisaFile)
+      this.entitiesStore.pushUpdateDiscount(pno.ID, this.activeSalesChannel.ChannelID, pno.DiscountPercentage, pno.RetailPrice, pno.WholesalePrice, pno.ActiveStatus, pno.AffectedVisaFile)
       pno.edited = false
       this.newdiscount = [];
       this.entitiesStore.fetchDiscounts(this.activeSalesChannel.ChannelID).then(() => {
@@ -1458,7 +1458,7 @@ export default {
       this.newsaleschannel.push({ Code: '', ChannelName: '', Comment: '', StartDate: '', EndDate: '', edited: true });
     },
     addDiscount() {
-      this.newdiscount.push({ DiscountPercentage: '', RetailPrice: '', WholesalePrice: '', EffectedVisaFile: '', ActiveStatus: '', edited: true });
+      this.newdiscount.push({ DiscountPercentage: '', RetailPrice: '', WholesalePrice: '', AffectedVisaFile: '', ActiveStatus: '', edited: true });
     },
     addCustomLocalOption() {
       this.newcustomlocaloption.push({ FeatureCode: '', FeaturePrice: '', edited: true });

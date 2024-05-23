@@ -459,7 +459,7 @@ def get_discounts(country, model_year):
     sales_channels_id = request.args.get('id')
     conditions = [f"ChannelID = '{sales_channels_id}'"]
 
-    df_discounts = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'DIS'), columns=['ID', 'ChannelID', 'DiscountPercentage', 'RetailPrice', 'WholesalePrice', 'ActiveStatus', 'EffectedVisaFile'], conditions=conditions)
+    df_discounts = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'DIS'), columns=['ID', 'ChannelID', 'DiscountPercentage', 'RetailPrice', 'WholesalePrice', 'ActiveStatus', 'AffectedVisaFile'], conditions=conditions)
     
     df_discounts = df_discounts.sort_values(by='DiscountPercentage', ascending=True)
 

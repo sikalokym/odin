@@ -158,14 +158,14 @@ export const useEntitiesStore = defineStore({
             let path = `/db/${this.country}/${this.model_year}/write/sales-channels`
             return index.post(path, updates);
         },
-        async pushUpdateDiscount(ID, SalesChannelID, DiscountPercentage, RetailPrice, WholesalePrice, ActiveStatus, EffectedVisaFile) {
+        async pushUpdateDiscount(ID, SalesChannelID, DiscountPercentage, RetailPrice, WholesalePrice, ActiveStatus, AffectedVisaFile) {
             let updates = {
                 ChannelID: SalesChannelID,
                 DiscountPercentage: DiscountPercentage,
                 RetailPrice: RetailPrice,
                 WholesalePrice: WholesalePrice,
                 ActiveStatus: ActiveStatus,
-                EffectedVisaFile: EffectedVisaFile
+                AffectedVisaFile: AffectedVisaFile
             }
             if (ID !== null) {
                 updates.ID = ID;
