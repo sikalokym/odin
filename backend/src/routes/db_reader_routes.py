@@ -445,14 +445,36 @@ def get_changelog(country, model_year):
 
     return df_pno_features.to_json(orient='records')
 
-@bp_db_reader.route('/contract-partners', methods=['GET'])
-def get_contract_partners(country, model_year):
-    df_contract_partners = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CP'), columns=['ID', 'Code', 'PartnerName', 'Discount', 'Comment', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
-    df_contract_partners = filter_df_by_model_year(df_contract_partners, model_year)
+@bp_db_reader.route('/sales-channels', methods=['GET'])
+def get_sales_channels(country, model_year):
+    df_sales_channels = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SC'), columns=['ID', 'Code', 'ChannelName', 'Comment', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
+    df_sales_channels = filter_df_by_model_year(df_sales_channels, model_year)
     
-    df_contract_partners = df_contract_partners.sort_values(by='Code', ascending=True)
+    df_sales_channels = df_sales_channels.sort_values(by='Code', ascending=True)
 
-    return df_contract_partners.to_json(orient='records')
+    return df_sales_channels.to_json(orient='records')
+
+@bp_db_reader.route('/discounts', methods=['GET'])
+def get_discounts(country, model_year):
+    sales_channels_id = request.args.get('id')
+    conditions = [f"ChannelID = '{sales_channels_id}'"]
+
+    df_discounts = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'DIS'), columns=['ID', 'ChannelID', 'DiscountPercentage', 'RetailPrice', 'WholesalePrice', 'ActiveStatus', 'EffectedVisaFile'], conditions=conditions)
+    
+    df_discounts = df_discounts.sort_values(by='DiscountPercentage', ascending=True)
+
+    return df_discounts.to_json(orient='records')
+
+@bp_db_reader.route('/custom-local-options', methods=['GET'])
+def get_custom_local_options(country, model_year):
+    discount_id = request.args.get('id')
+    conditions = [f"DiscountID = '{discount_id}'"]
+
+    df_custom_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['ID', 'FeatureCode', 'FeaturePrice'], conditions=conditions)
+    
+    df_custom_local_options = df_custom_local_options.sort_values(by='FeatureCode', ascending=True)
+
+    return df_custom_local_options.to_json(orient='records')
 
 @bp_db_reader.route('/visa-files', methods=['GET'])
 def get_visa_files(country, model_year):

@@ -371,8 +371,8 @@ def write_packages(country, model_year):
     DBOperations.instance.upsert_data_from_df(df_pno_packages_relations, DBOperations.instance.config.get('RELATIONS', 'PKG_Custom'), all_columns, conditional_columns)
     return 'Packages written successfully', 200
 
-@bp_db_writer.route('/contract-partners', methods=['POST'])
-def upsert_contract_partner(country, model_year):
+@bp_db_writer.route('/sales-channels', methods=['POST'])
+def upsert_sales_channel(country, model_year):
     data = request.json
     if not data:
         return 'No data provided', 400
@@ -384,6 +384,7 @@ def upsert_contract_partner(country, model_year):
         data['EndDate'] = int(data['EndDate'])
 
     try:
+        data['CountryCode'] = country
         # Create a DataFrame with a single row
         df_new_entry = pd.DataFrame([data])
 
@@ -392,8 +393,78 @@ def upsert_contract_partner(country, model_year):
         conditional_columns = ['ID']
 
         # Perform the upsert
-        DBOperations.instance.upsert_data_from_df(df_new_entry, DBOperations.instance.config.get('TABLES', 'CP'), all_columns, conditional_columns)
+        DBOperations.instance.upsert_data_from_df(df_new_entry, DBOperations.instance.config.get('TABLES', 'SC'), all_columns, conditional_columns)
     except Exception as e:
         return str(e), 500
     
-    return 'Contract partner created successfully', 200
+    return 'Sales channel created successfully', 200
+
+@bp_db_writer.route('/discounts', methods=['POST'])
+def upsert_discount(country, model_year):
+    data = request.json
+    if not data:
+        return 'No data provided', 400
+    if 'ID' not in data:
+        data['ID'] = str(uuid.uuid4())
+    if data.get('ActiveStatus', False):
+        data['ActiveStatus'] = 1
+    else:
+        data['ActiveStatus'] = 0
+
+    try:
+        if data['DiscountPercentage'] == '':
+            data['DiscountPercentage'] = None
+        if data['RetailPrice'] == '':
+            data['RetailPrice'] = None
+        if data['WholesalePrice'] == '':
+            data['WholesalePrice'] = None
+            
+        if data['DiscountPercentage'] is not None:
+            data['DiscountPercentage'] = float(data['DiscountPercentage'])
+        if data['RetailPrice'] is not None:
+            data['RetailPrice'] = float(data['RetailPrice'])
+        if data['WholesalePrice'] is not None:
+            data['WholesalePrice'] = float(data['WholesalePrice'])
+        
+        # Create a DataFrame with a single row
+        df_new_entry = pd.DataFrame([data])
+
+        # Extract columns for upsert
+        all_columns = df_new_entry.columns.tolist()
+        conditional_columns = ['ID']
+
+        # Perform the upsert
+        DBOperations.instance.upsert_data_from_df(df_new_entry, DBOperations.instance.config.get('TABLES', 'DIS'), all_columns, conditional_columns)
+    except Exception as e:
+        return str(e), 500
+    
+    return 'Discount created successfully', 200
+
+@bp_db_writer.route('/custom-local-options', methods=['POST'])
+def upsert_custom_local_option(country, model_year):
+    data = request.json
+    if not data:
+        return 'No data provided', 400
+    if 'ID' not in data:
+        data['ID'] = str(uuid.uuid4())
+
+    try:
+        if data['FeaturePrice'] == '':
+            data['FeaturePrice'] = None
+            
+        if data['FeaturePrice'] is not None:
+            data['FeaturePrice'] = float(data['FeaturePrice'])
+
+        # Create a DataFrame with a single row
+        df_new_entry = pd.DataFrame([data])
+
+        # Extract columns for upsert
+        all_columns = df_new_entry.columns.tolist()
+        conditional_columns = ['ID']
+
+        # Perform the upsert
+        DBOperations.instance.upsert_data_from_df(df_new_entry, DBOperations.instance.config.get('TABLES', 'CLO'), all_columns, conditional_columns)
+    except Exception as e:
+        return str(e), 500
+    
+    return 'Custom local option created successfully', 200
