@@ -42,51 +42,65 @@ def sap_price_list(country):
     data = request.get_json()
     if not data:
         return 'Data is required', 400
-    if 'visa_file' not in data:
-        return 'Visa file is required', 400
     
     code = data.get('code', 'All')
-    if code != 'All':
-        conditions = [f'CountryCode = {country}', f"Code = '{code}'"]
-        df_code_exists = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CP'), columns=['Code', 'PartnerName', 'Discount', 'Comment', 'StartDate', 'EndDate'], conditions=conditions)
-        if df_code_exists.empty:
-            return 'Invalid code', 400
-
-    visa_file = data['visa_file']
-    visa_files = load_available_visa_files(country)
-    if visa_file not in visa_files and visa_file != 'All':
-        return 'Invalid visa file', 400
     time = datetime.datetime.now().strftime("%Y%U")
+
+    conditions = [f'CountryCode = {country}', f'StartDate <= {time}', f'EndDate >= {time}']
+    if code != 'All':
+        conditions.append(f'Code = {code}')
+    df_channels = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SC'), columns=['ID', 'Code', 'ChannelName'], conditions=conditions)
+    if df_channels.empty:
+        return 'Invalid code' if code != 'All' else f'No Sales Channel with the code {code} found', 400
+
+    channel_ids = df_channels['ID'].tolist()
+    discount_conditions = []
+    if len (channel_ids) == 1:
+        discount_conditions.append(f"ChannelID = '{channel_ids[0]}'")
+    else:
+        discount_conditions.append(f"ChannelID IN {tuple(channel_ids)}")
+    df_discounts = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'DIS'), columns=['ID', 'ChannelID', 'DiscountPercentage', 'RetailPrice', 'WholesalePrice', 'ActiveStatus', 'AffectedVisaFile'], conditions=discount_conditions)
+    
+    discount_ids = df_discounts['ID'].tolist()
+    local_option_conditions = []
+    if len(discount_ids) == 1:
+        local_option_conditions.append(f"DiscountID = '{discount_ids[0]}'")
+    else:
+        local_option_conditions.append(f"DiscountID IN {tuple(discount_ids)}")
+
+    df_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['FeatureCode', 'FeaturePrice', 'DiscountID'], conditions=local_option_conditions)
+    
+    available_visa_files = load_available_visa_files(country)
+
+    df_discounts['AffectedVisaFile'] = df_discounts['AffectedVisaFile'].replace('All', ','.join(available_visa_files.keys()))
+    df_discounts['AffectedVisaFile'] = df_discounts['AffectedVisaFile'].str.split(',')
+    df_discounts = df_discounts.explode('AffectedVisaFile')
+    df_discounts = df_discounts[df_discounts['AffectedVisaFile'].isin(available_visa_files.keys())]
+
+    df_discounts = df_discounts.merge(df_channels, left_on='ChannelID', right_on='ID', suffixes=('_discount', '_channel'))
+    df_discounts = df_discounts.drop(columns=['ID_channel', 'ChannelID'])
+    df_discounts = df_discounts.rename(columns={'ID_discount': 'ID'})
 
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
-        if visa_file == 'All':
-            for folder_name, blob in visa_files.items():
-                dfs = get_sap_price_list(blob, code, country, time)
+        for visa_file, df_discounts_group in df_discounts.groupby('AffectedVisaFile'):
+            df_discount_options = df_local_options[df_local_options['DiscountID'].isin(df_discounts_group['ID'].tolist())]
+            dfs = get_sap_price_list(available_visa_files[visa_file], df_discounts_group, df_discount_options)
+            folder_name = visa_file
+            for df in dfs:
+                code, channel_name = df.name.split('+#+')
+                excel_filename = f'SAP - PL{code} - {channel_name}.xlsx'
+                excel_buffer = io.BytesIO()
+                with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                    df.to_excel(writer, index=False)
+                zip_file.writestr(f'{folder_name}/{excel_filename}', excel_buffer.getvalue())
+            if len(dfs) > 1:
                 concatenated_df = pd.concat(dfs)
-
-                for df in dfs:
-                    partner_code, partner_name = df.name.split('+#+')
-                    excel_filename = f'SAP - PL{partner_code} - {partner_name}.xlsx'
-                    excel_buffer = io.BytesIO()
-                    with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-                        df.to_excel(writer, index=False)
-                    zip_file.writestr(f'{folder_name}/{excel_filename}', excel_buffer.getvalue())
-
                 concat_excel_buffer = io.BytesIO()
                 with pd.ExcelWriter(concat_excel_buffer, engine='openpyxl') as writer:
                     concatenated_df.to_excel(writer, index=False)
                 zip_file.writestr(f'{folder_name}/MAWISTA ALL.xlsx', concat_excel_buffer.getvalue())
-        else:
-            dfs = get_sap_price_list(visa_files[visa_file], code, country, time)
-            concatenated_df = pd.concat(dfs)
-            for df in dfs:
-                code, partner_name = df.name.split('+#+')
-                excel_filename = f'SAP - PL{code} - {partner_name}.xlsx'
-                excel_buffer = io.BytesIO()
-                with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-                    df.to_excel(writer, index=False)
-                zip_file.writestr(excel_filename, excel_buffer.getvalue())
+
 
     zip_buffer.seek(0)
     return send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='sap_price_list.zip')
