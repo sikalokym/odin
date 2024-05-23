@@ -100,7 +100,7 @@
       <button
         style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translateX(-50%); margin-top: 64px;"
         @click="exportPricelist"
-        :disabled="this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === ''">Export
+        :disabled="False && (this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === '')">Export
         Pricelist</button>
     </div>
     <!-- Country Select Dropdown Menu -->
@@ -200,6 +200,21 @@ export default {
       link.setAttribute('download', 'VariantBinder_.xlsx');
       document.body.appendChild(link);
       link.click();
+    },
+    async exportPricelist() {
+      const link = document.createElement('a');
+      link.href = `${axios.endpoint}/231/export/sap-price-list`;
+      console.log(link.href);
+
+      // This ensures the link is ready to download the file
+      link.setAttribute('download', 'SAP_Price_Lists.zip');
+      document.body.appendChild(link);
+
+      // Trigger the download
+      link.click();
+
+      // Cleanup: remove the link after triggering the download
+      document.body.removeChild(link);
     },
     changeCountry(newCountry) {
       this.pnoStore.setCountry(newCountry);
