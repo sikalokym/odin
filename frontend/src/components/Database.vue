@@ -14,6 +14,8 @@
       <option value="Colors" :disabled="this.pnoStore.model_year === ''">Colors</option>
       <option value="Upholstery" :disabled="this.pnoStore.model_year === ''">Upholstery</option>
       <option value="Packages" :disabled="this.pnoStore.model_year === ''">Packages</option>
+      <option value="VISA Files" :disabled="this.pnoStore.model_year === ''">VISA Files</option>
+      <option value="Sales Channels" :disabled="this.pnoStore.model_year === ''">Sales Channels</option>
     </select>
     <!-- Filter for model years -->
     <label class="modelyear" style="width: 180px;">Model Year</label><br>
@@ -71,14 +73,21 @@
   <main class="main-content">
     <!-- Table Filter -->
     <div style="display: flex; margin-bottom: 1em;">
-      <input v-if="displaytable !== '' && model_year !== '0' && !customFeatureTable" v-model="searchTerm" type="text" placeholder="Filter" style="margin-right: 1ch;">
+      <input v-if="displaytable !== '' && model_year !== '0' && !customFeatureTable && !discountTable" v-model="searchTerm" type="text" placeholder="Filter" style="margin-right: 1ch;">
+      <!-- Add Custom Feature -->
       <button v-if="displaytable === 'Features' && model_year !== '0' && !customFeatureTable" @click="showCustomFeatureTable">Add custom feature</button>
+      <!-- Upload Visa File -->
+      <button v-if="displaytable === 'VISA Files' && model_year !== '0'" @click="$refs.file.click()">Upload VISA file</button>
+      <input type='file' class="visaupload" id="getFile" ref="file" style="display:none" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" @change="uploadVisa">
+      <!-- Displaying discounts for sales channel -->
+      <div v-if="displaytable === 'Sales Channels' && model_year !== '0' && discountTable"><strong>[{{ this.activeSalesChannel.Code + " " + this.activeSalesChannel.ChannelName }}]</strong> Discounts</div>
+      <button v-if="discountTable && model_year !== '0'" @click="this.discountTable = false, this.xCodesTable = false, this.selectedRow = null" style="margin-left: 10px;">Return to Sales Channels</button>
     </div>
+
     <!-- Model Table -->
     <table v-if="displaytable === 'Model' && model_year !== '0'">
       <thead v-if="model_year !== '0'">
         <tr>
-
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
               Model
@@ -590,6 +599,291 @@
         </tr>
       </tbody>
     </table>
+    <!-- VISA File Table -->
+    <table v-if="displaytable === 'VISA Files' && model_year !== '0'">
+      <thead v-if="model_year !== '0'">
+        <tr>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Name
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('file_name', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('file_name', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th style="width: 10px">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="pno in visa_files" :key="pno.id" :class="{ 'editing': pno.edited }">
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: left;">
+            {{ pno.file_name }}
+          </td>
+          <td style="background-color: #f4f4f4;">
+            <span @click="deleteVISAFile(pno.file_name)" style="cursor: pointer; color: red;">[X]</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <!-- Sales Channels Table -->
+    <table v-if="displaytable === 'Sales Channels' && model_year !== '0' && !discountTable">
+      <thead v-if="model_year !== '0'">
+        <tr>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Code
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Code', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Code', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Name
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('ChannelName', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('ChannelName', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Comment
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Comment', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Comment', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Start Date
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('StartDate', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('StartDate', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              End Date
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('EndDate', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('EndDate', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th style="width: 10px">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="pno in sales_channels" :key="pno.id" :class="{ 'editing': pno.edited }">
+          <td>
+            <input type="Code" v-model="pno.Code" @input="pno.edited = true" @change="pushUpdateSalesChannel(pno)" />
+          </td>
+          <td>
+            <input type="ChannelName" v-model="pno.ChannelName" @input="pno.edited = true" @change="pushUpdateSalesChannel(pno)" />
+          </td>
+          <td>
+            <input type="Comment" v-model="pno.Comment" @input="pno.edited = true" @change="pushUpdateSalesChannel(pno)" />
+          </td>
+          <td>
+            <input type="StartDate" v-model="pno.StartDate" @input="pno.edited = true" @change="pushUpdateSalesChannel(pno)" />
+          </td>
+          <td>
+            <input type="EndDate" v-model="pno.EndDate" @input="pno.edited = true" @change="pushUpdateSalesChannel(pno)" />
+          </td>
+          <td style="background-color: #f4f4f4;">
+            <span @click="fetchDiscounts(pno)" style="cursor: pointer; margin-right: 10px;">[%]</span>
+            <span @click="deleteSalesChannel(pno.ID)" style="cursor: pointer; color: red;">[X]</span>
+          </td>
+        </tr>
+      </tbody>
+      <tbody>
+        <tr v-for="pno in newsaleschannel" :key="pno.id" :class="{ 'editing': pno.edited }">
+          <td>
+            <input type="Code" v-model="pno.Code" @input="pno.edited = true"/>
+          </td>
+          <td>
+            <input type="ChannelName" v-model="pno.ChannelName" @input="pno.edited = true"/>
+          </td>
+          <td>
+            <input type="Comment" v-model="pno.Comment" @input="pno.edited = true"/>
+          </td>
+          <td>
+            <input type="StartDate" v-model="pno.StartDate" @input="pno.edited = true"/>
+          </td>
+          <td>
+            <input type="EndDate" v-model="pno.EndDate" @input="pno.edited = true"/>
+          </td>
+          <td style="background-color: #f4f4f4;">
+            <span @click="createSalesChannel(pno)" style="cursor: pointer;">[Save]</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div v-if="displaytable === 'Sales Channels' && model_year !== '0' && !discountTable" style="text-align: left; margin-left: 5px;">
+      <button @click="addSalesChannel">Add Sales Channel</button>
+    </div>
+    <!-- Discount Table -->
+    <table v-if="displaytable === 'Sales Channels' && model_year !== '0' && discountTable">
+      <thead v-if="model_year !== '0'">
+        <tr>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Discount %
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('DiscountPercentage', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('DiscountPercentage', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Retail Price
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('RetailPrice', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('RetailPrice', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Wholesale Price
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('WholesalePrice', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('WholesalePrice', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Affected Visa Files
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('EffectedVisaFile', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('EffectedVisaFile', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Active
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('ActiveStatus', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('ActiveStatus', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th style="width: 10px">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="pno in discounts" :key="pno.id" :class="{ 'editing': pno.edited, 'selected': pno.id === selectedRow }">
+          <td>
+            <input type="DiscountPercentage" v-model="pno.DiscountPercentage" @input="pno.edited = true" @change="pushUpdateDiscount(pno)" />
+          </td>
+          <td>
+            <input type="RetailPrice" v-model="pno.RetailPrice" @input="pno.edited = true" @change="pushUpdateDiscount(pno)" :disabled="pno.DiscountPercentage !== null && pno.DiscountPercentage !== ''" />
+          </td>
+          <td>
+            <input type="WholesalePrice" v-model="pno.WholesalePrice" @input="pno.edited = true" @change="pushUpdateDiscount(pno)" :disabled="pno.DiscountPercentage !== null && pno.DiscountPercentage !== ''" />
+          </td>
+          <td>
+            <input type="EffectedVisaFile" v-model="pno.EffectedVisaFile" @input="pno.edited = true" @change="pushUpdateDiscount(pno)" />
+          </td>
+          <td>
+            <input type="checkbox" v-model="pno.ActiveStatus" @change="pno.edited = true, pushUpdateDiscount(pno)" />
+          </td>
+          <td style="background-color: #f4f4f4;">
+            <span @click="fetchXCodes(pno)" style="cursor: pointer;">[X-Codes]</span>
+            <!-- <span @click="deleteDiscount(pno.ID)" style="cursor: pointer; color: red;">[X]</span> -->
+          </td> 
+        </tr>
+      </tbody>
+      <tbody>
+        <tr v-for="pno in newdiscount" :key="pno.id">
+          <td>
+            <input type="DiscountPercentage" v-model="pno.DiscountPercentage" @input="pno.edited = true" />
+          </td>
+          <td>
+            <input type="RetailPrice" v-model="pno.RetailPrice" @input="pno.edited = true" :disabled="pno.DiscountPercentage !== null && pno.DiscountPercentage !== ''" />
+          </td>
+          <td>
+            <input type="WholesalePrice" v-model="pno.WholesalePrice" @input="pno.edited = true" :disabled="pno.DiscountPercentage !== null && pno.DiscountPercentage !== ''" />
+          </td>
+          <td>
+            <input type="EffectedVisaFile" v-model="pno.EffectedVisaFile" @input="pno.edited = true" />
+          </td>
+          <td>
+            <input type="checkbox" v-model="pno.ActiveStatus" @change="pno.edited = true" />
+          </td>
+          <td style="background-color: #f4f4f4;">
+            <span @click="createDiscount(pno)" style="cursor: pointer;">[Save]</span>
+            <!-- <span @click="deleteDiscount(pno.ID)" style="cursor: pointer; color: red;">[X]</span> -->
+          </td> 
+        </tr>
+      </tbody>
+    </table>
+    <div v-if="displaytable === 'Sales Channels' && model_year !== '0' && discountTable" style="text-align: left; margin-left: 5px;">
+      <button @click="addDiscount">Add Discount</button>
+    </div>
+    <!-- XCodes Table -->
+    <table v-if="displaytable === 'Sales Channels' && model_year !== '0' && xCodesTable" style="margin-top: 30px;">
+      <thead v-if="model_year !== '0'">
+        <tr>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Feature Code
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('FeatureCode', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('FeatureCode', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Price
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('FeaturePrice', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('FeaturePrice', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th style="width: 10px">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="pno in custom_local_options" :key="pno.id" :class="{ 'editing': pno.edited }">
+          <td>
+            <input type="FeatureCode" v-model="pno.FeatureCode" @input="pno.edited = true" @change="pushUpdateXCode(pno)" />
+          </td>
+          <td>
+            <input type="FeaturePrice" v-model="pno.FeaturePrice" @input="pno.edited = true" @change="pushUpdateXCode(pno)" />
+          </td>
+          <td style="background-color: #f4f4f4;">
+            <span @click="deleteXCode(pno.ID)" style="cursor: pointer; color: red;">[X]</span>
+          </td> 
+        </tr>
+      </tbody>
+    </table>
+    <tbody>
+        <tr v-for="pno in newcustomlocaloption" :key="pno.id" :class="{ 'editing': pno.edited }">
+          <td>
+            <input type="FeatureCode" v-model="pno.FeatureCode" @input="pno.edited = true" />
+          </td>
+          <td>
+            <input type="FeaturePrice" v-model="pno.FeaturePrice" @input="pno.edited = true" />
+          </td>
+          <td style="background-color: #f4f4f4;">
+            <span @click="createXCode(pno)" style="cursor: pointer;">[Save]</span>
+          </td>
+        </tr>
+      </tbody>
+    <div v-if="displaytable === 'Sales Channels' && model_year !== '0' && xCodesTable" style="text-align: left; margin-left: 5px;">
+      <button @click="addCustomLocalOption">Add X-Code</button>
+    </div>
   </main>
 </template>
 
@@ -618,6 +912,14 @@ export default {
       sortColumn: '',
       searchTerm: '',
       customFeatureTable: false,
+      discountTable: false,
+      xCodesTable: false,
+      selectedRow: null,
+      activeSalesChannel: [],
+      newsaleschannel: [],
+      activeDiscount: [],
+      newdiscount: [],
+      newcustomlocaloption: [],
       newEntry: {
         Code: '',
         CustomName: '',
@@ -652,6 +954,54 @@ export default {
     },
     countries() {
       return this.pnoStore.supported_countries
+    },
+    visa_files() {
+      return this.entitiesStore.visafiles.filter(file_name =>
+        Object.values(file_name).some(value =>
+          String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
+        )
+      ).sort((a, b) => {
+        if (a[this.sortColumn] === undefined || a[this.sortColumn] === null) return 1;
+        if (b[this.sortColumn] === undefined || b[this.sortColumn] === null) return -1;
+        if (a[this.sortColumn] < b[this.sortColumn]) return -1 * this.sortOrder;
+        if (a[this.sortColumn] > b[this.sortColumn]) return 1 * this.sortOrder;
+      });
+    },
+    sales_channels() {
+      return this.entitiesStore.saleschannels.filter(code =>
+        Object.values(code).some(value =>
+          String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
+        )
+      ).sort((a, b) => {
+        if (a[this.sortColumn] === undefined || a[this.sortColumn] === null) return 1;
+        if (b[this.sortColumn] === undefined || b[this.sortColumn] === null) return -1;
+        if (a[this.sortColumn] < b[this.sortColumn]) return -1 * this.sortOrder;
+        if (a[this.sortColumn] > b[this.sortColumn]) return 1 * this.sortOrder;
+      });
+    },
+    discounts() {
+      return this.entitiesStore.discounts.filter(code =>
+        Object.values(code).some(value =>
+          String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
+        )
+      ).sort((a, b) => {
+        if (a[this.sortColumn] === undefined || a[this.sortColumn] === null) return 1;
+        if (b[this.sortColumn] === undefined || b[this.sortColumn] === null) return -1;
+        if (a[this.sortColumn] < b[this.sortColumn]) return -1 * this.sortOrder;
+        if (a[this.sortColumn] > b[this.sortColumn]) return 1 * this.sortOrder;
+      });
+    },
+    custom_local_options() {
+      return this.entitiesStore.customlocaloptions.filter(code =>
+        Object.values(code).some(value =>
+          String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
+        )
+      ).sort((a, b) => {
+        if (a[this.sortColumn] === undefined || a[this.sortColumn] === null) return 1;
+        if (b[this.sortColumn] === undefined || b[this.sortColumn] === null) return -1;
+        if (a[this.sortColumn] < b[this.sortColumn]) return -1 * this.sortOrder;
+        if (a[this.sortColumn] > b[this.sortColumn]) return 1 * this.sortOrder;
+      });
     },
     // Unique values for tables
     tableModels() {
@@ -863,6 +1213,36 @@ methods: {
     }
   },
 
+  async fetchDiscounts(pno) {
+    this.discountTable = true;
+    this.activeSalesChannel = {
+      Code: pno.Code,
+      ChannelName: pno.ChannelName,
+      ChannelID: pno.ID
+    };
+    try {
+      await this.entitiesStore.fetchDiscounts(pno.ID);
+      console.log('Discounts fetched');
+    } catch (error) {
+      console.error('Error fetching data', error);
+    }
+  },
+
+  async fetchXCodes(pno) {
+    this.selectedRow = pno.id;
+    this.xCodesTable = true;
+    this.activeDiscount = {
+      ChannelID: pno.ID
+    };
+    try {
+      await this.entitiesStore.fetchCustomLocalOptions(pno.ID);
+      console.log('X codes fetched');
+    } catch (error) {
+      console.error('Error fetching data', error);
+    }
+  },
+
+
   async reset() {
     this.model_year = '0';
     this.model = '';
@@ -871,6 +1251,9 @@ methods: {
     this.gearbox = '';
     this.displaytable = '';
     this.customFeatureTable = false;
+    this.discountTable = false;
+    this.xCodesTable = false;
+    this.selectedRow = null;
     await this.pnoStore.setModelYear('0');
   },
   async displaytablereset() {
@@ -880,6 +1263,9 @@ methods: {
     this.salesversion = '';
     this.gearbox = '';
     this.customFeatureTable = false;
+    this.discountTable = false;
+    this.xCodesTable = false;
+    this.selectedRow = null;
     this.searchTerm = '';
     await this.pnoStore.setModelYear('0');
   },
@@ -956,6 +1342,69 @@ methods: {
       StartDate: null,
       EndDate: null,
     };
+  },
+  // Sales Channels
+  pushUpdateSalesChannel(pno) {
+    this.entitiesStore.pushUpdateSalesChannel(pno.ID, pno.Code, pno.ChannelName, pno.Comment, pno.StartDate, pno.EndDate)
+    pno.edited = false
+  },
+  createSalesChannel(pno) {
+    pno.ID = null
+    this.entitiesStore.pushUpdateSalesChannel(pno.ID, pno.Code, pno.ChannelName, pno.Comment, pno.StartDate, pno.EndDate)
+    pno.edited = false
+    this.newsaleschannel = [];
+    this.entitiesStore.fetchSalesChannels().then(() => {
+      console.log('Sales channels fetched')
+    }).catch((error) => {
+      console.error('Error fetching sales channels', error)
+    })
+  },
+  // Discounts
+  pushupdateDiscount(pno) {
+    this.entitiesStore.pushUpdateDiscount(pno.ID, pno.ChannelID, pno.DiscountPercentage, pno.RetailPrice, pno.WholesalePrice, pno.ActiveStatus, pno.EffectedVisaFile)
+    pno.edited = false
+  },
+  createDiscount(pno) {
+    pno.ID = null
+    this.entitiesStore.pushUpdateDiscount(pno.ID, this.activeSalesChannel.ChannelID, pno.DiscountPercentage, pno.RetailPrice, pno.WholesalePrice, pno.ActiveStatus, pno.EffectedVisaFile)
+    pno.edited = false
+    this.newdiscount = [];
+    this.entitiesStore.fetchDiscounts(this.activeSalesChannel.ChannelID).then(() => {
+      console.log('Discounts fetched')
+    }).catch((error) => {
+      console.error('Error fetching discounts', error)
+    })
+  },
+  // XCodes
+  pushUpdateXCode(pno) {
+    this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeDiscount.ChannelID, pno.FeatureCode, pno.FeaturePrice)
+    pno.edited = false
+  },
+  createXCode(pno) {
+    pno.ID = null
+    this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeDiscount.ChannelID, pno.FeatureCode, pno.FeaturePrice)
+    pno.edited = false
+    this.newcustomlocaloption = [];
+    this.entitiesStore.fetchCustomLocalOptions(this.activeDiscount.ChannelID).then(() => {
+      console.log('X codes fetched')
+    }).catch((error) => {
+      console.error('Error fetching X codes', error)
+    })
+  },
+  deleteXCode(id) {
+    this.entitiesStore.deleteXCode(id)
+  },
+  deleteVISAFile(file_name) {
+    this.entitiesStore.deleteVISAFile(file_name)
+  },
+  addSalesChannel() {
+    this.newsaleschannel.push({ Code: '', ChannelName: '', Comment: '', StartDate: '', EndDate: '', edited: true });
+  },
+  addDiscount() {
+    this.newdiscount.push({ DiscountPercentage: '', RetailPrice: '', WholesalePrice: '', EffectedVisaFile: '', ActiveStatus: '', edited: true });
+  },
+  addCustomLocalOption() {
+    this.newcustomlocaloption.push({ FeatureCode: '', FeaturePrice: '', edited: true });
   },
   //Sorting Functions
   sortTable(column, sortOrder) {
@@ -1040,6 +1489,10 @@ hr.divider {
   padding: 10px;
   display: flex;
   align-items: center;
+}
+
+.selected {
+  background-color: lightblue;
 }
 
 </style>

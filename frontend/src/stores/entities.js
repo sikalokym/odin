@@ -9,6 +9,10 @@ export const useEntitiesStore = defineStore({
     salesversions: [],
     gearboxes: [],
     countries: [],
+    visafiles: [],
+    discounts: [],
+    customlocaloptions: [],
+    saleschannels: [],
     country: '',
     model_year: new Date().getFullYear() + 1,
   }),
@@ -64,6 +68,38 @@ export const useEntitiesStore = defineStore({
             console.log(error)
         })
     },
+    async fetchVISAFiles() {
+        let path = `/db/${this.country}/${this.model_year}/visa-files`
+        return await index.get(path).then((response) => {
+            this.visafiles = response.data
+        }).catch((error) => {
+            console.log(error)
+        })
+    },
+    async fetchSalesChannels() {
+        let path = `/db/${this.country}/${this.model_year}/sales-channels`
+        return await index.get(path).then((response) => {
+            this.saleschannels = response.data
+        }).catch((error) => {
+            console.log(error)
+        })
+    },
+    async fetchDiscounts(id) {
+        let path = `/db/${this.country}/${this.model_year}/discounts?&id=${id}`
+        return await index.get(path).then((response) => {
+            this.discounts = response.data
+        }).catch((error) => {
+            console.log(error)
+        })
+    },
+    async fetchCustomLocalOptions(id) {
+        let path = `/db/${this.country}/${this.model_year}/custom-local-options?&id=${id}`
+        return await index.get(path).then((response) => {
+            this.customlocaloptions = response.data
+        }).catch((error) => {
+            console.log(error)
+        })
+    },
     async fetchCountries() {
         let path = `/setup/supported_countries`
         return await index.get(path).then((response) => {
@@ -106,6 +142,54 @@ export const useEntitiesStore = defineStore({
             CustomName: translation,
         }
         let path = `/db/${this.country}/${this.model_year}/write/gearboxes`
+        return index.post(path, updates);
+    },
+    async pushUpdateSalesChannel(ID, Code, ChannelName, Comment, StartDate, EndDate) {
+        let updates = {
+        Code: Code,
+        ChannelName: ChannelName,
+        Comment: Comment,
+        StartDate: StartDate,
+        EndDate: EndDate
+        };
+        if (ID !== null) {
+            updates.ID = ID;
+        }
+        let path = `/db/${this.country}/${this.model_year}/write/sales-channels`
+        return index.post(path, updates);
+    },
+    async pushUpdateDiscount(ID, SalesChannelID, DiscountPercentage, RetailPrice, WholesalePrice, ActiveStatus, EffectedVisaFile) {
+        let updates = {
+            ChannelID: SalesChannelID,
+            DiscountPercentage: DiscountPercentage,
+            RetailPrice: RetailPrice,
+            WholesalePrice: WholesalePrice,
+            ActiveStatus: ActiveStatus,
+            EffectedVisaFile: EffectedVisaFile
+        }
+        if (ID !== null) {
+            updates.ID = ID;
+        }
+        let path = `/db/${this.country}/${this.model_year}/write/discounts`
+        return index.post(path, updates);
+    },
+    async pushUpdateCustomLocalOptions(ID, DiscountlID, FeatureCode, FeaturePrice) {
+        let updates = {
+            DiscountID: DiscountlID,
+            FeatureCode: FeatureCode,
+            FeaturePrice: FeaturePrice
+        }
+        if (ID !== null) {
+            updates.ID = ID;
+        }
+        let path = `/db/${this.country}/${this.model_year}/write/custom-local-options`
+        return index.post(path, updates);
+    },
+    async deleteVisaFile(file_name) {
+        let updates = {
+            file_name: file_name,
+        }
+        let path = `/db/${this.country}/${this.model_year}/write/visa_files`
         return index.post(path, updates);
     },
 },

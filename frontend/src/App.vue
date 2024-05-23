@@ -54,6 +54,16 @@ export default {
       console.log('Gearboxes text fetched')
     }).catch((error) => {
       console.error('Error fetching gearboxes text', error)
+    }),
+    await entitiesStore.fetchVISAFiles().then(() => {
+      console.log('VISA files fetched')
+    }).catch((error) => {
+      console.error('Error fetching VISA files', error)
+    }),
+    await entitiesStore.fetchSalesChannels().then(() => {
+      console.log('Sales channels fetched')
+    }).catch((error) => {
+      console.error('Error fetching sales channels', error)
     })
   },
 };
