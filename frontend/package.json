@@ -10,6 +10,7 @@
     "postinstall": "npm run build"
   },
   "dependencies": {
+    "@azure/msal-browser": "^3.14.0",
     "@primer/css": "^21.2.0",
     "axios": "^0.28.0",
     "core-js": "^3.8.3",
