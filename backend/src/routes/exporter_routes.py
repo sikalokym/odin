@@ -37,13 +37,9 @@ def variant_binder(country):
         return str(e), 500
     return send_file(xlsx_file, download_name=title, as_attachment=True), 200
 
-@bp_exporter.route('/sap-price-list', methods=['POST'])
+@bp_exporter.route('/sap-price-list', methods=['GET'])
 def sap_price_list(country):
-    data = request.get_json()
-    if not data:
-        return 'Data is required', 400
-    
-    code = data.get('code', 'All')
+    code = request.args.get('code', 'All')
     time = datetime.datetime.now().strftime("%Y%U")
 
     conditions = [f'CountryCode = {country}', f'StartDate <= {time}', f'EndDate >= {time}']
@@ -100,7 +96,6 @@ def sap_price_list(country):
                 with pd.ExcelWriter(concat_excel_buffer, engine='openpyxl') as writer:
                     concatenated_df.to_excel(writer, index=False)
                 zip_file.writestr(f'{folder_name}/MAWISTA ALL.xlsx', concat_excel_buffer.getvalue())
-
 
     zip_buffer.seek(0)
     return send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='sap_price_list.zip')
