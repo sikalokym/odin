@@ -28,6 +28,7 @@ def get_sap_price_list(name, df_sales_channels, df_discount_options):
     for _, row in df_sales_channels.iterrows():
         res_df = df_sap_price.copy()
         res_df['Wholesale Price'] = res_df['Wholesale Price'].apply(lambda x: float(x)* (1-float(row['DiscountPercentage'])*0.01))
+        res_df['Price List'] = row['Code']
         df_local_options = df_discount_options[df_discount_options['DiscountID'] == row['ID']]
         res_df = add_local_codes(res_df, df_local_options)
         res_df.name = f"{row['Code']}+#+{row['ChannelName']}"
