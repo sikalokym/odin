@@ -470,7 +470,7 @@ def get_custom_local_options(country, model_year):
     discount_id = request.args.get('id')
     conditions = [f"DiscountID = '{discount_id}'"]
 
-    df_custom_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['ID', 'FeatureCode', 'FeaturePrice'], conditions=conditions)
+    df_custom_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['ID', 'FeatureCode', 'FeatureRetailPrice', 'FeatureWholesalePrice'], conditions=conditions)
     
     df_custom_local_options = df_custom_local_options.sort_values(by='FeatureCode', ascending=True)
 

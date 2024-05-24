@@ -404,7 +404,8 @@ CREATE TABLE CustomLocalOption (
     ID UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
     DiscountID UNIQUEIDENTIFIER,
     FeatureCode VARCHAR(12),
-    FeaturePrice DECIMAL(19,2),
+    FeatureRetailPrice DECIMAL(19,2),
+    FeatureWholesalePrice DECIMAL(19,2),
     FOREIGN KEY (DiscountID) REFERENCES Discount(ID)
 );
 

@@ -43,7 +43,6 @@ def add_local_codes(df, df_codes):
     last_row['Engine'] = '-'
     last_row['Body'] = '-'
     last_row['Steering'] = '-'
-    last_row['Retail Price'] = 0
     last_row['Transfer Price'] = 0
     last_row['Color'] = None
     last_row['Upholstery'] = None
@@ -51,6 +50,7 @@ def add_local_codes(df, df_codes):
     for _, row in df_codes.iterrows():
         new_row = last_row.copy()
         new_row['Option'] = row['FeatureCode']
-        new_row['Wholesale Price'] = row['FeaturePrice']
+        new_row['Wholesale Price'] = row['FeatureWholesalePrice']
+        new_row['Retail Price'] = row['FeatureRetailPrice']
         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     return df

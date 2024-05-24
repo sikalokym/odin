@@ -64,7 +64,7 @@ def sap_price_list(country):
     else:
         local_option_conditions.append(f"DiscountID IN {tuple(discount_ids)}")
 
-    df_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['FeatureCode', 'FeaturePrice', 'DiscountID'], conditions=local_option_conditions)
+    df_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['FeatureCode', 'FeatureRetailPrice', 'FeatureWholesalePrice', 'DiscountID'], conditions=local_option_conditions)
     
     available_visa_files = load_available_visa_files(country)
 

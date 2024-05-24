@@ -447,13 +447,10 @@ def upsert_custom_local_option(country, model_year):
         return 'No data provided', 400
     if 'ID' not in data:
         data['ID'] = str(uuid.uuid4())
-
+    # 'FeatureRetailPrice', 'FeatureWholesalePrice'
     try:
-        if data['FeaturePrice'] == '':
-            data['FeaturePrice'] = None
-            
-        if data['FeaturePrice'] is not None:
-            data['FeaturePrice'] = float(data['FeaturePrice'])
+        data['FeatureRetailPrice'] = float(data['FeatureRetailPrice']) if data.get('FeatureRetailPrice') and data['FeatureRetailPrice'] != '' else 0
+        data['FeatureWholesalePrice'] = float(data['FeatureWholesalePrice']) if data.get('FeatureWholesalePrice') and data['FeatureWholesalePrice'] != '' else 0
 
         # Create a DataFrame with a single row
         df_new_entry = pd.DataFrame([data])
