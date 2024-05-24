@@ -19,12 +19,12 @@ class DatabaseConnection:
             raise e
 
     @classmethod
-    def get_db_connection(self, max_attempts=3):
+    def get_db_connection(self, test=False, max_attempts=3):
         self.logger.debug('Starting database connection')
         for attempt in range(max_attempts):
             try:
                 if self.connection is None or self.connection.closed:
-                    connection_string = os.environ.get('DB_CONNECTION_STRING')
+                    connection_string = os.environ.get('TEST_DB_CONNECTION_STRING') if test else os.environ.get('DB_CONNECTION_STRING')
                     self.connection = pyodbc.connect(connection_string)
                 return self.connection
             except pyodbc.Error as e:
@@ -33,4 +33,3 @@ class DatabaseConnection:
                     raise e
                 else:
                     sleep(1)
-        

@@ -10,10 +10,10 @@ class DBOperations:
     instance = None
 
     @classmethod
-    def create_instance(cls):
+    def create_instance(cls, test=False):
         config = configparser.ConfigParser()
         config.read('config/data_model.cfg')
-        conn = DatabaseConnection.get_db_connection()
+        conn = DatabaseConnection.get_db_connection(test=test)
         cls.instance = cls(conn, config)
         return cls.instance
     
@@ -58,6 +58,8 @@ class DBOperations:
             data = cursor.fetchall()
             if not data:
                 columns = [column.strip() for column in columns.split(',')]
+                if columns == ['*']:
+                    return pd.DataFrame([])
                 return pd.DataFrame([], columns=columns)
             columns = [column[0] for column in data[0].cursor_description]
             data = [list(row) for row in data]
