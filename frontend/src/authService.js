@@ -12,19 +12,12 @@ export const login = async () => {
 };
 
 export const getRoles = async () => {
-    return ['Modifier'];
-
-    // Simulate roles for testing purposes
-    //   const urlParams = new URLSearchParams(window.location.search);
-    //   const testRole = urlParams.get('role');
-    //   if (testRole) {
-    //     return [testRole];
-    //   }
 
     const account = msalInstance.getActiveAccount();
     if (!account) {
         throw new Error('No active account found');
     }
+    console.log('account', account);
 
     const tokenResponse = await msalInstance.acquireTokenSilent({
         scopes: ['user.read'],
@@ -32,11 +25,11 @@ export const getRoles = async () => {
     });
 
     const userRoles = tokenResponse.idTokenClaims.roles || [];
+    console.log('userRoles', userRoles);
     return userRoles;
 };
 
 export const ensureAuthenticated = async () => {
-    return;
     if (!msalInstance.getActiveAccount()) {
         await login();
     }
