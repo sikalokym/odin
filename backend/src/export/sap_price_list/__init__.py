@@ -38,7 +38,6 @@ def get_sap_price_list(name, df_sales_channels, df_discount_options):
 
 def add_local_codes(df, df_codes):
     last_row = df.iloc[-1].copy()
-    last_row['Car Type'] = '-'
     last_row['Sales Version'] = '-'
     last_row['Market Code'] = '-'
     last_row['Engine'] = '-'
