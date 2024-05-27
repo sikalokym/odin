@@ -465,8 +465,8 @@ def get_discounts(country, model_year):
 
 @bp_db_reader.route('/custom-local-options', methods=['GET'])
 def get_custom_local_options(country, model_year):
-    discount_id = request.args.get('id')
-    conditions = [f"DiscountID = '{discount_id}'"]
+    channel_id = request.args.get('id')
+    conditions = [f"ChannelID = '{channel_id}'"]
 
     df_custom_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['ID', 'FeatureCode', 'FeatureRetailPrice', 'FeatureWholesalePrice'], conditions=conditions)
     

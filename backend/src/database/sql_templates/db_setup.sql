@@ -402,11 +402,11 @@ CREATE TABLE Discount (
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CustomLocalOption')
 CREATE TABLE CustomLocalOption (
     ID UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-    DiscountID UNIQUEIDENTIFIER,
+    ChannelID UNIQUEIDENTIFIER,
     FeatureCode VARCHAR(12),
     FeatureRetailPrice DECIMAL(19,2),
     FeatureWholesalePrice DECIMAL(19,2),
-    FOREIGN KEY (DiscountID) REFERENCES Discount(ID)
+    FOREIGN KEY (ChannelID) REFERENCES SalesChannel(ID)
 );
 
 -- Create the change log table
