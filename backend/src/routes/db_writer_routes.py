@@ -196,6 +196,23 @@ def write_customfeatures(country, model_year):
     DBOperations.instance.upsert_data_from_df(df_pno_custom_features_new, DBOperations.instance.config.get('AUTH', 'CFEAT'), all_columns, ['PNOID', 'Code'])
     return 'Features written successfully', 200
 
+@bp_db_writer.route('/delete/customfeatures', methods=['POST'])
+def delete_customfeatures(country, model_year):
+    id = request.args.get('id')
+    if not id:
+        return {"error": "ID is required"}, 400
+    
+    table_name = DBOperations.instance.config.get('AUTH', 'CFEAT')
+    delete_query = f"DELETE FROM {table_name} WHERE ID = %s"
+
+    try:
+        with DBOperations.instance.get_cursor() as cursor:
+            cursor.execute(delete_query, (id,))
+        return {"message": "Record deleted successfully"}, 200
+    except Exception as e:
+        DBOperations.instance.logger.error(f"Error deleting record: {e}")
+        return {"error": str(e)}, 500
+
 @bp_db_writer.route('/options', methods=['POST'])
 def write_options(country, model_year):
     data = request.get_json()
@@ -399,6 +416,23 @@ def upsert_sales_channel(country, model_year):
     
     return 'Sales channel created successfully', 200
 
+@bp_db_writer.route('/sales-channels', methods=['DELETE'])
+def delete_sales_channel(country, model_year):
+    channel_id = request.args.get('id')
+    if not channel_id:
+        return {"error": "Channel ID is required"}, 400
+
+    table_name = DBOperations.instance.config.get('TABLES', 'SC')
+    delete_query = f"DELETE FROM {table_name} WHERE ID = %s"
+
+    try:
+        with DBOperations.instance.get_cursor() as cursor:
+            cursor.execute(delete_query, (channel_id,))
+        return {"message": "Record deleted successfully"}, 200
+    except Exception as e:
+        DBOperations.instance.logger.error(f"Error deleting record: {e}")
+        return {"error": str(e)}, 500
+
 @bp_db_writer.route('/discounts', methods=['POST'])
 def upsert_discount(country, model_year):
     data = request.json
@@ -440,6 +474,23 @@ def upsert_discount(country, model_year):
     
     return 'Discount created successfully', 200
 
+@bp_db_writer.route('/discounts', methods=['DELETE'])
+def delete_discount(country, model_year):
+    discount_id = request.args.get('id')
+    if not discount_id:
+        return {"error": "Discount ID is required"}, 400
+
+    table_name = DBOperations.instance.config.get('TABLES', 'DIS')
+    delete_query = f"DELETE FROM {table_name} WHERE ID = %s"
+
+    try:
+        with DBOperations.instance.get_cursor() as cursor:
+            cursor.execute(delete_query, (discount_id,))
+        return {"message": "Record deleted successfully"}, 200
+    except Exception as e:
+        DBOperations.instance.logger.error(f"Error deleting record: {e}")
+        return {"error": str(e)}, 500
+
 @bp_db_writer.route('/custom-local-options', methods=['POST'])
 def upsert_custom_local_option(country, model_year):
     data = request.json
@@ -447,7 +498,7 @@ def upsert_custom_local_option(country, model_year):
         return 'No data provided', 400
     if 'ID' not in data:
         data['ID'] = str(uuid.uuid4())
-    # 'FeatureRetailPrice', 'FeatureWholesalePrice'
+        data['CountryCode'] = country
     try:
         data['FeatureRetailPrice'] = float(data['FeatureRetailPrice']) if data.get('FeatureRetailPrice') and data['FeatureRetailPrice'] != '' else 0
         data['FeatureWholesalePrice'] = float(data['FeatureWholesalePrice']) if data.get('FeatureWholesalePrice') and data['FeatureWholesalePrice'] != '' else 0
@@ -465,3 +516,20 @@ def upsert_custom_local_option(country, model_year):
         return str(e), 500
     
     return 'Custom local option created successfully', 200
+
+@bp_db_writer.route('/custom-local-options', methods=['DELETE'])
+def delete_custom_local_option(country, model_year):
+    id = request.args.get('id')
+    if not id:
+        return {"error": "ID is required"}, 400
+    
+    table_name = DBOperations.instance.config.get('TABLES', 'CLO')
+    delete_query = f"DELETE FROM {table_name} WHERE ID = %s"
+
+    try:
+        with DBOperations.instance.get_cursor() as cursor:
+            cursor.execute(delete_query, (id,))
+        return {"message": "Record deleted successfully"}, 200
+    except Exception as e:
+        DBOperations.instance.logger.error(f"Error deleting record: {e}")
+        return {"error": str(e)}, 500
