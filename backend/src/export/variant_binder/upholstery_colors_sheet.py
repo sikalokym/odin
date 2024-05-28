@@ -34,7 +34,6 @@ all_border = Border(top=Side(style='thin', color='000000'),
 
 fill = PatternFill(start_color='000080', end_color='000080', fill_type='solid')
 
-
 def get_sheet(ws, sales_versions, title, time):
     """
     Fetches options data and inserts it into the specified worksheet.
@@ -50,12 +49,14 @@ def get_sheet(ws, sales_versions, title, time):
     df_upholstery = fetch_upholstery_data(sales_versions.copy(), time)
     df_colors = fetch_color_data(sales_versions.copy(), time)
 
+    ws.column_dimensions['A'].width = 10
+    ws.column_dimensions['B'].width = 65
+
     insert_table(ws, sales_versions, title + ' - Polster', df_upholstery)
+    mid_row = ws.max_row + 1
     ws.append([])
     insert_table(ws, sales_versions, title + ' - Außenfarben', df_colors)
     
-    ws.column_dimensions['A'].width = 10
-    ws.column_dimensions['B'].width = 65
     for col in range(3, ws.max_column):
         ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = 20
     ws.column_dimensions[ws.cell(row=1, column=ws.max_column).column_letter].width = 40
@@ -63,18 +64,24 @@ def get_sheet(ws, sales_versions, title, time):
     ws.column_dimensions[ws.cell(row=1, column=ws.max_column-1).column_letter].width = 1
     for cell in ws[ws.cell(row=1, column=ws.max_column-1).column_letter]:
         cell.fill = PatternFill(start_color='FFFFFF', end_color='FFFFFF', fill_type='solid')
-        if cell.row == 2*len(df_upholstery) + 1:
+        if cell.row == mid_row:
             cell.border = Border(top=None, bottom=None, left=None, right=None)
         else:
             cell.border = Border(top=None, bottom=None, left=Side(style='thin', color='000000'), right=Side(style='thin', color='000000'))
 
-    
     ws.sheet_view.showGridLines = False
 
 def insert_table(ws, sales_versions, title, df_res):
 
     insert_title(ws, sales_versions, title)
+    old_custom_category = -1
+    catgory_rows = []
+    first_row = ws.max_row + 1
     for _, row in df_res.iterrows():
+        if 'CustomCategory' in df_res.columns and row['CustomCategory'] != old_custom_category:
+            add_custom_category(ws, row['CustomCategory'])
+            old_custom_category = row['CustomCategory']
+            catgory_rows.append(ws.max_row)
         svs = [cell_values.get(row[sv], row[sv]) for sv in sales_versions['SalesVersion']]
         if row['Price'] == 'Pack Only'or row['Price'] == 'Serie':
             ws.append([row['Code'], row['CustomName'], row['Price']] + svs + ['', row['Rules']])
@@ -86,15 +93,23 @@ def insert_table(ws, sales_versions, title, df_res):
                 ws.cell(row=ws.max_row, column=3).alignment = Alignment(horizontal='center', vertical='bottom')
                 ws.append(['', '', prices[1]] + svs) 
                 ws.cell(row=ws.max_row, column=3).alignment = Alignment(horizontal='center', vertical='top')
-        foramt_row(ws, ws.max_row-1, ws.max_row)
-    format_first_two_columns(ws, ws.max_row + 1 - len(df_res) * 2, ws.max_row)
+        format_row(ws, ws.max_row-1, ws.max_row)
+    
+    format_first_two_columns(ws, first_row, ws.max_row, catgory_rows)
 
-def format_first_two_columns(ws, row1, row2):
+def format_first_two_columns(ws, row1, row2, catgory_rows):
     # for each row in the first column, merge the cells in the first two columns if the cell's value is the same as the one above
     max_col_letter = ws.cell(row=row1, column=ws.max_column).column_letter
-    curr_row = row1
-    curr_end_row = row1
-    for row in range(row1+2, row2+1, 2):
+    entry_rows = []
+    while row1 <= row2:
+        if row1 not in catgory_rows:
+            entry_rows.append(row1)
+            row1 += 1
+        row1 += 1
+
+    curr_row = entry_rows[0]
+    curr_end_row = entry_rows[0]
+    for row in entry_rows[1:]:
         if ws.cell(row=row, column=1).value == ws.cell(row=curr_row, column=1).value and ws.cell(row=curr_row, column=1).value:
             curr_end_row = row
         elif curr_row != curr_end_row:
@@ -111,9 +126,22 @@ def format_first_two_columns(ws, row1, row2):
         else:
             curr_row = row
             curr_end_row = row
-    
 
-def foramt_row(ws, row1, row2):
+def add_custom_category(ws, custom_category):
+    ws.append(['', custom_category])
+    # add border around the second cell of the row
+    ws.cell(row=ws.max_row, column=2).border = Border(top=None, bottom=None, left=Side(style='thin', color='000000'), right=Side(style='thin', color='000000'))
+    for col in range(1, ws.max_column+1):
+        cell = ws.cell(row=ws.max_row, column=col)
+        cell.fill = PatternFill(start_color='BFBFBF', end_color='BFBFBF', fill_type='solid')
+        cell.font = Font(name='Arial', size=10, bold=True)
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        if col == ws.max_column:
+            cell.border = Border(top=None, bottom=None, left=None, right=Side(style='thin', color='000000'))
+        elif col == 3:
+            cell.border = Border(top=None, bottom=Side(style='thin', color='000000'), left=None, right=None)
+
+def format_row(ws, row1, row2):
     for col in range(1, ws.max_column+1):
         if col != 3:
             cell = ws.cell(row=row1, column=col)
@@ -127,7 +155,6 @@ def foramt_row(ws, row1, row2):
             ws.cell(row=row1, column=col).font = Font(name='Arial', size=10, bold=True)
             ws.cell(row=row2, column=col).alignment = Alignment(horizontal='center', vertical='top')
             ws.cell(row=row2, column=col).border = Border(top=None, bottom=Side(style='thin', color='000000'), left=Side(style='thin', color='000000'), right=Side(style='thin', color='000000'))
-        
 
 def insert_title(ws, sales_versions, title):
 
@@ -159,7 +186,6 @@ def fetch_color_data(sales_versions, time):
     else:
         pno_color_price_conditions.append(f"RelationID in {tuple(rel_codes)}")
     df_pno_color_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'COL_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax', 'CustomName'], conditions=pno_color_price_conditions)
-
 
     sales_versions.rename(columns={'ID': 'TmpCode'}, inplace=True)
     df_pno_color = df_pno_color.merge(sales_versions[['TmpCode', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='TmpCode', how='left')
@@ -233,7 +259,7 @@ def fetch_upholstery_data(sales_versions, time):
         pno_upholstery_price_conditions.append(f"RelationID = '{rel_codes[0]}'")
     else:
         pno_upholstery_price_conditions.append(f"RelationID in {tuple(rel_codes)}")
-    df_pno_upholstery_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax', 'CustomName'], conditions=pno_upholstery_price_conditions)
+    df_pno_upholstery_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax', 'CustomName', 'CustomCategory'], conditions=pno_upholstery_price_conditions)
 
     sales_versions.rename(columns={'ID': 'TmpCode'}, inplace=True)
     df_pno_upholstery = df_pno_upholstery.merge(sales_versions[['TmpCode', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='TmpCode', how='left')
@@ -290,4 +316,5 @@ def fetch_upholstery_data(sales_versions, time):
     # remove the first new line separator
     df_result['Rules'] = df_result['Rules'].apply(lambda x: x[1:] if x.startswith('\n') else x)
 
+    df_result = df_result.sort_values('CustomCategory')
     return df_result
