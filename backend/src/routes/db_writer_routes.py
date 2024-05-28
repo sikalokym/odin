@@ -408,6 +408,18 @@ def delete_sales_channel(country, model_year):
     channel_id = request.args.get('ID')
     if not channel_id:
         return {"error": "Channel ID is required"}, 400
+    
+    discounts_df = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'DIS'), conditions=[f'ChannelID = {channel_id}'])
+    if not discounts_df.empty:
+        dis_ids = discounts_df['ID'].unique().tolist()
+        for dis_id in dis_ids:
+            delete_discount(dis_id)
+
+    clo_df = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), conditions=[f'ChannelID = {channel_id}'])
+    if not clo_df.empty:
+        clo_ids = clo_df['ID'].unique().tolist()
+        for clo_id in clo_ids:
+            delete_custom_local_options(clo_id)
 
     table_name = DBOperations.instance.config.get('TABLES', 'SC')
     delete_query = f"DELETE FROM {table_name} WHERE ID = ?"
@@ -467,12 +479,8 @@ def delete_discount(country, model_year):
     if not discount_id:
         return {"error": "Discount ID is required"}, 400
 
-    table_name = DBOperations.instance.config.get('TABLES', 'DIS')
-    delete_query = f"DELETE FROM {table_name} WHERE ID = ?"
-
     try:
-        with DBOperations.instance.get_cursor() as cursor:
-            cursor.execute(delete_query, (discount_id,))
+        delete_discount(discount_id)
         return {"message": "Record deleted successfully"}, 200
     except Exception as e:
         DBOperations.instance.logger.error(f"Error deleting record: {e}")
@@ -504,18 +512,26 @@ def upsert_custom_local_option(country, model_year):
     return 'Custom local option created successfully', 200
 
 @bp_db_writer.route('/custom-local-options', methods=['DELETE'])
-def delete_custom_local_option(country, model_year):
+def remove_custom_local_option(country, model_year):
     id = request.args.get('ID')
     if not id:
         return {"error": "ID is required"}, 400
-    
-    table_name = DBOperations.instance.config.get('TABLES', 'CLO')
-    delete_query = f"DELETE FROM {table_name} WHERE ID = ?"
-
     try:
-        with DBOperations.instance.get_cursor() as cursor:
-            cursor.execute(delete_query, (id,))
+        delete_custom_local_options(id)
         return {"message": "Record deleted successfully"}, 200
     except Exception as e:
         DBOperations.instance.logger.error(f"Error deleting record: {e}")
         return {"error": str(e)}, 500
+    
+def delete_discount(id):
+    table_name = DBOperations.instance.config.get('TABLES', 'DIS')
+    delete_query = f"DELETE FROM {table_name} WHERE ID = ?"
+    with DBOperations.instance.get_cursor() as cursor:
+        cursor.execute(delete_query, (id,))
+
+def delete_custom_local_options(id):
+    table_name = DBOperations.instance.config.get('TABLES', 'CLO')
+    delete_query = f"DELETE FROM {table_name} WHERE ID = ?"
+    with DBOperations.instance.get_cursor() as cursor:
+        cursor.execute(delete_query, (id,))
+
