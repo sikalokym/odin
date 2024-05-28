@@ -408,14 +408,14 @@ def delete_sales_channel(country, model_year):
     channel_id = request.args.get('ID')
     if not channel_id:
         return {"error": "Channel ID is required"}, 400
-    
-    discounts_df = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'DIS'), conditions=[f'ChannelID = {channel_id}'])
+    condition = f"ID = '{channel_id}'"
+    discounts_df = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'DIS'), conditions=condition)
     if not discounts_df.empty:
         dis_ids = discounts_df['ID'].unique().tolist()
         for dis_id in dis_ids:
             delete_discount(dis_id)
 
-    clo_df = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), conditions=[f'ChannelID = {channel_id}'])
+    clo_df = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), conditions=condition)
     if not clo_df.empty:
         clo_ids = clo_df['ID'].unique().tolist()
         for clo_id in clo_ids:
