@@ -359,7 +359,7 @@ def get_features(country, model_year):
     df_pno_features = pd.concat([df_pno_features, df_pno_custom_features], ignore_index=True)
 
     # group by code. if the number of custom names is more than one, change the custom name to '*Model-specific text*'
-    df_pno_features = df_pno_features.groupby('Code').agg({'MarketText': 'first', 'CustomName': lambda x: '*Model-specific text*' if len(x.unique()) > 1 else x.unique()[0], 'CustomCategory': 'first', 'ID': 'first'}).reset_index()
+    df_pno_features = df_pno_features.groupby('Code').agg({'MarketText': 'first', 'CustomName': lambda x: '*Model-specific text*' if len(x.unique()) > 1 else x.unique()[0], 'CustomCategory': 'first', 'ID': lambda x: ','.join(x)}).reset_index()
 
     df_pno_features = df_pno_features.sort_values(by='Code', ascending=True)
     df_pno_features.drop_duplicates(inplace=True)

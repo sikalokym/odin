@@ -127,11 +127,15 @@ def write_features(country, model_year):
 @bp_db_writer.route('/update/customfeatures', methods=['POST'])
 def update_customfeatures(country, model_year):
     data = request.get_json()
-    id = data.get('ID', None)
-    if id is None:
+    ids = data.get('ID', None)
+    if ids is None:
         return 'No ID provided', 400
-
-    conditions = [f"ID = '{id}'"]
+    ids = ids.split(',')
+    conditions = []
+    if len(ids) == 1:
+        conditions.append(f"ID = '{ids[0]}'")
+    else:
+        conditions.append(f"ID in {tuple(ids)}")
     df_pno_custom_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'CFEAT'), conditions=conditions)
 
     update_columns = ['CustomName', 'CustomCategory']
@@ -179,19 +183,21 @@ def write_customfeatures(country, model_year):
 
 @bp_db_writer.route('/delete/customfeatures', methods=['POST'])
 def delete_customfeatures(country, model_year):
-    id = request.args.get('id')
-    if not id:
+    ids = request.args.get('ID')
+    if not ids:
         return {"error": "ID is required"}, 400
     
     table_name = DBOperations.instance.config.get('AUTH', 'CFEAT')
-    delete_query = f"DELETE FROM {table_name} WHERE ID = %s"
+
+    # Construct the DELETE query
+    delete_query = f"DELETE FROM {table_name} WHERE ID IN %s"
 
     try:
         with DBOperations.instance.get_cursor() as cursor:
-            cursor.execute(delete_query, (id,))
-        return {"message": "Record deleted successfully"}, 200
+            cursor.execute(delete_query, (tuple(ids.split(',')),))
+        return {"message": "Records deleted successfully"}, 200
     except Exception as e:
-        DBOperations.instance.logger.error(f"Error deleting record: {e}")
+        DBOperations.instance.logger.error(f"Error deleting records: {e}")
         return {"error": str(e)}, 500
 
 @bp_db_writer.route('/options', methods=['POST'])
@@ -399,7 +405,7 @@ def upsert_sales_channel(country, model_year):
 
 @bp_db_writer.route('/sales-channels', methods=['DELETE'])
 def delete_sales_channel(country, model_year):
-    channel_id = request.args.get('id')
+    channel_id = request.args.get('ID')
     if not channel_id:
         return {"error": "Channel ID is required"}, 400
 
@@ -457,7 +463,7 @@ def upsert_discount(country, model_year):
 
 @bp_db_writer.route('/discounts', methods=['DELETE'])
 def delete_discount(country, model_year):
-    discount_id = request.args.get('id')
+    discount_id = request.args.get('ID')
     if not discount_id:
         return {"error": "Discount ID is required"}, 400
 
@@ -499,7 +505,7 @@ def upsert_custom_local_option(country, model_year):
 
 @bp_db_writer.route('/custom-local-options', methods=['DELETE'])
 def delete_custom_local_option(country, model_year):
-    id = request.args.get('id')
+    id = request.args.get('ID')
     if not id:
         return {"error": "ID is required"}, 400
     
