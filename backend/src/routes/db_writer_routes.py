@@ -479,7 +479,6 @@ def upsert_custom_local_option(country, model_year):
         return 'No data provided', 400
     if 'ID' not in data:
         data['ID'] = str(uuid.uuid4())
-        data['CountryCode'] = country
     try:
         data['FeatureRetailPrice'] = float(data['FeatureRetailPrice']) if data.get('FeatureRetailPrice') and data['FeatureRetailPrice'] != '' else 0
         data['FeatureWholesalePrice'] = float(data['FeatureWholesalePrice']) if data.get('FeatureWholesalePrice') and data['FeatureWholesalePrice'] != '' else 0
