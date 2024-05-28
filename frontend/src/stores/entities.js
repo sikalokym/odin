@@ -96,6 +96,8 @@ export const useEntitiesStore = defineStore({
             let path = `/db/${this.country}/${this.model_year}/custom-local-options?&id=${id}`
             return await index.get(path).then((response) => {
                 this.customlocaloptions = response.data
+                console.log("Custom Local Options fetched: ")
+                console.log(this.customlocaloptions)
             }).catch((error) => {
                 console.log(error)
             })
@@ -158,13 +160,17 @@ export const useEntitiesStore = defineStore({
             let path = `/db/${this.country}/${this.model_year}/write/sales-channels`
             return index.post(path, updates);
         },
-        async pushUpdateDiscount(ID, SalesChannelID, DiscountPercentage, RetailPrice, WholesalePrice, ActiveStatus, AffectedVisaFile) {
+        async deleteSalesChannel(ID) {
+            let path = `/db/${this.country}/${this.model_year}/write/sales-channels?ID=${ID}`
+            return index.delete(path);
+        },
+        async pushUpdateDiscount(ID, SalesChannelID, DiscountPercentage, RetailPrice, WholesalePrice, PNOSpecific, AffectedVisaFile) {
             let updates = {
                 ChannelID: SalesChannelID,
                 DiscountPercentage: DiscountPercentage,
                 RetailPrice: RetailPrice,
                 WholesalePrice: WholesalePrice,
-                ActiveStatus: ActiveStatus,
+                PNOSpecific: PNOSpecific,
                 AffectedVisaFile: AffectedVisaFile
             }
             if (ID !== null) {
@@ -173,17 +179,26 @@ export const useEntitiesStore = defineStore({
             let path = `/db/${this.country}/${this.model_year}/write/discounts`
             return index.post(path, updates);
         },
-        async pushUpdateCustomLocalOptions(ID, DiscountlID, FeatureCode, FeaturePrice) {
+        async deleteDiscount(ID) {
+            let path = `/db/${this.country}/${this.model_year}/write/discounts?ID=${ID}`
+            return index.delete(path);
+        },
+        async pushUpdateCustomLocalOptions(ID, SalesChannelID, FeatureCode, FeatureRetailPrice, FeatureWholesalePrice) {
             let updates = {
-                DiscountID: DiscountlID,
+                ChannelID: SalesChannelID,
                 FeatureCode: FeatureCode,
-                FeaturePrice: FeaturePrice
+                FeatureRetailPrice: FeatureRetailPrice,
+                FeatureWholesalePrice: FeatureWholesalePrice
             }
             if (ID !== null) {
                 updates.ID = ID;
             }
             let path = `/db/${this.country}/${this.model_year}/write/custom-local-options`
             return index.post(path, updates);
+        },
+        async deleteCustomLocalOptions(ID) {
+            let path = `/db/${this.country}/${this.model_year}/write/custom-local-options?ID=${ID}`
+            return index.delete(path);
         },
         async deleteVisaFile(file_name) {
             let updates = {

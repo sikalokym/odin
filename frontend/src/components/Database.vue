@@ -89,7 +89,7 @@
   <main class="main-content">
     <!-- Table Filter -->
     <div style="display: flex; margin-bottom: 1em;">
-      <input v-if="displaytable !== '' && model_year !== '0' && !customFeatureTable && !discountTable"
+      <input v-if="displaytable !== '' && model_year !== '0' && !customFeatureTable && !discountTable && !xCodesTable"
         v-model="searchTerm" type="text" placeholder="Filter" style="margin-right: 1ch;">
       <!-- Add Custom Feature -->
       <button v-if="displaytable === 'Features' && model_year !== '0' && !customFeatureTable"
@@ -102,8 +102,10 @@
       <!-- Displaying discounts for sales channel -->
       <div v-if="displaytable === 'Sales Channels' && model_year !== '0' && discountTable"><strong>[{{
       this.activeSalesChannel.Code + " " + this.activeSalesChannel.ChannelName }}]</strong> Discounts</div>
-      <button v-if="discountTable && model_year !== '0'"
-        @click="this.discountTable = false, this.xCodesTable = false, this.selectedRow = null"
+      <div v-if="displaytable === 'Sales Channels' && model_year !== '0' && xCodesTable"><strong>[{{
+      this.activeSalesChannel.Code + " " + this.activeSalesChannel.ChannelName }}]</strong> X-Codes</div>
+      <button v-if="(discountTable || xCodesTable) && model_year !== '0'"
+        @click="this.discountTable = false, this.xCodesTable = false, this.selectedRow = null, this.newsaleschannel = [], this.newdiscount = [], this.newcustomlocaloption = []"
         style="margin-left: 10px;">Return to Sales Channels</button>
     </div>
 
@@ -376,16 +378,19 @@
               </div>
             </div>
           </th>
+          <th style="width: 10px">Action</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="pno in tableFeatures" :key="pno.id" :class="{ 'editing': pno.edited }">
           <td style="background-color: #f4f4f4;">
-            {{ pno.Code }}
+            <input v-if="pno.ID !== null" v-model="pno.Code" type="text" @input="pno.edited = true" @change="pushUpdateFeature(pno)" />
+            <span v-else>{{ pno.Code }}</span>
           </td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">
-            {{ pno.MarketText }}
+            <input v-if="pno.ID !== null" v-model="pno.MarketText" type="text" @input="pno.edited = true" @change="pushUpdateFeature(pno)" />
+            <span v-else>{{ pno.MarketText }}</span>
           </td>
           <td>
             <input v-model="pno.CustomName" type="text" @input="pno.edited = true" @change="pushUpdateFeature(pno)" />
@@ -393,6 +398,9 @@
           <td>
             <input v-model="pno.CustomCategory" type="text" @input="pno.edited = true"
               @change="pushUpdateFeature(pno)" />
+          </td>
+          <td style="background-color: #f4f4f4;">
+            <span v-if="pno.ID !== null" @click="deleteCustomFeature(pno)" style="cursor: pointer; color: red;">[X]</span>
           </td>
         </tr>
       </tbody>
@@ -666,8 +674,8 @@
       </tbody>
     </table>
     <!-- Sales Channels Table -->
-    <table v-if="displaytable === 'Sales Channels' && model_year !== '0' && !discountTable">
-      <thead v-if="model_year !== '0'">
+    <table v-if="displaytable === 'Sales Channels' && model_year !== '0' && !discountTable && !xCodesTable">
+      <thead v-if="model_year !== '0' && (sales_channels.length > 0 || this.newsaleschannel.length >= 1) ">
         <tr>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
@@ -740,7 +748,8 @@
           </td>
           <td style="background-color: #f4f4f4;">
             <span @click="fetchDiscounts(pno)" style="cursor: pointer; margin-right: 10px;">[%]</span>
-            <span @click="deleteSalesChannel(pno.ID)" style="cursor: pointer; color: red;">[X]</span>
+            <span @click="fetchXCodes(pno)" style="cursor: pointer; margin-right: 10px;">[X-Codes]</span>
+            <span @click="deleteSalesChannel(pno)" style="cursor: pointer; color: red;">[X]</span>
           </td>
         </tr>
       </tbody>
@@ -767,13 +776,13 @@
         </tr>
       </tbody>
     </table>
-    <div v-if="displaytable === 'Sales Channels' && model_year !== '0' && !discountTable"
+    <div v-if="displaytable === 'Sales Channels' && model_year !== '0' && !discountTable && !xCodesTable"
       style="text-align: left; margin-left: 5px;">
       <button @click="addSalesChannel">Add Sales Channel</button>
     </div>
     <!-- Discount Table -->
     <table v-if="displaytable === 'Sales Channels' && model_year !== '0' && discountTable">
-      <thead v-if="model_year !== '0'">
+      <thead v-if="model_year !== '0' && (discounts.length > 0 || this.newdiscount.length >= 1)">
         <tr>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
@@ -813,10 +822,10 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              Active
+              PNO Specific
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('ActiveStatus', 1)" style="cursor: pointer;">↑</span>
-                <span @click="sortTable('ActiveStatus', -1)" style="cursor: pointer;">↓</span>
+                <span @click="sortTable('PNOSpecific', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('PNOSpecific', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -828,7 +837,8 @@
           :class="{ 'editing': pno.edited, 'selected': pno.id === selectedRow }">
           <td>
             <input type="DiscountPercentage" v-model="pno.DiscountPercentage" @input="pno.edited = true"
-              @change="pushUpdateDiscount(pno)" />
+              @change="pushUpdateDiscount(pno)" 
+              :disabled="(pno.RetailPrice !== null && pno.RetailPrice !== '') || (pno.WholesalePrice !== null && pno.WholesalePrice !== '')" />
           </td>
           <td>
             <input type="RetailPrice" v-model="pno.RetailPrice" @input="pno.edited = true"
@@ -844,19 +854,19 @@
             <input type="AffectedVisaFile" v-model="pno.AffectedVisaFile" @input="pno.edited = true"
               @change="pushUpdateDiscount(pno)" />
           </td>
-          <td>
-            <input type="checkbox" v-model="pno.ActiveStatus" @change="pno.edited = true, pushUpdateDiscount(pno)" />
+          <td style="background-color: #f4f4f4;">
+            <input type="checkbox" v-model="pno.PNOSpecific" @change="pno.edited = true, pushUpdateDiscount(pno)" />
           </td>
           <td style="background-color: #f4f4f4;">
-            <span @click="fetchXCodes(pno)" style="cursor: pointer;">[X-Codes]</span>
-            <!-- <span @click="deleteDiscount(pno.ID)" style="cursor: pointer; color: red;">[X]</span> -->
+            <span @click="deleteDiscount(pno)" style="cursor: pointer; color: red;">[X]</span>
           </td>
         </tr>
       </tbody>
       <tbody>
         <tr v-for="pno in newdiscount" :key="pno.id">
           <td>
-            <input type="DiscountPercentage" v-model="pno.DiscountPercentage" @input="pno.edited = true" />
+            <input type="DiscountPercentage" v-model="pno.DiscountPercentage" @input="pno.edited = true" 
+            :disabled="(pno.RetailPrice !== null && pno.RetailPrice !== '') || (pno.WholesalePrice !== null && pno.WholesalePrice !== '')" />
           </td>
           <td>
             <input type="RetailPrice" v-model="pno.RetailPrice" @input="pno.edited = true"
@@ -870,7 +880,7 @@
             <input type="AffectedVisaFile" v-model="pno.AffectedVisaFile" @input="pno.edited = true" />
           </td>
           <td>
-            <input type="checkbox" v-model="pno.ActiveStatus" @change="pno.edited = true" />
+            <input type="checkbox" v-model="pno.PNOSpecific" @change="pno.edited = true" />
           </td>
           <td style="background-color: #f4f4f4;">
             <span @click="createDiscount(pno)" style="cursor: pointer;">[Save]</span>
@@ -883,9 +893,9 @@
       style="text-align: left; margin-left: 5px;">
       <button @click="addDiscount">Add Discount</button>
     </div>
-    <!-- XCodes Table -->
-    <table v-if="displaytable === 'Sales Channels' && model_year !== '0' && xCodesTable" style="margin-top: 30px;">
-      <thead v-if="model_year !== '0'">
+    <!-- X-Codes Table -->
+    <table v-if="displaytable === 'Sales Channels' && model_year !== '0' && xCodesTable">
+      <thead v-if="model_year !== '0' && (custom_local_options.length > 0 || this.newcustomlocaloption.length >= 1)">
         <tr>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
@@ -898,10 +908,19 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              Price
+              Retail Price
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('FeaturePrice', 1)" style="cursor: pointer;">↑</span>
-                <span @click="sortTable('FeaturePrice', -1)" style="cursor: pointer;">↓</span>
+                <span @click="sortTable('FeatureRetailPrice', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('FeatureRetailPrice', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Wholesale Price
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('FeatureWholesalePrice', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('FeatureWholesalePrice', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -915,11 +934,15 @@
               @change="pushUpdateXCode(pno)" />
           </td>
           <td>
-            <input type="FeaturePrice" v-model="pno.FeaturePrice" @input="pno.edited = true"
+            <input type="FeatureRetailPrice" v-model="pno.FeatureRetailPrice" @input="pno.edited = true"
+              @change="pushUpdateXCode(pno)" />
+          </td>
+          <td>
+            <input type="FeatureWholesalePrice" v-model="pno.FeatureWholesalePrice" @input="pno.edited = true"
               @change="pushUpdateXCode(pno)" />
           </td>
           <td style="background-color: #f4f4f4;">
-            <span @click="deleteXCode(pno.ID)" style="cursor: pointer; color: red;">[X]</span>
+            <span @click="deleteXCode(pno)" style="cursor: pointer; color: red;">[X]</span>
           </td>
         </tr>
       </tbody>
@@ -930,7 +953,10 @@
           <input type="FeatureCode" v-model="pno.FeatureCode" @input="pno.edited = true" />
         </td>
         <td>
-          <input type="FeaturePrice" v-model="pno.FeaturePrice" @input="pno.edited = true" />
+          <input type="FeatureRetailPrice" v-model="pno.FeatureRetailPrice" @input="pno.edited = true" />
+        </td>
+        <td>
+          <input type="FeatureWholesalePrice" v-model="pno.FeatureWholesalePrice" @input="pno.edited = true" />
         </td>
         <td style="background-color: #f4f4f4;">
           <span @click="createXCode(pno)" style="cursor: pointer;">[Save]</span>
@@ -974,7 +1000,6 @@ export default {
       selectedRow: null,
       activeSalesChannel: [],
       newsaleschannel: [],
-      activeDiscount: [],
       newdiscount: [],
       newcustomlocaloption: [],
       newEntry: {
@@ -1288,7 +1313,9 @@ export default {
     async fetchXCodes(pno) {
       this.selectedRow = pno.id;
       this.xCodesTable = true;
-      this.activeDiscount = {
+      this.activeSalesChannel = {
+        Code: pno.Code,
+        ChannelName: pno.ChannelName,
         ChannelID: pno.ID
       };
       try {
@@ -1311,6 +1338,10 @@ export default {
       this.discountTable = false;
       this.xCodesTable = false;
       this.selectedRow = null;
+      this.newsaleschannel = [];
+      this.newdiscount = [];
+      this.newcustomlocaloption = [];
+      this.searchTerm = '';
       await this.pnoStore.setModelYear('0');
     },
     async displaytablereset() {
@@ -1323,6 +1354,9 @@ export default {
       this.discountTable = false;
       this.xCodesTable = false;
       this.selectedRow = null;
+      this.newsaleschannel = [];
+      this.newdiscount = [];
+      this.newcustomlocaloption = [];
       this.searchTerm = '';
       await this.pnoStore.setModelYear('0');
     },
@@ -1348,8 +1382,13 @@ export default {
       if (this.model === '' && (pno.CustomName === '' || pno.CustomName === '*Model-specific text*')) {
         return;
       }
-      this.pnoStore.pushUpdateFeature(this.model, pno.Code, pno.CustomName, pno.CustomCategory, pno.Custom)
+      this.pnoStore.pushUpdateFeature(this.model, pno.Code, pno.CustomName, pno.CustomCategory, pno.ID)
       pno.edited = false
+    },
+    async deleteCustomFeature(pno) {
+      await this.pnoStore.deleteCustomFeature(this.model, pno.ID)
+      pno.edited = false
+      await this.pnoStore.fetchPnosFeatures(this.model, this.engine, this.salesversion, this.gearbox)
     },
     pushUpdateOption(pno) {
       if (this.model === '' && (pno.CustomName === '' || pno.CustomName === '*Model-specific text*')) {
@@ -1401,55 +1440,79 @@ export default {
       };
     },
     // Sales Channels
-    pushUpdateSalesChannel(pno) {
-      this.entitiesStore.pushUpdateSalesChannel(pno.ID, pno.Code, pno.ChannelName, pno.Comment, pno.StartDate, pno.EndDate)
+    async pushUpdateSalesChannel(pno) {
+      await this.entitiesStore.pushUpdateSalesChannel(pno.ID, pno.Code, pno.ChannelName, pno.Comment, pno.StartDate, pno.EndDate)
       pno.edited = false
     },
-    createSalesChannel(pno) {
+    async createSalesChannel(pno) {
       pno.ID = null
-      this.entitiesStore.pushUpdateSalesChannel(pno.ID, pno.Code, pno.ChannelName, pno.Comment, pno.StartDate, pno.EndDate)
+      await this.entitiesStore.pushUpdateSalesChannel(pno.ID, pno.Code, pno.ChannelName, pno.Comment, pno.StartDate, pno.EndDate)
       pno.edited = false
       this.newsaleschannel = [];
-      this.entitiesStore.fetchSalesChannels().then(() => {
+      await this.entitiesStore.fetchSalesChannels().then(() => {
+        console.log('Sales channels fetched')
+      }).catch((error) => {
+        console.error('Error fetching sales channels', error)
+      })
+    },
+    async deleteSalesChannel(pno) {
+      await this.entitiesStore.deleteSalesChannel(pno.ID)
+      pno.edited = false
+      await this.entitiesStore.fetchSalesChannels().then(() => {
         console.log('Sales channels fetched')
       }).catch((error) => {
         console.error('Error fetching sales channels', error)
       })
     },
     // Discounts
-    pushupdateDiscount(pno) {
-      this.entitiesStore.pushUpdateDiscount(pno.ID, pno.ChannelID, pno.DiscountPercentage, pno.RetailPrice, pno.WholesalePrice, pno.ActiveStatus, pno.AffectedVisaFile)
+    async pushUpdateDiscount(pno) {
+      await this.entitiesStore.pushUpdateDiscount(pno.ID, pno.ChannelID, pno.DiscountPercentage, pno.RetailPrice, pno.WholesalePrice, pno.PNOSpecific, pno.AffectedVisaFile)
       pno.edited = false
     },
-    createDiscount(pno) {
+    async createDiscount(pno) {
       pno.ID = null
-      this.entitiesStore.pushUpdateDiscount(pno.ID, this.activeSalesChannel.ChannelID, pno.DiscountPercentage, pno.RetailPrice, pno.WholesalePrice, pno.ActiveStatus, pno.AffectedVisaFile)
+      await this.entitiesStore.pushUpdateDiscount(pno.ID, this.activeSalesChannel.ChannelID, pno.DiscountPercentage, pno.RetailPrice, pno.WholesalePrice, pno.PNOSpecific, pno.AffectedVisaFile)
       pno.edited = false
       this.newdiscount = [];
-      this.entitiesStore.fetchDiscounts(this.activeSalesChannel.ChannelID).then(() => {
+      await this.entitiesStore.fetchDiscounts(this.activeSalesChannel.ChannelID).then(() => {
+        console.log('Discounts fetched')
+      }).catch((error) => {
+        console.error('Error fetching discounts', error)
+      })
+    },
+    async deleteDiscount(pno) {
+      await this.entitiesStore.deleteDiscount(pno.ID)
+      pno.edited = false
+      await this.entitiesStore.fetchDiscounts(this.activeSalesChannel.ChannelID).then(() => {
         console.log('Discounts fetched')
       }).catch((error) => {
         console.error('Error fetching discounts', error)
       })
     },
     // XCodes
-    pushUpdateXCode(pno) {
-      this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeDiscount.ChannelID, pno.FeatureCode, pno.FeaturePrice)
+    async pushUpdateXCode(pno) {
+      this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeSalesChannel.ChannelID, pno.FeatureCode, pno.FeatureRetailPrice, pno.FeatureWholesalePrice)
       pno.edited = false
     },
-    createXCode(pno) {
+    async createXCode(pno) {
       pno.ID = null
-      this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeDiscount.ChannelID, pno.FeatureCode, pno.FeaturePrice)
+      await this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeSalesChannel.ChannelID, pno.FeatureCode, pno.FeatureRetailPrice, pno.FeatureWholesalePrice)
       pno.edited = false
       this.newcustomlocaloption = [];
-      this.entitiesStore.fetchCustomLocalOptions(this.activeDiscount.ChannelID).then(() => {
+      await this.entitiesStore.fetchCustomLocalOptions(this.activeSalesChannel.ChannelID).then(() => {
         console.log('X codes fetched')
       }).catch((error) => {
         console.error('Error fetching X codes', error)
       })
     },
-    deleteXCode(id) {
-      this.entitiesStore.deleteXCode(id)
+    async deleteXCode(pno) {
+      await this.entitiesStore.deleteCustomLocalOptions(pno.ID)
+      pno.edited = false
+      await this.entitiesStore.fetchCustomLocalOptions(this.activeSalesChannel.ChannelID).then(() => {
+        console.log('X codes fetched')
+      }).catch((error) => {
+        console.error('Error fetching X codes', error)
+      })
     },
     deleteVISAFile(file_name) {
       this.entitiesStore.deleteVISAFile(file_name)
@@ -1458,10 +1521,15 @@ export default {
       this.newsaleschannel.push({ Code: '', ChannelName: '', Comment: '', StartDate: '', EndDate: '', edited: true });
     },
     addDiscount() {
-      this.newdiscount.push({ DiscountPercentage: '', RetailPrice: '', WholesalePrice: '', AffectedVisaFile: '', ActiveStatus: '', edited: true });
+      this.newdiscount.push({ DiscountPercentage: '', RetailPrice: '', WholesalePrice: '', AffectedVisaFile: '', PNOSpecific: '', edited: true });
+      this.entitiesStore.fetchDiscounts(this.activeSalesChannel.ChannelID).then(() => {
+        console.log('Discounts fetched')
+      }).catch((error) => {
+        console.error('Error fetching discounts', error)
+      })
     },
     addCustomLocalOption() {
-      this.newcustomlocaloption.push({ FeatureCode: '', FeaturePrice: '', edited: true });
+      this.newcustomlocaloption.push({ FeatureCode: '', FeatureRetailPrice: '', FeatureWholesalePrice: '', edited: true });
     },
     //Sorting Functions
     sortTable(column, sortOrder) {
@@ -1512,6 +1580,10 @@ export default {
 td {
   min-width: 180px;
 
+}
+
+th {
+  min-width: 180px;
 }
 
 .editing {

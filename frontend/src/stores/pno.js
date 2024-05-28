@@ -144,7 +144,7 @@ export const usePNOStore = defineStore({
       })
     },
     // PNO-speficic updates
-    async pushUpdateFeature(model, feature, translation, category, custom) {
+    async pushUpdateFeature(model, feature, translation, category, ID) {
       let updates = {
         Code: feature,
         CustomName: translation,
@@ -153,7 +153,10 @@ export const usePNOStore = defineStore({
       if (model !== '') {
         updates.Model = model;
       }
-      let subpath = custom ? 'update/customfeatures' : 'features'
+      if (ID !== null) {
+        updates.ID = ID;
+      }
+      let subpath = (ID !== null) ? 'update/customfeatures' : 'features';
       let path = `/db/${this.country}/${this.model_year}/write/${subpath}`
       return index.post(path, updates);
     },
@@ -168,6 +171,16 @@ export const usePNOStore = defineStore({
         updates.Model = model;
       }
       let path = `/db/${this.country}/${this.model_year}/write/insert/customfeatures`
+      return index.post(path, updates);
+    },
+    async deleteCustomFeature(model, ID) {
+      let updates = {
+        ID: ID,
+      }
+      if (model !== '') {
+        updates.Model = model;
+      }
+      let path = `/db/${this.country}/${this.model_year}/write/delete/customfeatures`
       return index.post(path, updates);
     },
     async pushUpdateOption(model, option, translation) {

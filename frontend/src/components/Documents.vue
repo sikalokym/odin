@@ -63,44 +63,21 @@
         <option disabled value="0">Please select Model Year...</option>
         <option v-for="model_year in model_years" :key="model_year" :value="model_year">{{ model_year }}</option>
       </select>
-      <!-- Filter for models -->
-      <label class="model" style="width: 180px;">Model</label><br>
-      <select name="model" id="model" v-model="model" @change="refreshEnginecats"
-        style="width:180px; height:30px; position: absolute;">
-        <option disabled value="">Please Select Model...</option>
-        <option value="0">All</option>
-        <option v-for="model in models" :key="model" :value="model">{{ model }}</option>
-      </select>
-      <!-- Filter for type of export -->
-      <label class="engine" style="width: 180px;">Export Type</label><br>
-      <select name="engine" id="engine" v-model="engine"
-        style="width:180px; height:30px; position: absolute; margin-left: -90px;">
-        <option disabled value="">Please Select Export...</option>
-        <option value="all">Single File</option>
-        <option value="model">Multiple Files</option>
+      <!-- Filter for sales_channels -->
+      <label class="sales_channel" style="width: 180px;">Sales Channel</label><br>
+      <select name="sales_channel" id="sales_channel" v-model="sales_channel"
+        style="width:180px; height:30px; position: absolute; margin-left: -90px; ">
+        <option disabled value="">Please Select Sales Channel...</option>
+        <option value="All">All</option>
+        <option v-for="sales_channel in sales_channels" :key="sales_channel" :value="sales_channel">{{ sales_channel.Code }}</option>
       </select>
       <br><br>
-      <!-- Filter for validity date of the Variant Binder export -->
-      <label class="validity_date" style="width: 180px;">Validity Date</label>
-      <div class="validity"
-        style="display: flex; gap: 10px; position:absolute; left: 50%; transform: translateX(-50%);">
-        <select name="validity_year" id="validity_year" v-model="validity_year" style="width:85px; height:30px;">
-          <option disabled value="">Year</option>
-          <option v-for="validity_year in validity_years" :key="validity_year" :value="validity_year">{{ validity_year
-            }}</option>
-        </select>
-        <select name="validity_week" id="validity_week" v-model="validity_week" style="width:85px; height:30px;">
-          <option disabled value="">Week</option>
-          <option v-for="n in validity_weeks" :key="n" :value="String(n).padStart(2, '0')">{{ String(n).padStart(2, '0')
-            }}</option>
-        </select>
-      </div>
 
       <!-- Export Pricelist Button -->
       <button
-        style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translateX(-50%); margin-top: 64px;"
+        style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translateX(-50%); margin-top: 24px;"
         @click="exportPricelist"
-        :disabled="False && (this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === '')">Export
+        :disabled="this.pnoStore.model_year === '0' || this.sales_channel === ''">Export
         Pricelist</button>
     </div>
     <!-- Country Select Dropdown Menu -->
@@ -130,6 +107,7 @@ export default {
       validity_year: '',
       validity_week: '',
       engine: '',
+      sales_channel: '',
       showFilters: 'VariantBinder',
       pnoStore: usePNOStore(),
       entitiesStore: useEntitiesStore(),
@@ -140,6 +118,11 @@ export default {
   async created() {
     this.pnoStore.setModelYear('0');
     this.entitiesStore.setModelYear('0');
+    this.entitiesStore.fetchSalesChannels().then(() => {
+      console.log('Sales channels fetched')
+    }).catch((error) => {
+      console.error('Error fetching sales channels', error)
+    })
   },
   computed: {
     filteredPnos() {
@@ -169,6 +152,9 @@ export default {
         return [];
       }
     },
+    sales_channels() {
+      return this.entitiesStore.saleschannels
+    },
     bottomDivStyle() {
       if (this.showFilters === '') {
         return { marginTop: '837px' };
@@ -179,11 +165,18 @@ export default {
   },
 
   methods: {
-    refreshModelyear() {
+    async refreshModelyear() {
       this.pnoStore.setModelYear(this.model_year)
+      this.entitiesStore.setModelYear(this.model_year);
       console.log('Model year refreshed')
 
-      this.pnoStore.fetchPnos()
+      await this.pnoStore.fetchPnos()
+      await this.entitiesStore.fetchSalesChannels().then(() => {
+        console.log('Sales channels fetched')
+      }).catch((error) => {
+        console.error('Error fetching sales channels', error)
+      })
+      console.log(this.sales_channels)
       this.model = '';
       this.engine = '';
       this.validity_year = '';
@@ -203,7 +196,7 @@ export default {
     },
     async exportPricelist() {
       const link = document.createElement('a');
-      link.href = `${axios.endpoint}/231/export/sap-price-list`;
+      link.href = `${axios.endpoint}/231/export/sap-price-list?code=${this.sales_channel.Code}`;
       console.log(link.href);
 
       // This ensures the link is ready to download the file
@@ -262,14 +255,15 @@ export default {
 }
 
 .model,
-.engine {
+.engine,
+.sales_channel {
   text-align: left;
   display: inline-block;
   width: 180px;
   margin-top: 42px;
 }
 
-.validity_date {
+.validity_date, {
   margin-left: -91px;
 }
 
