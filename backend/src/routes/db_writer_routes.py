@@ -382,10 +382,8 @@ def upsert_sales_channel(country, model_year):
         return 'No data provided', 400
     if 'ID' not in data:
         data['ID'] = str(uuid.uuid4())
-    if 'StartDate' in data:
-        data['StartDate'] = int(data['StartDate'])
-    if 'EndDate' in data:
-        data['EndDate'] = int(data['EndDate'])
+    data['StartDate'] = int (data['StartDate']) if data.get('StartDate') and data['StartDate'] != '' else 0
+    data['EndDate'] = int (data['EndDate']) if data.get('EndDate') and data['EndDate'] != '' else 999999
 
     try:
         data['CountryCode'] = country
@@ -445,19 +443,9 @@ def upsert_discount(country, model_year):
         data['PNOSpecific'] = 0
 
     try:
-        if data['DiscountPercentage'] == '':
-            data['DiscountPercentage'] = None
-        if data['RetailPrice'] == '':
-            data['RetailPrice'] = None
-        if data['WholesalePrice'] == '':
-            data['WholesalePrice'] = None
-            
-        if data['DiscountPercentage'] is not None:
-            data['DiscountPercentage'] = float(data['DiscountPercentage'])
-        if data['RetailPrice'] is not None:
-            data['RetailPrice'] = float(data['RetailPrice'])
-        if data['WholesalePrice'] is not None:
-            data['WholesalePrice'] = float(data['WholesalePrice'])
+        data['DiscountPercentage'] = float(data['DiscountPercentage'] if data.get('DiscountPercentage') and data['DiscountPercentage'] != '' else 0)
+        data['RetailPrice'] = float(data['RetailPrice'] if data.get('RetailPrice') and data['RetailPrice'] != '' else 0)
+        data['WholesalePrice'] = float(data['WholesalePrice'] if data.get('WholesalePrice') and data['WholesalePrice'] != '' else 0)
         
         # Create a DataFrame with a single row
         df_new_entry = pd.DataFrame([data])
