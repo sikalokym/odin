@@ -522,4 +522,3 @@ def delete_custom_local_options(id):
     delete_query = f"DELETE FROM {table_name} WHERE ID = ?"
     with DBOperations.instance.get_cursor() as cursor:
         cursor.execute(delete_query, (id,))
-
