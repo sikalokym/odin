@@ -9,7 +9,8 @@ from src.routes.exporter_routes import bp_exporter
 from src.routes.settings_routes import bp_settings
 import src.utils.scheduler as scheduler
 from src.utils.sql_logging_handler import setup_logger_config
-
+import time
+import threading
 
 app = Flask(__name__)
 CORS(app)
@@ -37,13 +38,31 @@ WELCOME_PAGE_TEMPLATE = """
 </html>
 """
 
+last_request_time = time.time()  # Global variable to store the last request timestamp
+open_db_connection = False  # Global variable to store the status of the database connection
+
+def close_db_connection_after_inactivity():
+    global last_request_time
+    global open_db_connection
+    while open_db_connection:
+        current_time = time.time()
+        if current_time - last_request_time >= 60:
+            DatabaseConnection.close_connection()
+            open_db_connection = False
+        time.sleep(60)
+
 @app.before_request
 def before_request():
     DBOperations.create_instance()
 
 @app.after_request
 def after_request(response):
-    DatabaseConnection.close_connection()
+    global last_request_time
+    last_request_time = time.time()
+    global open_db_connection
+    if not open_db_connection:
+        open_db_connection = True
+        threading.Thread(target=close_db_connection_after_inactivity, daemon=True).start()
     return response
 
 @app.route('/', methods=['GET'])
