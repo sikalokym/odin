@@ -190,7 +190,7 @@ def delete_customfeatures(country, model_year):
     table_name = DBOperations.instance.config.get('AUTH', 'CFEAT')
 
     # Construct the DELETE query
-    delete_query = f"DELETE FROM {table_name} WHERE ID IN %s"
+    delete_query = f"DELETE FROM {table_name} WHERE ID IN ?"
 
     try:
         with DBOperations.instance.get_cursor() as cursor:
@@ -410,7 +410,7 @@ def delete_sales_channel(country, model_year):
         return {"error": "Channel ID is required"}, 400
 
     table_name = DBOperations.instance.config.get('TABLES', 'SC')
-    delete_query = f"DELETE FROM {table_name} WHERE ID = %s"
+    delete_query = f"DELETE FROM {table_name} WHERE ID = ?"
 
     try:
         with DBOperations.instance.get_cursor() as cursor:
@@ -468,7 +468,7 @@ def delete_discount(country, model_year):
         return {"error": "Discount ID is required"}, 400
 
     table_name = DBOperations.instance.config.get('TABLES', 'DIS')
-    delete_query = f"DELETE FROM {table_name} WHERE ID = %s"
+    delete_query = f"DELETE FROM {table_name} WHERE ID = ?"
 
     try:
         with DBOperations.instance.get_cursor() as cursor:
@@ -510,7 +510,7 @@ def delete_custom_local_option(country, model_year):
         return {"error": "ID is required"}, 400
     
     table_name = DBOperations.instance.config.get('TABLES', 'CLO')
-    delete_query = f"DELETE FROM {table_name} WHERE ID = %s"
+    delete_query = f"DELETE FROM {table_name} WHERE ID = ?"
 
     try:
         with DBOperations.instance.get_cursor() as cursor:
