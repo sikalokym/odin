@@ -50,21 +50,14 @@ def sap_price_list(country):
         return 'Invalid code' if code != 'All' else f'No Sales Channel with the code {code} found', 400
 
     channel_ids = df_channels['ID'].tolist()
-    discount_conditions = []
+    rel_conditions = []
     if len (channel_ids) == 1:
-        discount_conditions.append(f"ChannelID = '{channel_ids[0]}'")
+        rel_conditions.append(f"ChannelID = '{channel_ids[0]}'")
     else:
-        discount_conditions.append(f"ChannelID IN {tuple(channel_ids)}")
-    df_discounts = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'DIS'), columns=['ID', 'ChannelID', 'DiscountPercentage', 'RetailPrice', 'WholesalePrice', 'ActiveStatus', 'AffectedVisaFile'], conditions=discount_conditions)
-    
-    discount_ids = df_discounts['ID'].tolist()
-    local_option_conditions = []
-    if len(discount_ids) == 1:
-        local_option_conditions.append(f"DiscountID = '{discount_ids[0]}'")
-    else:
-        local_option_conditions.append(f"DiscountID IN {tuple(discount_ids)}")
+        rel_conditions.append(f"ChannelID IN {tuple(channel_ids)}")
+    df_discounts = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'DIS'), columns=['ID', 'ChannelID', 'DiscountPercentage', 'RetailPrice', 'WholesalePrice', 'PNOSpecific', 'AffectedVisaFile'], conditions=rel_conditions)
 
-    df_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['FeatureCode', 'FeatureRetailPrice', 'FeatureWholesalePrice', 'DiscountID'], conditions=local_option_conditions)
+    df_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['FeatureCode', 'FeatureRetailPrice', 'FeatureWholesalePrice', 'ChannelID'], conditions=rel_conditions)
     
     available_visa_files = load_available_visa_files(country)
 
@@ -74,13 +67,13 @@ def sap_price_list(country):
     df_discounts = df_discounts[df_discounts['AffectedVisaFile'].isin(available_visa_files.keys())]
 
     df_discounts = df_discounts.merge(df_channels, left_on='ChannelID', right_on='ID', suffixes=('_discount', '_channel'))
-    df_discounts = df_discounts.drop(columns=['ID_channel', 'ChannelID'])
-    df_discounts = df_discounts.rename(columns={'ID_discount': 'ID'})
+    df_discounts = df_discounts.drop(columns=['ID_channel', 'ID_discount'])
+    df_discounts = df_discounts.rename(columns={'ChannelID': 'ID'})
 
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
         for visa_file, df_discounts_group in df_discounts.groupby('AffectedVisaFile'):
-            df_discount_options = df_local_options[df_local_options['DiscountID'].isin(df_discounts_group['ID'].tolist())]
+            df_discount_options = df_local_options[df_local_options['ChannelID'].isin(df_discounts_group['ID'].tolist())]
             dfs = get_sap_price_list(available_visa_files[visa_file], df_discounts_group, df_discount_options)
             folder_name = visa_file
             for df in dfs:

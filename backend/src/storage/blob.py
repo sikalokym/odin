@@ -56,7 +56,6 @@ def load_available_visa_files(country_code):
     visa_files = {visa_name: blob_name for visa_name, blob_name in zip(visa_names, blob_names)}
     return visa_files
 
-
 def load_visa_files(country_code):
     """
     Loads Visa files from a specified container and returns a concatenated DataFrame.

@@ -393,7 +393,7 @@ CREATE TABLE Discount (
     DiscountPercentage DECIMAL(19,2),
     RetailPrice DECIMAL(19,2),
     WholesalePrice DECIMAL(19,2),
-    ActiveStatus BIT,
+    PNOSpecific BIT,
     AffectedVisaFile NVARCHAR(MAX),
     FOREIGN KEY (ChannelID) REFERENCES SalesChannel(ID)
 );

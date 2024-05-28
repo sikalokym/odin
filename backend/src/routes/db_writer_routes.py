@@ -127,29 +127,11 @@ def write_features(country, model_year):
 @bp_db_writer.route('/update/customfeatures', methods=['POST'])
 def update_customfeatures(country, model_year):
     data = request.get_json()
-    if not data:
-        return 'No data provided', 400
-    
-    model = data.get('Model', None)
-    pnos_conditions = [f'CountryCode = {country}']
-    if model:
-        pnos_conditions.append(f"Model = '{model}'")
+    id = data.get('ID', None)
+    if id is None:
+        return 'No ID provided', 400
 
-
-    # Create a DataFrame from the list of JSON objects
-    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=pnos_conditions)
-    df_pnos = filter_df_by_model_year(df_pnos, model_year)
-    ids = df_pnos['ID'].tolist()
-    code = data.get('Code', None)
-    if code is None:
-        return 'No code provided', 400
-
-    conditions = [f"Code = '{code}'"]
-    if len(ids) == 1:
-        conditions.append(f"PNOID = '{ids[0]}'")
-    else:
-        conditions.append(f"PNOID in {tuple(ids)}")
-
+    conditions = [f"ID = '{id}'"]
     df_pno_custom_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'CFEAT'), conditions=conditions)
 
     update_columns = ['CustomName', 'CustomCategory']
@@ -159,11 +141,10 @@ def update_customfeatures(country, model_year):
         df_pno_custom_features[col] = data[col]
 
     all_columns = df_pno_custom_features.columns.tolist()
-    conditional_columns = list(set(all_columns) - set(update_columns))
+    conditional_columns = ['ID']
 
     DBOperations.instance.upsert_data_from_df(df_pno_custom_features, DBOperations.instance.config.get('AUTH', 'CFEAT'), all_columns, conditional_columns)
     return 'Features written successfully', 200
-
 
 @bp_db_writer.route('/insert/customfeatures', methods=['POST'])
 def write_customfeatures(country, model_year):
@@ -440,10 +421,10 @@ def upsert_discount(country, model_year):
         return 'No data provided', 400
     if 'ID' not in data:
         data['ID'] = str(uuid.uuid4())
-    if data.get('ActiveStatus', False):
-        data['ActiveStatus'] = 1
+    if data.get('PNOSpecific', False) == 'true':
+        data['PNOSpecific'] = 1
     else:
-        data['ActiveStatus'] = 0
+        data['PNOSpecific'] = 0
 
     try:
         if data['DiscountPercentage'] == '':
