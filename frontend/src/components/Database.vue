@@ -851,11 +851,16 @@
               :disabled="pno.DiscountPercentage !== null && pno.DiscountPercentage !== ''" />
           </td>
           <td>
-            <input type="AffectedVisaFile" v-model="pno.AffectedVisaFile" @input="pno.edited = true"
-              @change="pushUpdateDiscount(pno)" />
+            <v-select :options="['All', ...this.entitiesStore.visafiles.map(file => file.file_name)]" v-model="pno.AffectedVisaFile" @input="handleSelectChange(pno)" :reduce="label => label" placeholder="Select..." multiple></v-select>
           </td>
+          <!-- <td> -->
+            <!-- <select v-model="pno.AffectedVisaFile" multiple @change="handleSelectChange(pno)">
+              <option value="All">All</option>
+              <option v-for="file in this.entitiesStore.visafiles" :value="file.file_name">{{ file.file_name }}</option>
+            </select>
+          </td> -->
           <td style="background-color: #f4f4f4;">
-            <input type="checkbox" v-model="pno.PNOSpecific" @change="pno.edited = true, pushUpdateDiscount(pno)" />
+            <input type="checkbox" v-model="pno.PNOSpecific" @change="pno.edited = true; pushUpdateDiscount(pno)" />
           </td>
           <td style="background-color: #f4f4f4;">
             <span @click="deleteDiscount(pno)" style="cursor: pointer; color: red;">[X]</span>
@@ -876,10 +881,8 @@
             <input type="WholesalePrice" v-model="pno.WholesalePrice" @input="pno.edited = true"
               :disabled="pno.DiscountPercentage !== null && pno.DiscountPercentage !== ''" />
           </td>
-          <td>
-            <input type="AffectedVisaFile" v-model="pno.AffectedVisaFile" @input="pno.edited = true" />
-          </td>
-          <td>
+            <v-select :options="['All', ...this.entitiesStore.visafiles.map(file => file.file_name)]" v-model="pno.AffectedVisaFile" @input="handleSelectChangeNew(pno)" :reduce="label => label" placeholder="Select..." multiple></v-select>
+          <td style="background-color: #f4f4f4;">
             <input type="checkbox" v-model="pno.PNOSpecific" @change="pno.edited = true" />
           </td>
           <td style="background-color: #f4f4f4;">
@@ -976,9 +979,14 @@
 import { usePNOStore } from '../stores/pno.js'
 import { useEntitiesStore } from '../stores/entities.js'
 import index from '../api/index.js'
+import "vue-select/dist/vue-select.css"
+import vSelect from "vue-select"
 
 export default {
   name: 'DatabaseView',
+  components: {
+    vSelect
+  },
   data() {
     return {
       model: '',
@@ -1530,6 +1538,23 @@ export default {
     },
     addCustomLocalOption() {
       this.newcustomlocaloption.push({ FeatureCode: '', FeatureRetailPrice: '', FeatureWholesalePrice: '', edited: true });
+    },
+    handleSelectChange(pno) {
+      if (pno.AffectedVisaFile.includes('All')) {
+        pno.AffectedVisaFile = 'All';
+      } else {
+        pno.AffectedVisaFile = pno.AffectedVisaFile.join(',');
+      }
+      pno.edited = true;
+      this.pushUpdateDiscount(pno);
+    },
+    handleSelectChangeNew(pno) {
+      if (pno.AffectedVisaFile.includes('All')) {
+        pno.AffectedVisaFile = 'All';
+      } else {
+        pno.AffectedVisaFile = pno.AffectedVisaFile.join(',');
+      }
+      pno.edited = true;
     },
     //Sorting Functions
     sortTable(column, sortOrder) {

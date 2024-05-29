@@ -88,6 +88,8 @@ export const useEntitiesStore = defineStore({
             let path = `/db/${this.country}/${this.model_year}/discounts?&id=${id}`
             return await index.get(path).then((response) => {
                 this.discounts = response.data
+                console.log("Discounts fetched: ")
+                console.log(response.data)
             }).catch((error) => {
                 console.log(error)
             })
