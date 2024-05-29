@@ -88,8 +88,6 @@ export const useEntitiesStore = defineStore({
             let path = `/db/${this.country}/${this.model_year}/discounts?&id=${id}`
             return await index.get(path).then((response) => {
                 this.discounts = response.data
-                console.log("Discounts fetched: ")
-                console.log(response.data)
             }).catch((error) => {
                 console.log(error)
             })
@@ -98,8 +96,6 @@ export const useEntitiesStore = defineStore({
             let path = `/db/${this.country}/${this.model_year}/custom-local-options?&id=${id}`
             return await index.get(path).then((response) => {
                 this.customlocaloptions = response.data
-                console.log("Custom Local Options fetched: ")
-                console.log(this.customlocaloptions)
             }).catch((error) => {
                 console.log(error)
             })

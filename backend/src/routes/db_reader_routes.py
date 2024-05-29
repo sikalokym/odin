@@ -353,6 +353,7 @@ def get_features(country, model_year):
     df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['Code', 'CustomName', 'CustomCategory'], conditions=conditions)
     df_pno_features['Code'] = df_pno_features['Code'].str.strip()
     df_pno_features['MarketText'] = df_pno_features['Code'].map(df_features.set_index('Code')['MarketText'])
+    df_pno_features['ID'] = None
 
     df_pno_custom_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'CFEAT'), columns=['ID', 'Code', 'CustomName', 'CustomCategory'], conditions=conditions)
 
@@ -459,6 +460,10 @@ def get_discounts(country, model_year):
 
     df_discounts = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'DIS'), columns=['ID', 'ChannelID', 'DiscountPercentage', 'RetailPrice', 'WholesalePrice', 'PNOSpecific', 'AffectedVisaFile'], conditions=conditions)
     
+    # split AffectedVisaFile column by comma if not All else return a list with no elements
+    df_discounts['AffectedVisaFile'] = df_discounts['AffectedVisaFile'].replace('All', None)
+    df_discounts['AffectedVisaFile'] = df_discounts['AffectedVisaFile'].map(lambda x: x.split(',') if x else [])
+
     df_discounts = df_discounts.sort_values(by='DiscountPercentage', ascending=True)
 
     return df_discounts.to_json(orient='records')

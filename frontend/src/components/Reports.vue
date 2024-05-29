@@ -108,9 +108,6 @@ export default {
     async refreshModelyear() {
       await this.pnoStore.setModelYear(this.model_year)
       await this.entitiesStore.setModelYear(this.model_year)
-      console.log(this.model_year)
-      console.log('Model year refreshed')
-
       this.model = '';
       this.engine = '';
       this.salesversion = '';

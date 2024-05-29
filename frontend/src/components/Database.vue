@@ -851,14 +851,8 @@
               :disabled="pno.DiscountPercentage !== null && pno.DiscountPercentage !== ''" />
           </td>
           <td>
-            <v-select :options="['All', ...this.entitiesStore.visafiles.map(file => file.file_name)]" v-model="pno.AffectedVisaFile" @input="handleSelectChange(pno)" :reduce="label => label" placeholder="Select..." multiple></v-select>
+            <v-select :options="this.entitiesStore.visafiles.map(file => file.file_name)" v-model="pno.AffectedVisaFile" @option:deselected="pushUpdateDiscount(pno)" @option:selected="pushUpdateDiscount(pno)" :reduce="label => label" placeholder="All" multiple></v-select>
           </td>
-          <!-- <td> -->
-            <!-- <select v-model="pno.AffectedVisaFile" multiple @change="handleSelectChange(pno)">
-              <option value="All">All</option>
-              <option v-for="file in this.entitiesStore.visafiles" :value="file.file_name">{{ file.file_name }}</option>
-            </select>
-          </td> -->
           <td style="background-color: #f4f4f4;">
             <input type="checkbox" v-model="pno.PNOSpecific" @change="pno.edited = true; pushUpdateDiscount(pno)" />
           </td>
@@ -881,7 +875,7 @@
             <input type="WholesalePrice" v-model="pno.WholesalePrice" @input="pno.edited = true"
               :disabled="pno.DiscountPercentage !== null && pno.DiscountPercentage !== ''" />
           </td>
-            <v-select :options="['All', ...this.entitiesStore.visafiles.map(file => file.file_name)]" v-model="pno.AffectedVisaFile" @input="handleSelectChangeNew(pno)" :reduce="label => label" placeholder="Select..." multiple></v-select>
+            <v-select :options="this.entitiesStore.visafiles.map(file => file.file_name)" v-model="pno.AffectedVisaFile" @input="handleSelectChange(pno)" :reduce="label => label" placeholder="All" multiple></v-select>
           <td style="background-color: #f4f4f4;">
             <input type="checkbox" v-model="pno.PNOSpecific" @change="pno.edited = true" />
           </td>
@@ -1235,9 +1229,6 @@ export default {
     async refreshModelyear() {
       await this.pnoStore.setModelYear(this.model_year)
       await this.entitiesStore.setModelYear(this.model_year)
-      console.log(this.model_year)
-      console.log('Model year refreshed')
-
       this.model = '';
       this.engine = '';
       this.salesversion = '';
@@ -1438,7 +1429,6 @@ export default {
       this.customFeatureTable = !this.customFeatureTable;
     },
     pushNewCustomFeature(newEntry) {
-      console.log(newEntry)
       this.pnoStore.pushNewCustomFeature(this.model, newEntry.CustomName, newEntry.CustomCategory, newEntry.StartDate, newEntry.EndDate)
       this.newEntry = {
         CustomName: null,
@@ -1564,7 +1554,6 @@ export default {
     // Database updates 
     uploadVisa() {
       const file = this.$refs.file.files[0];
-      console.log(file)
       const formData = new FormData();
       formData.append('visa', file);
       index.post(`/${this.pnoStore.country}/ingest/visa/upload`, formData);

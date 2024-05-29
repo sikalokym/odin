@@ -450,6 +450,9 @@ def upsert_discount(country, model_year):
         # Create a DataFrame with a single row
         df_new_entry = pd.DataFrame([data])
 
+        # make AffectedVisaFile a string concatenated with comma
+        df_new_entry['AffectedVisaFile'] = ','.join(data['AffectedVisaFile']) if data.get('AffectedVisaFile') else 'All'
+
         # Extract columns for upsert
         all_columns = df_new_entry.columns.tolist()
         conditional_columns = ['ID']

@@ -2,9 +2,9 @@
   <aside class="sidebar">
     <span class="title" style="font-size: 32px;">Specifications</span>
     <div style="margin-top: 10px;">
-      <button v-on:click="showFilters = 'VariantBinder'; console.log(showFilters)"
+      <button v-on:click="showFilters = 'VariantBinder'"
         :class="{ 'highlighted': showFilters === 'VariantBinder' }">Variant Binder</button>
-      <button v-on:click="showFilters = 'Pricelist'; console.log(showFilters)" style="margin-left: 10px;"
+      <button v-on:click="showFilters = 'Pricelist'" style="margin-left: 10px;"
         :class="{ 'highlighted': showFilters === 'Pricelist' }">Pricelist
       </button>
     </div>
@@ -60,24 +60,24 @@
       <label class="modelyear" style="width: 180px;">Model Year</label><br>
       <select name="model_year" id="model_year" v-model="model_year" @change="refreshModelyear"
         style="width:180px; height:30px; position: absolute;">
-        <option disabled value="0">Please select Model Year...</option>
+        <option disabled value="0">select Model Year...</option>
         <option v-for="model_year in model_years" :key="model_year" :value="model_year">{{ model_year }}</option>
       </select>
       <!-- Filter for sales_channels -->
       <label class="sales_channel" style="width: 180px;">Sales Channel</label><br>
       <select name="sales_channel" id="sales_channel" v-model="sales_channel"
         style="width:180px; height:30px; position: absolute; margin-left: -90px; ">
-        <option disabled value="">Please Select Sales Channel...</option>
+        <option disabled value="">Select Sales Channel...</option>
         <option value="All">All</option>
-        <option v-for="sales_channel in sales_channels" :key="sales_channel" :value="sales_channel">{{ sales_channel.Code }}</option>
+        <option v-for="sales_channel in sales_channels" :key="sales_channel" :value="sales_channel.Code">{{
+          sales_channel.Code }}</option>
       </select>
       <br><br>
 
       <!-- Export Pricelist Button -->
       <button
         style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translateX(-50%); margin-top: 24px;"
-        @click="exportPricelist"
-        :disabled="this.pnoStore.model_year === '0' || this.sales_channel === ''">Export
+        @click="exportPricelist" :disabled="this.pnoStore.model_year === '0' || this.sales_channel === ''">Export
         Pricelist</button>
     </div>
     <!-- Country Select Dropdown Menu -->
@@ -196,7 +196,7 @@ export default {
     },
     async exportPricelist() {
       const link = document.createElement('a');
-      link.href = `${axios.endpoint}/231/export/sap-price-list?code=${this.sales_channel.Code}`;
+      link.href = `${axios.endpoint}/231/export/sap-price-list?code=${this.sales_channel}`;
       console.log(link.href);
 
       // This ensures the link is ready to download the file
@@ -263,7 +263,7 @@ export default {
   margin-top: 42px;
 }
 
-.validity_date, {
+.validity_date {
   margin-left: -91px;
 }
 
