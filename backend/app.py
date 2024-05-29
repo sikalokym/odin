@@ -1,14 +1,15 @@
-from flask import Flask, render_template_string
-from flask_cors import CORS
 from src.database.db_connection import DatabaseConnection
 from src.database.db_operations import DBOperations
-from src.routes.ingest_routes import bp_ingest
 from src.routes.db_reader_routes import bp_db_reader
 from src.routes.db_writer_routes import bp_db_writer
 from src.routes.exporter_routes import bp_exporter
 from src.routes.settings_routes import bp_settings
+from src.utils.sql_logging_handler import logger
+from src.routes.ingest_routes import bp_ingest
 import src.utils.scheduler as scheduler
-from src.utils.sql_logging_handler import setup_logger_config
+
+from flask import Flask, render_template_string
+from flask_cors import CORS
 import time
 import threading
 
@@ -49,11 +50,14 @@ def close_db_connection_after_inactivity():
         if current_time - last_request_time >= 60:
             DatabaseConnection.close_connection()
             open_db_connection = False
-        time.sleep(60)
+        time.sleep(10)
 
 @app.before_request
 def before_request():
-    DBOperations.create_instance()
+    global open_db_connection
+    if not open_db_connection:
+        DBOperations.create_instance(logger=logger)
+    open_db_connection = False
 
 @app.after_request
 def after_request(response):
@@ -72,5 +76,4 @@ def welcome():
 
 if __name__ == "__main__":
     scheduler.cpam_scheduler.start()
-    setup_logger_config()
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000, use_reloader=False)

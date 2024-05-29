@@ -38,7 +38,6 @@ class SQLLoggingHandler(logging.Handler):
         except Exception as e:
             print(f"Failed to log message to database: {e}")
 
-
 def setup_logger_config(logger):
     # Create a handler that saves the logs to a file and saves them for 7 days
     new_handler = logging.handlers.TimedRotatingFileHandler('logs/app.log', when='D', interval=1, backupCount=7)
@@ -51,7 +50,6 @@ def setup_logger_config(logger):
     sql_handler.setLevel(logging.DEBUG)
     logger.addHandler(sql_handler)
     return logger
-
 
 # Configure logging
 logger = logging.getLogger(__name__)

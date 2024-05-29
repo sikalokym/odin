@@ -10,17 +10,17 @@ class DBOperations:
     instance = None
 
     @classmethod
-    def create_instance(cls, test=False):
+    def create_instance(cls, logger=None, test=False):
         config = configparser.ConfigParser()
         config.read('config/data_model.cfg')
         conn = DatabaseConnection.get_db_connection(test=test)
-        cls.instance = cls(conn, config)
+        cls.instance = cls(conn, config, logger)
         return cls.instance
     
-    def __init__(self, db_conn, config):
+    def __init__(self, db_conn, config, logger=None):
         self.conn = db_conn
         self.config = config
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger or logging.getLogger(__name__)
 
     @contextmanager
     def get_cursor(self):
