@@ -75,6 +75,13 @@ class DBOperations:
     def create_temp_staging_table(self, target_table_name, cols):
         try:
             with self.get_cursor() as cursor:
+                # Check if the temporary staging table exists and delete it if it does
+                cursor.execute(f"""
+                    IF OBJECT_ID('tempdb..#tmp_staging_{target_table_name}') IS NOT NULL
+                    DROP TABLE #tmp_staging_{target_table_name};
+                """)
+
+                # Create the new temporary staging table
                 cursor.execute(f"""
                     SELECT {', '.join(cols)} 
                     INTO #tmp_staging_{target_table_name}
