@@ -9,7 +9,14 @@ import { getRoles, ensureAuthenticated } from '@/authService';
 Routes
 */
 const routes = [
-	{ path: '/', name: 'Home', component: Home },
+	{
+		path: '/',
+		name: 'Home',
+		component: Home,
+		meta : {
+			requiresRole: 'Reader',
+		},
+	},
 	{
 		path: '/database',
 		name: 'Database',
@@ -21,7 +28,10 @@ const routes = [
 	{
 		path: '/documents',
 		name: 'Documents',
-		component: Documents
+		component: Documents,
+		meta: {
+			requiresRole: 'Reader',
+		},
 	},
 	{
 		path: '/reports',
