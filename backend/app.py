@@ -53,9 +53,7 @@ def close_db_connection_after_inactivity():
 
 @app.before_request
 def before_request():
-    global open_db_connection
-    if not open_db_connection:
-        DBOperations.create_instance()
+    DBOperations.create_instance()
 
 @app.after_request
 def after_request(response):
