@@ -406,7 +406,7 @@ def delete_sales_channel(country, model_year):
     channel_id = request.args.get('ID')
     if not channel_id:
         return {"error": "Channel ID is required"}, 400
-    condition = f"ID = '{channel_id}'"
+    condition = [f"ChannelID  = '{channel_id}'"]
     discounts_df = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'DIS'), conditions=condition)
     if not discounts_df.empty:
         dis_ids = discounts_df['ID'].unique().tolist()
@@ -428,7 +428,7 @@ def delete_sales_channel(country, model_year):
         return {"message": "Record deleted successfully"}, 200
     except Exception as e:
         DBOperations.instance.logger.error(f"Error deleting record: {e}")
-        return {"error": str(e)}, 500
+        return {"error": str(e)}, 500    
 
 @bp_db_writer.route('/discounts', methods=['POST'])
 def upsert_discount(country, model_year):
@@ -437,7 +437,7 @@ def upsert_discount(country, model_year):
         return 'No data provided', 400
     if 'ID' not in data:
         data['ID'] = str(uuid.uuid4())
-    if data.get('PNOSpecific', False) == 'true':
+    if data.get('PNOSpecific', False):
         data['PNOSpecific'] = 1
     else:
         data['PNOSpecific'] = 0
@@ -462,7 +462,7 @@ def upsert_discount(country, model_year):
     return 'Discount created successfully', 200
 
 @bp_db_writer.route('/discounts', methods=['DELETE'])
-def delete_discount(country, model_year):
+def remove_discount(country, model_year):
     discount_id = request.args.get('ID')
     if not discount_id:
         return {"error": "Discount ID is required"}, 400
