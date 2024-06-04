@@ -353,14 +353,14 @@ def get_features(country, model_year):
     df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['Code', 'CustomName', 'CustomCategory'], conditions=conditions)
     df_pno_features['Code'] = df_pno_features['Code'].str.strip()
     df_pno_features['MarketText'] = df_pno_features['Code'].map(df_features.set_index('Code')['MarketText'])
-    df_pno_features['ID'] = None
+    df_pno_features['ID'] = ''
 
     df_pno_custom_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'CFEAT'), columns=['ID', 'Code', 'CustomName', 'CustomCategory'], conditions=conditions)
 
     df_pno_features = pd.concat([df_pno_features, df_pno_custom_features], ignore_index=True)
 
     # group by code. if the number of custom names is more than one, change the custom name to '*Model-specific text*'
-    df_pno_features = df_pno_features.groupby('Code').agg({'MarketText': 'first', 'CustomName': lambda x: '*Model-specific text*' if len(x.unique()) > 1 else x.unique()[0], 'CustomCategory': 'first', 'ID': lambda x: ','.join(x)}).reset_index()
+    df_pno_features = df_pno_features.groupby('Code').agg({'MarketText': 'first', 'CustomName': lambda x: '*Model-specific text*' if len(x.unique()) > 1 else x.unique()[0], 'CustomCategory': 'first', 'ID': lambda x: ','.join(x) if x.any() else ''}).reset_index()
 
     df_pno_features = df_pno_features.sort_values(by='Code', ascending=True)
     df_pno_features.drop_duplicates(inplace=True)
