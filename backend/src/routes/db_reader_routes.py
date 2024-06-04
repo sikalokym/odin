@@ -353,7 +353,7 @@ def get_features(country, model_year):
     df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['Code', 'CustomName', 'CustomCategory'], conditions=conditions)
     df_pno_features['Code'] = df_pno_features['Code'].str.strip()
     df_pno_features['MarketText'] = df_pno_features['Code'].map(df_features.set_index('Code')['MarketText'])
-    df_pno_features['ID'] = None
+    df_pno_features['ID'] = ''
 
     df_pno_custom_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'CFEAT'), columns=['ID', 'Code', 'CustomName', 'CustomCategory'], conditions=conditions)
 
