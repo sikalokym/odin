@@ -530,3 +530,12 @@ def delete_custom_local_options(id):
     delete_query = f"DELETE FROM {table_name} WHERE ID = ?"
     with DBOperations.instance.get_cursor() as cursor:
         cursor.execute(delete_query, (id,))
+        
+@bp_db_writer.route('/visa', methods=['DELETE'])
+def delete_visa_file(country):
+    visa_file_name = request.args.get('file_name')
+    table_name = DBOperations.instance.config.get('RELATIONS', 'RAW_VISA')
+    delete_query = f"DELETE FROM {table_name} WHERE VisaFile = ? AND CountryCode = {country}"
+    with DBOperations.instance.get_cursor() as cursor:
+        cursor.execute(delete_query, (visa_file_name,))
+    return {"message": "Record deleted successfully"}, 200

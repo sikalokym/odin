@@ -350,7 +350,7 @@ CREATE TABLE CustomizationRules (
     FOREIGN KEY (PNOID) REFERENCES PNO(ID)
 );
 
--- Create the customization rules table
+-- Create the VisaFilesPrices table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'VisaFilesPrices')
 CREATE TABLE VisaFilesPrices (
     Model VARCHAR(12),
@@ -370,6 +370,45 @@ CREATE TABLE VisaFilesPrices (
     Package VARCHAR(12),
     Price DECIMAL(19,2),
     PriceBeforeTax DECIMAL(19,2),
+);
+
+-- VisaFiles
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'VisaFiles')
+CREATE TABLE VisaFiles (
+    ID UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+    Active NVARCHAR(255),
+    [Sales Org.] NVARCHAR(255),
+    [Distr. Ch.] NVARCHAR(255),
+    [Price List] NVARCHAR(255),
+    [Dealer Group] NVARCHAR(255),
+    Country NVARCHAR(255),
+    [Car Type] NVARCHAR(255),
+    Engine NVARCHAR(255),
+    [Sales Version] NVARCHAR(255),
+    Body NVARCHAR(255),
+    Gearbox NVARCHAR(255),
+    Steering NVARCHAR(255),
+    [Market Code] NVARCHAR(255),
+    [Model Year] NVARCHAR(255),
+    [Structure week] NVARCHAR(255),
+    [Date From] NVARCHAR(255),
+    [Date To] NVARCHAR(255),
+    Currency NVARCHAR(255),
+    Color NVARCHAR(255),
+    [Option] NVARCHAR(255),
+    Upholstery NVARCHAR(255),
+    Package NVARCHAR(255),
+    [S-Note] NVARCHAR(255),
+    MSRP NVARCHAR(255),
+    TAX2 NVARCHAR(255),
+    VAT NVARCHAR(255),
+    TAX1 NVARCHAR(255),
+    [Price Before Tax] NVARCHAR(255),
+    [Wholesale Price] NVARCHAR(255),
+    [Transfer Price] NVARCHAR(255),
+    VisaFile NVARCHAR(255),
+    CountryCode VARCHAR(12),
+    LoadingDate DATETIME DEFAULT GETDATE()
 );
 
 -- Create the sales channel table

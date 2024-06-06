@@ -4,6 +4,8 @@ import configparser
 from azure.storage.blob import BlobServiceClient
 import pandas as pd
 
+from src.database.db_operations import DBOperations
+
 # Load configurations
 config = configparser.ConfigParser()
 config.read('config/azure_blob.cfg')
@@ -56,6 +58,20 @@ def load_available_visa_files(country_code):
     visa_files = {visa_name: blob_name for visa_name, blob_name in zip(visa_names, blob_names)}
     return visa_files
 
+def get_available_visa_files(country_code, model_year):
+    """
+    Loads the list of available Visa files from the specified container.
+
+    Args:
+        country_code (str): The country code to filter the blob names.
+
+    Returns:
+        list: A list of blob names without the file extensions.
+    """
+    raw_visa_files = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), columns=['VisaFile', '[Car Type] as CarType'], conditions=[f"CountryCode = '{country_code}'", f"[Model Year] = '{model_year}'"])
+
+    return raw_visa_files
+    
 def load_visa_files(country_code):
     """
     Loads Visa files from a specified container and returns a concatenated DataFrame.
@@ -80,7 +96,8 @@ def load_visa_files(country_code):
             try:
                 df = pd.read_excel(data, usecols='A:AD', dtype=str)
                 df = df.where(pd.notnull(df), None)
-                df['FileName'] = blob.name[len(country_code)+1:]
+                df['VisaFile'] = blob.name[len(country_code)+1:]
+                df['CountryCode'] = country_code
                 df_list.append(df)
             except Exception as e:
                 print(f"Failed to read blob {blob.name}: {e}")

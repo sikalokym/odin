@@ -34,8 +34,13 @@ DROP TRIGGER IF EXISTS [dbo].[trg_PNOPackageCustom_InsertUpdate];
 GO
 
 -- Drop all tables in the database
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'VisaFiles')
+DROP TABLE VisaFiles
+GO
+
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'VisaFilesPrices')
 DROP TABLE VisaFilesPrices
+GO
 
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'CustomizationRules')
 DROP TABLE [dbo].[CustomizationRules]

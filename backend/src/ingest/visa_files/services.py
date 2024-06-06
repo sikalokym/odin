@@ -35,7 +35,11 @@ def ingest_visa_data(spec_markt):
     Returns:
         None
     """
-    df_visa = blob.load_visa_files(spec_markt)
+    df_raw_visa = blob.load_visa_files(spec_markt)
+    df_visa = df_raw_visa.copy()
+    
+    DBOperations.instance.upsert_data_from_df(df_raw_visa, config.get('RELATIONS', 'RAW_VISA'), df_visa.columns.tolist(), df_visa.columns.tolist())
+    
     columns = ['Model', 'Engine', 'SalesVersion', 'Body', 'Gearbox', 'Steering', 'MarketCode', 'ModelYear', 'StartDate', 'EndDate', 'Color', 'Options', 'Upholstery', 'Package', 'Price', 'PriceBeforeTax']
     df_processed = preprocess.process_visa_df(df_visa, columns)
 
