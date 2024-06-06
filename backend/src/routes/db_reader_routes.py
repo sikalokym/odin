@@ -333,7 +333,7 @@ def get_features(country, model_year):
     if gearbox:
         conditions.append(f"Gearbox = '{gearbox}'")
 
-    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'Model', 'StartDate', 'EndDate'], conditions=conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     if df_pnos.empty:
         return jsonify([])
@@ -350,18 +350,29 @@ def get_features(country, model_year):
     df_features['Code'] = df_features['Code'].str.strip()
     df_features.drop_duplicates(subset='Code', inplace=True)
 
-    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['Code', 'CustomName', 'CustomCategory'], conditions=conditions)
+    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Code', 'CustomName', 'CustomCategory'], conditions=conditions)
     df_pno_features['Code'] = df_pno_features['Code'].str.strip()
     df_pno_features['MarketText'] = df_pno_features['Code'].map(df_features.set_index('Code')['MarketText'])
     df_pno_features['ID'] = ''
 
-    df_pno_custom_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'CFEAT'), columns=['ID', 'Code', 'CustomName', 'CustomCategory'], conditions=conditions)
+    df_pno_custom_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'CFEAT'), columns=['PNOID', 'ID', 'Code', 'CustomName', 'CustomCategory'], conditions=conditions)
 
     df_pno_features = pd.concat([df_pno_features, df_pno_custom_features], ignore_index=True)
 
-    # group by code. if the number of custom names is more than one, change the custom name to '*Model-specific text*'
-    df_pno_features = df_pno_features.groupby('Code').agg({'MarketText': 'first', 'CustomName': lambda x: '*Model-specific text*' if len(x.unique()) > 1 else x.unique()[0], 'CustomCategory': 'first', 'ID': lambda x: ','.join(x) if x.any() else ''}).reset_index()
-
+    # Create a mapping from PNOID to Model
+    pno_id_to_model = df_pnos.set_index('ID')['Model'].to_dict()
+    
+    # Create a mapping from CustomName to PNOID in df_pno_features
+    custom_name_to_pnoid = df_pno_features.set_index('CustomName')['PNOID'].to_dict()
+    
+    # Use the mappings in the aggregation
+    df_pno_features = df_pno_features.groupby('Code').agg({
+        'MarketText': 'first', 
+        'CustomName': lambda x: "Specific: " + ', '.join(sorted([model for model in (pno_id_to_model.get(custom_name_to_pnoid.get(i, 'Unknown'), 'Unknown') for i in x.replace([None, "", "Null"], "Common").unique()) if model != 'Unknown'])) if len(x.replace([None, "", "Null"], "Common").unique()) > 1 else x.unique()[0],
+        'CustomCategory': 'first', 
+        'ID': lambda x: ','.join(x) if x.any() else ''
+    }).reset_index()
+    
     df_pno_features = df_pno_features.sort_values(by='Code', ascending=True)
     df_pno_features.drop_duplicates(inplace=True)
 
