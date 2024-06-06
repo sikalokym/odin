@@ -73,7 +73,7 @@ def sap_price_list(country):
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
         for visa_file, df_discounts_group in df_discounts.groupby('AffectedVisaFile'):
-            df_discount_options = df_local_options[df_local_options['ChannelID'].isin(df_discounts_group['ID'].tolist())]
+            df_discount_options = df_local_options[(df_local_options['ChannelID'].isin(df_discounts_group['ID'].tolist())) & (df_local_options['AffectedVisaFile'] == visa_file)]
             dfs = get_sap_price_list(available_visa_files[visa_file], df_discounts_group, df_discount_options)
             folder_name = visa_file
             for df in dfs:

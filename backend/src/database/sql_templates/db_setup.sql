@@ -406,6 +406,9 @@ CREATE TABLE CustomLocalOption (
     FeatureCode VARCHAR(12),
     FeatureRetailPrice DECIMAL(19,2),
     FeatureWholesalePrice DECIMAL(19,2),
+    AffectedVisaFile NVARCHAR(MAX),
+    StartDate INT,
+    EndDate INT,
     FOREIGN KEY (ChannelID) REFERENCES SalesChannel(ID)
 );
 
