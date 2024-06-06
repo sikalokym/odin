@@ -487,7 +487,12 @@ def upsert_custom_local_option(country, model_year):
     try:
         data['FeatureRetailPrice'] = float(data['FeatureRetailPrice']) if data.get('FeatureRetailPrice') and data['FeatureRetailPrice'] != '' else 0
         data['FeatureWholesalePrice'] = float(data['FeatureWholesalePrice']) if data.get('FeatureWholesalePrice') and data['FeatureWholesalePrice'] != '' else 0
+        data['StartDate'] = int (data['StartDate']) if data.get('StartDate') and data['StartDate'] != '' else 0
+        data['EndDate'] = int (data['EndDate']) if data.get('EndDate') and data['EndDate'] != '' else 999999
 
+        # make AffectedVisaFile a string concatenated with comma
+        df_new_entry['AffectedVisaFile'] = ','.join(data['AffectedVisaFile']) if data.get('AffectedVisaFile') else 'All'
+        
         # Create a DataFrame with a single row
         df_new_entry = pd.DataFrame([data])
 
