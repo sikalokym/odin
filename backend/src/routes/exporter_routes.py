@@ -40,7 +40,7 @@ def variant_binder(country):
 @bp_exporter.route('/sap-price-list', methods=['GET'])
 def sap_price_list(country):
     code = request.args.get('code', 'All')
-    time = datetime.datetime.now().strftime("%Y%U")
+    time = request.args.get('date', datetime.datetime.now().strftime("%Y%U"))
 
     conditions = [f'CountryCode = {country}', f'StartDate <= {time}', f'EndDate >= {time}']
     if code != 'All':
