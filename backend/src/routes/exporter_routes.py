@@ -56,8 +56,8 @@ def sap_price_list(country):
     else:
         rel_conditions.append(f"ChannelID IN {tuple(channel_ids)}")
     df_discounts = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'DIS'), columns=['ID', 'ChannelID', 'DiscountPercentage', 'RetailPrice', 'WholesalePrice', 'PNOSpecific', 'AffectedVisaFile'], conditions=rel_conditions)
-
-    df_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['FeatureCode', 'FeatureRetailPrice', 'FeatureWholesalePrice', 'ChannelID'], conditions=rel_conditions)
+    rel_conditions += [f"StartDate <= {time}", f"EndDate >= {time}"]
+    df_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['FeatureCode', 'FeatureRetailPrice', 'FeatureWholesalePrice', 'ChannelID', 'AffectedVisaFile'], conditions=rel_conditions)
     
     available_visa_files = load_available_visa_files(country)
 

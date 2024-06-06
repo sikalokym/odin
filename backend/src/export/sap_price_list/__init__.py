@@ -26,15 +26,22 @@ def get_sap_price_list(name, df_sales_channels, df_discount_options):
     df_sap_price['Transfer Price'].apply(lambda x: float(x)*transfer_price_factor)
     df_sap_price['Active'] = config['DEFAULT']['ACTIVE']
     dfs = []
+    
     for _, row in df_sales_channels.iterrows():
-        res_df = prepare_pno_specific_discount(df_sap_price.copy()) if row['PNOSpecific'] else df_sap_price.copy()
-        res_df['Wholesale Price'] = res_df['Wholesale Price'].apply(lambda x: float(x)* (1-float(row['DiscountPercentage'])*0.01))
+        res_df = df_sap_price.copy()
+        if row['DiscountPercentage']:
+            res_df['Wholesale Price'] = res_df['Wholesale Price'].apply(lambda x: float(x)* (1-float(row['DiscountPercentage'])*0.01))
+        else:
+            res_df['Wholesale Price'] = row['WholesalePrice']
+            res_df['Retail Price'] = row['RetailPrice']
+        if row['PNOSpecific']:
+            res_df = prepare_pno_specific_discount(df_sap_price.copy())
         res_df['Price List'] = row['Code']
         df_local_options = df_discount_options[df_discount_options['ChannelID'] == row['ID']]
         res_df = add_local_codes(res_df, df_local_options)
         res_df.name = f"{row['Code']}+#+{row['ChannelName']}"
         dfs.append(res_df)
-
+ 
     return dfs
 
 def add_local_codes(df, df_codes):

@@ -475,6 +475,9 @@ def get_custom_local_options(country, model_year):
 
     df_custom_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['ID', 'FeatureCode', 'FeatureRetailPrice', 'FeatureWholesalePrice', 'AffectedVisaFile', 'StartDate', 'EndDate'], conditions=conditions)
     
+    # split AffectedVisaFile column by comma if not All else return a list with no elements
+    df_custom_local_options['AffectedVisaFile'] = df_custom_local_options['AffectedVisaFile'].replace('All', None)
+    df_custom_local_options['AffectedVisaFile'] = df_custom_local_options['AffectedVisaFile'].map(lambda x: x.split(',') if x else [])
     df_custom_local_options = df_custom_local_options.sort_values(by='FeatureCode', ascending=True)
 
     return df_custom_local_options.to_json(orient='records')
