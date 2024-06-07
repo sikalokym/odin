@@ -181,12 +181,15 @@ export const useEntitiesStore = defineStore({
             let path = `/db/${this.country}/${this.model_year}/write/discounts?ID=${ID}`
             return index.delete(path);
         },
-        async pushUpdateCustomLocalOptions(ID, SalesChannelID, FeatureCode, FeatureRetailPrice, FeatureWholesalePrice) {
+        async pushUpdateCustomLocalOptions(ID, SalesChannelID, FeatureCode, FeatureRetailPrice, FeatureWholesalePrice, AffectedVisaFile, StartDate, EndDate) {
             let updates = {
                 ChannelID: SalesChannelID,
                 FeatureCode: FeatureCode,
                 FeatureRetailPrice: FeatureRetailPrice,
-                FeatureWholesalePrice: FeatureWholesalePrice
+                FeatureWholesalePrice: FeatureWholesalePrice,
+                AffectedVisaFile: AffectedVisaFile,
+                StartDate: StartDate,
+                EndDate: EndDate
             }
             if (ID !== null) {
                 updates.ID = ID;
@@ -202,7 +205,7 @@ export const useEntitiesStore = defineStore({
             let updates = {
                 file_name: file_name,
             }
-            let path = `/db/${this.country}/${this.model_year}/write/visa_files`
+            let path = `/db/${this.country}/${this.model_year}/write/visa`
             return index.post(path, updates);
         },
     },

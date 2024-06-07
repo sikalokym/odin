@@ -20,8 +20,7 @@
     </select>
     <!-- Filter for model years -->
     <label class="modelyear" style="width: 180px;">Model Year</label><br>
-    <select name="model_year" id="model_year" v-model="model_year" @change="refreshModelyear(); fetchPnoSpecifics()"
-      style="width:180px; height:30px; position: absolute;" :disabled="displaytable === ''">
+    <select name="model_year" id="model_year" v-model="model_year" @change="handleModelYearChange" style="width:180px; height:30px; position: absolute;" :disabled="displaytable === ''">
       <option disabled value="0">Please Select...</option>
       <option value="0000" :disabled="!['Model', 'Engine', 'SalesVersion', 'Gearbox'].includes(displaytable)">All
       </option>
@@ -385,11 +384,11 @@
       <tbody>
         <tr v-for="pno in tableFeatures" :key="pno.id" :class="{ 'editing': pno.edited }">
           <td style="background-color: #f4f4f4;">
-            <input v-if="pno.ID !== null" v-model="pno.Code" type="text" @input="pno.edited = true" @change="pushUpdateFeature(pno)" />
+            <input v-if="pno.ID !== ''" v-model="pno.Code" type="text" @input="pno.edited = true" @change="pushUpdateFeature(pno)" />
             <span v-else>{{ pno.Code }}</span>
           </td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">
-            <input v-if="pno.ID !== null" v-model="pno.MarketText" type="text" @input="pno.edited = true" @change="pushUpdateFeature(pno)" />
+            <input v-if="pno.ID !== ''" v-model="pno.MarketText" type="text" @input="pno.edited = true" @change="pushUpdateFeature(pno)" />
             <span v-else>{{ pno.MarketText }}</span>
           </td>
           <td>
@@ -400,7 +399,7 @@
               @change="pushUpdateFeature(pno)" />
           </td>
           <td style="background-color: #f4f4f4;">
-            <span v-if="pno.ID !== null" @click="deleteCustomFeature(pno)" style="cursor: pointer; color: red;">[X]</span>
+            <span v-if="pno.ID !== ''" @click="deleteCustomFeature(pno)" style="cursor: pointer; color: red;">[X]</span>
           </td>
         </tr>
       </tbody>
@@ -652,10 +651,19 @@
         <tr>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
+              Model
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('CarType', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('CarType', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
               Name
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('file_name', 1)" style="cursor: pointer;">↑</span>
-                <span @click="sortTable('file_name', -1)" style="cursor: pointer;">↓</span>
+                <span @click="sortTable('VisaFile', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('VisaFile', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -664,11 +672,14 @@
       </thead>
       <tbody>
         <tr v-for="pno in visa_files" :key="pno.id" :class="{ 'editing': pno.edited }">
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            {{ pno.CarType }}
+          </td>
           <td class="VISAColumn" style="background-color: #f4f4f4; text-align: left;">
-            {{ pno.file_name }}
+            {{ pno.VisaFile }}
           </td>
           <td style="background-color: #f4f4f4;">
-            <span @click="deleteVISAFile(pno.file_name)" style="cursor: pointer; color: red;">[X]</span>
+            <span @click="deleteVISAFile(pno.VisaFile)" style="cursor: pointer; color: red;">[X]</span>
           </td>
         </tr>
       </tbody>
@@ -813,7 +824,7 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              Affected Visa Files
+              Model
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('AffectedVisaFile', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('AffectedVisaFile', -1)" style="cursor: pointer;">↓</span>
@@ -851,7 +862,7 @@
               :disabled="pno.DiscountPercentage !== null && pno.DiscountPercentage !== ''" />
           </td>
           <td>
-            <v-select :options="this.entitiesStore.visafiles.map(file => file.file_name)" v-model="pno.AffectedVisaFile" @option:deselected="pushUpdateDiscount(pno)" @option:selected="pushUpdateDiscount(pno)" :reduce="label => label" placeholder="All" multiple></v-select>
+            <v-select :options="this.entitiesStore.visafiles.map(file => file.CarType)" v-model="pno.AffectedVisaFile" @option:deselected="pushUpdateDiscount(pno)" @option:selected="pushUpdateDiscount(pno)" :reduce="label => label" placeholder="All" multiple></v-select>
           </td>
           <td style="background-color: #f4f4f4;">
             <input type="checkbox" v-model="pno.PNOSpecific" @change="pno.edited = true; pushUpdateDiscount(pno)" />
@@ -875,7 +886,7 @@
             <input type="WholesalePrice" v-model="pno.WholesalePrice" @input="pno.edited = true"
               :disabled="pno.DiscountPercentage !== null && pno.DiscountPercentage !== ''" />
           </td>
-            <v-select :options="this.entitiesStore.visafiles.map(file => file.file_name)" v-model="pno.AffectedVisaFile" @input="handleSelectChange(pno)" :reduce="label => label" placeholder="All" multiple></v-select>
+            <v-select :options="this.entitiesStore.visafiles.map(file => file.CarType)" v-model="pno.AffectedVisaFile" @input="handleSelectChange(pno)" :reduce="label => label" placeholder="All" multiple></v-select>
           <td style="background-color: #f4f4f4;">
             <input type="checkbox" v-model="pno.PNOSpecific" @change="pno.edited = true" />
           </td>
@@ -921,6 +932,33 @@
               </div>
             </div>
           </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Model
+                <div style="margin-left: 1ch;">
+                  <span @click="sortTable('AffectedVisaFile', 1)" style="cursor: pointer;">↑</span>
+                  <span @click="sortTable('AffectedVisaFile', -1)" style="cursor: pointer;">↓</span>
+                </div>
+              </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Start Date
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('StartDate', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('StartDate', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              End Date
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('EndDate', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('EndDate', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
           <th style="width: 10px">Action</th>
         </tr>
       </thead>
@@ -936,6 +974,17 @@
           </td>
           <td>
             <input type="FeatureWholesalePrice" v-model="pno.FeatureWholesalePrice" @input="pno.edited = true"
+              @change="pushUpdateXCode(pno)" />
+          </td>
+          <td>
+            <v-select :options="this.entitiesStore.visafiles.map(file => file.CarType)" v-model="pno.AffectedVisaFile" @option:deselected="pushUpdateXCode(pno)" @option:selected="pushUpdateXCode(pno)" :reduce="label => label" placeholder="All" multiple></v-select>
+          </td>
+          <td>
+            <input type="StartDate" v-model="pno.StartDate" @input="pno.edited = true"
+              @change="pushUpdateXCode(pno)" />
+          </td>
+          <td>
+            <input type="EndDate" v-model="pno.EndDate" @input="pno.edited = true"
               @change="pushUpdateXCode(pno)" />
           </td>
           <td style="background-color: #f4f4f4;">
@@ -954,6 +1003,15 @@
         </td>
         <td>
           <input type="FeatureWholesalePrice" v-model="pno.FeatureWholesalePrice" @input="pno.edited = true" />
+        </td>
+        <td>
+          <v-select :options="this.entitiesStore.visafiles.map(file => file.CarType)" v-model="pno.AffectedVisaFile" :reduce="label => label" placeholder="All" multiple></v-select>
+        </td>
+        <td>
+          <input type="StartDate" v-model="pno.StartDate" @input="pno.edited = true" />
+        </td>
+        <td>
+          <input type="EndDate" v-model="pno.EndDate" @input="pno.edited = true" />
         </td>
         <td style="background-color: #f4f4f4;">
           <span @click="createXCode(pno)" style="cursor: pointer;">[Save]</span>
@@ -1064,19 +1122,45 @@ export default {
       });
     },
     discounts() {
-      return this.entitiesStore.discounts.filter(code =>
-        Object.values(code).some(value =>
-          String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
-        )
-      ).sort((a, b) => {
-        if (a[this.sortColumn] === undefined || a[this.sortColumn] === null) return 1;
-        if (b[this.sortColumn] === undefined || b[this.sortColumn] === null) return -1;
-        if (a[this.sortColumn] < b[this.sortColumn]) return -1 * this.sortOrder;
-        if (a[this.sortColumn] > b[this.sortColumn]) return 1 * this.sortOrder;
-      });
+        let filtered = this.entitiesStore.discounts.map(discount => {
+            // Create a new object to avoid mutating the original data
+            let currentDiscount = { ...discount };
+            if (currentDiscount.DiscountPercentage !== undefined && currentDiscount.DiscountPercentage !== null) {
+              currentDiscount.DiscountPercentage = parseFloat(currentDiscount.DiscountPercentage).toFixed(2);
+            }
+            if (currentDiscount.RetailPrice !== undefined && currentDiscount.RetailPrice !== null) {
+              currentDiscount.RetailPrice = parseFloat(currentDiscount.RetailPrice).toFixed(2);
+            }
+            if (currentDiscount.WholesalePrice !== undefined && currentDiscount.WholesalePrice !== null) {
+              currentDiscount.WholesalePrice = parseFloat(currentDiscount.WholesalePrice).toFixed(2);
+            }
+            return currentDiscount;
+        }).filter(code =>
+            Object.values(code).some(value =>
+                String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
+            )
+        ).sort((a, b) => {
+            if (a[this.sortColumn] === undefined || a[this.sortColumn] === null) return 1;
+            if (b[this.sortColumn] === undefined || b[this.sortColumn] === null) return -1;
+            if (a[this.sortColumn] < b[this.sortColumn]) return -1 * this.sortOrder;
+            if (a[this.sortColumn] > b[this.sortColumn]) return 1 * this.sortOrder;
+        });
+        console.log("Test")
+        console.log(filtered)
+        return filtered;
     },
     custom_local_options() {
-      return this.entitiesStore.customlocaloptions.filter(code =>
+      return this.entitiesStore.customlocaloptions.map(option => {
+        // Create a new object to avoid mutating the original data
+        let customOption = { ...option };
+        if (customOption.FeatureRetailPrice !== undefined && customOption.FeatureRetailPrice !== null) {
+          customOption.FeatureRetailPrice = parseFloat(customOption.FeatureRetailPrice).toFixed(2);
+        }
+        if (customOption.FeatureWholesalePrice !== undefined && customOption.FeatureWholesalePrice !== null) {
+          customOption.FeatureWholesalePrice = parseFloat(customOption.FeatureWholesalePrice).toFixed(2);
+        }
+        return customOption;
+      }).filter(code =>
         Object.values(code).some(value =>
           String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
         )
@@ -1226,6 +1310,11 @@ export default {
   },
   methods: {
 
+    async handleModelYearChange() {
+      await this.refreshModelyear();
+      this.fetchPnoSpecifics();
+    },
+
     async refreshModelyear() {
       await this.pnoStore.setModelYear(this.model_year)
       await this.entitiesStore.setModelYear(this.model_year)
@@ -1234,7 +1323,11 @@ export default {
       this.salesversion = '';
       this.gearbox = '';
 
-      await this.fetchEntities();
+      await this.fetchEntities().then(() => {
+        console.log('VISA files fetched')
+      }).catch((error) => {
+        console.error('Error fetching VISA files', error)
+      })
 
       await this.pnoStore.fetchPnos().then(() => {
         console.log('PNOs fetched')
@@ -1260,6 +1353,14 @@ export default {
         if (this.displaytable === 'Gearbox') {
           await this.entitiesStore.fetchGearboxes();
           console.log('Gearboxes text fetched');
+        }
+        if (this.displaytable === 'VISA Files' || this.displaytable === 'Sales Channels') {
+          await this.entitiesStore.fetchVISAFiles();
+          console.log('Visa Files fetched');
+        }
+        if (this.displaytable === 'Sales Channels') {
+          await this.entitiesStore.fetchSalesChannels();
+          console.log('Sales channels fetched');
         }
       } catch (error) {
         console.error('Error fetching data', error);
@@ -1464,8 +1565,14 @@ export default {
     },
     // Discounts
     async pushUpdateDiscount(pno) {
+      console.log(pno)
       await this.entitiesStore.pushUpdateDiscount(pno.ID, pno.ChannelID, pno.DiscountPercentage, pno.RetailPrice, pno.WholesalePrice, pno.PNOSpecific, pno.AffectedVisaFile)
       pno.edited = false
+      await this.entitiesStore.fetchDiscounts(this.activeSalesChannel.ChannelID).then(() => {
+        console.log('Discounts fetched')
+      }).catch((error) => {
+        console.error('Error fetching discounts', error)
+      })
     },
     async createDiscount(pno) {
       pno.ID = null
@@ -1489,12 +1596,17 @@ export default {
     },
     // XCodes
     async pushUpdateXCode(pno) {
-      this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeSalesChannel.ChannelID, pno.FeatureCode, pno.FeatureRetailPrice, pno.FeatureWholesalePrice)
+      await this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeSalesChannel.ChannelID, pno.FeatureCode, pno.FeatureRetailPrice, pno.FeatureWholesalePrice, pno.AffectedVisaFile, pno.StartDate, pno.EndDate)
       pno.edited = false
+      await this.entitiesStore.fetchCustomLocalOptions(this.activeSalesChannel.ChannelID).then(() => {
+        console.log('X codes fetched')
+      }).catch((error) => {
+        console.error('Error fetching X codes', error)
+      })
     },
     async createXCode(pno) {
       pno.ID = null
-      await this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeSalesChannel.ChannelID, pno.FeatureCode, pno.FeatureRetailPrice, pno.FeatureWholesalePrice)
+      await this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeSalesChannel.ChannelID, pno.FeatureCode, pno.FeatureRetailPrice, pno.FeatureWholesalePrice, pno.AffectedVisaFile, pno.StartDate, pno.EndDate)
       pno.edited = false
       this.newcustomlocaloption = [];
       await this.entitiesStore.fetchCustomLocalOptions(this.activeSalesChannel.ChannelID).then(() => {
@@ -1527,7 +1639,7 @@ export default {
       })
     },
     addCustomLocalOption() {
-      this.newcustomlocaloption.push({ FeatureCode: '', FeatureRetailPrice: '', FeatureWholesalePrice: '', edited: true });
+      this.newcustomlocaloption.push({ FeatureCode: '', FeatureRetailPrice: '', FeatureWholesalePrice: '', AffectedVisaFile: '', StartDate: '', EndDate: '', edited: true });
     },
     handleSelectChange(pno) {
       if (pno.AffectedVisaFile.includes('All')) {

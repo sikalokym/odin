@@ -5,7 +5,7 @@
       <button v-on:click="showFilters = 'VariantBinder'"
         :class="{ 'highlighted': showFilters === 'VariantBinder' }">Variant Binder</button>
       <button v-on:click="showFilters = 'Pricelist'" style="margin-left: 10px;"
-        :class="{ 'highlighted': showFilters === 'Pricelist' }">Pricelist
+        :class="{ 'highlighted': showFilters === 'Pricelist' }">SAP Pricelist
       </button>
     </div>
     <div v-if="showFilters === 'VariantBinder'">
@@ -52,15 +52,16 @@
       <button
         style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translateX(-50%); margin-top: 64px;"
         @click="exportVariantBinder"
-        :disabled="this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === ''">Export
-        Variant Binder</button>
+        :disabled="exportInProgress || this.pnoStore.model_year === '0' || this.model === '' || this.model === '' || this.validity_year === '' || this.validity_week === ''">
+        Export Variant Binder
+      </button>
     </div>
     <div v-else-if="showFilters === 'Pricelist'">
       <!-- Filter for model years -->
       <label class="modelyear" style="width: 180px;">Model Year</label><br>
       <select name="model_year" id="model_year" v-model="model_year" @change="refreshModelyear"
         style="width:180px; height:30px; position: absolute;">
-        <option disabled value="0">select Model Year...</option>
+        <option disabled value="0">Please select Model Year...</option>
         <option v-for="model_year in model_years" :key="model_year" :value="model_year">{{ model_year }}</option>
       </select>
       <!-- Filter for sales_channels -->
@@ -73,11 +74,27 @@
           sales_channel.Code }}</option>
       </select>
       <br><br>
+        <!-- Filter for validity date of the Variant Binder export -->
+        <label class="validity_date" style="width: 180px;">Validity Date</label>
+        <div class="validity"
+          style="display: flex; gap: 10px; position:absolute; left: 50%; transform: translateX(-50%);">
+          <select name="validity_year" id="validity_year" v-model="validity_year" style="width:85px; height:30px;">
+            <option disabled value="">Year</option>
+            <option v-for="validity_year in validity_years" :key="validity_year" :value="validity_year">{{ validity_year
+              }}</option>
+          </select>
+          <select name="validity_week" id="validity_week" v-model="validity_week" style="width:85px; height:30px;">
+            <option disabled value="">Week</option>
+            <option v-for="n in validity_weeks" :key="n" :value="String(n).padStart(2, '0')">{{ String(n).padStart(2, '0')
+              }}</option>
+          </select>
+        </div>
+      <br><br><br>
 
       <!-- Export Pricelist Button -->
       <button
         style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translateX(-50%); margin-top: 24px;"
-        @click="exportPricelist" :disabled="this.pnoStore.model_year === '0' || this.sales_channel === ''">Export
+        @click="exportPricelist" :disabled="exportInProgress || this.pnoStore.model_year === '0' || this.sales_channel === ''">Export
         Pricelist</button>
     </div>
     <!-- Country Select Dropdown Menu -->
@@ -109,6 +126,7 @@ export default {
       engine: '',
       sales_channel: '',
       showFilters: 'VariantBinder',
+      exportInProgress: false,
       pnoStore: usePNOStore(),
       entitiesStore: useEntitiesStore(),
       countries: [],
@@ -187,27 +205,28 @@ export default {
       console.log('Engine cats refreshed')
     },
     async exportVariantBinder() {
+      this.exportInProgress = true;
       const link = document.createElement('a');
       link.href = `${axios.endpoint}/231/export/variant_binder?date=${this.validity_year}${this.validity_week}&model=${this.model}&engines_category=${this.engine}`;
-      console.log(link.href);
       link.setAttribute('download', 'VariantBinder_.xlsx');
       document.body.appendChild(link);
       link.click();
+      setTimeout(() => {
+        this.exportInProgress = false;
+      }, 10000);
     },
     async exportPricelist() {
+      this.exportInProgress = true;
       const link = document.createElement('a');
-      link.href = `${axios.endpoint}/231/export/sap-price-list?code=${this.sales_channel}`;
+      link.href = `${axios.endpoint}/231/export/sap-price-list?date=${this.validity_year}${this.validity_week}&code=${this.sales_channel}`;
       console.log(link.href);
-
-      // This ensures the link is ready to download the file
       link.setAttribute('download', 'SAP_Price_Lists.zip');
       document.body.appendChild(link);
-
-      // Trigger the download
       link.click();
-
-      // Cleanup: remove the link after triggering the download
       document.body.removeChild(link);
+      setTimeout(() => {
+        this.exportInProgress = false;
+      }, 10000);
     },
     changeCountry(newCountry) {
       this.pnoStore.setCountry(newCountry);
