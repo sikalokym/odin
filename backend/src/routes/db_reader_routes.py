@@ -499,6 +499,8 @@ def get_visa_files(country, model_year):
         # Load available Visa files
         df_visa = get_available_visa_files(country, model_year)
         
+        df_visa.drop_duplicates(inplace=True)
+        
         records = df_visa.to_dict(orient='records')
         return jsonify(records), 200
     except Exception as e:
