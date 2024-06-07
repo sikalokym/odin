@@ -139,8 +139,15 @@ class DBOperations:
                     MERGE INTO {target_table_name} AS TARGET
                     USING #tmp_staging_{target_table_name} AS SOURCE
                     ON {conditional_columns_sql}
+                """
+                
+                if update_sql:
+                    sql_command += f"""
                     WHEN MATCHED THEN
                         UPDATE SET {update_sql}
+                    """
+                    
+                sql_command += f"""
                     WHEN NOT MATCHED BY TARGET THEN
                         INSERT ({insert_columns_sql})
                         VALUES ({insert_values_sql});
@@ -169,12 +176,39 @@ class DBOperations:
 
         self.logger.debug('Inserting entities')
         entity_columns = ['Code', 'Special', 'ShortText', 'MarketText', 'CountryCode', 'StartDate', 'EndDate']
+        entities_with_translation = ['Typ', 'SV', 'G']
         for data_type, group in df.groupby('DataType'):
+            if data_type in entities_with_translation:
+                for code in group['Code'].unique():
+                    old_df = DBOperations.instance.get_table_df(self.config.get('TABLES', data_type), conditions=[f'CountryCode={country_code}', f'Code={code}'])
+                    if not old_df.empty:
+                        custom_names = old_df['CustomName'].unique().tolist()
+                        custom_names = [name for name in custom_names if name]
+                        if len(custom_names) > 1:
+                            self.logger.warning(f"Multiple custom names found for code {code} in {data_type}")
+                        elif len(custom_names) == 0:
+                            self.logger.warning(f"No custom name found for code {code} in {data_type}") 
+                        else:
+                            group['CustomName'] = custom_names[0]
+                            entity_columns.insert(-3, 'CustomName')
+            elif data_type == 'En':
+                for code in group['Code'].unique():
+                    old_df = DBOperations.instance.get_table_df(self.config.get('TABLES', data_type), conditions=[f'CountryCode={country_code}', f"Code='{code}'"])
+                    if not old_df.empty:
+                        old_df = old_df.dropna(subset=['CustomName'])
+                        if old_df.empty:
+                            self.logger.warning(f"No custom name found for code {code} in {data_type}")
+                        else:    
+                            group.loc[group['Code'] == code, 'CustomName'] = old_df['CustomName'].values[0]
+                            group.loc[group['Code'] == code, 'Performance'] = old_df['Performance'].values[0]
+                            group.loc[group['Code'] == code, 'EngineCategory'] = old_df['EngineCategory'].values[0]
+                            group.loc[group['Code'] == code, 'EngineType'] = old_df['EngineType'].values[0]
+                            entity_columns.insert(-3, 'CustomName')
+                            entity_columns.insert(-3, 'Performance')
+                            entity_columns.insert(-3, 'EngineCategory')
+                            entity_columns.insert(-3, 'EngineType')
             table_name = self.config.get('TABLES', data_type)
-            if table_name=='Feature':
-                conditional_columns = ['Code', 'Special', 'CountryCode', 'StartDate']
-            else:
-                conditional_columns = ['Code', 'CountryCode', 'StartDate']
+            conditional_columns = ['Code', 'Special', 'CountryCode', 'StartDate']
             group = group.drop('DataType', axis=1)
             self.upsert_data_from_df(group, table_name, entity_columns, conditional_columns)
 

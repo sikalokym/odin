@@ -10,6 +10,7 @@ backend/.env
 backend/.venv/
 backend/.vscode/
 backend/.idea/
+backend/.logs/
 
 docs/
 dist/

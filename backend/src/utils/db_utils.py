@@ -399,3 +399,48 @@ def log_df(df, msg_prefix, callable_logger, country_code=None):
             msg += f'{column}: {row[column]} '
 
         callable_logger(msg, extra={'country_code': country_code})
+
+def get_column_map():
+    """
+    Returns a dictionary mapping the old column names of visa files to the new column names.
+
+    Returns: 
+        dict: A dictionary mapping the old column names to the new column names.
+
+    """
+    column_map = {
+        'Active': 'Active',
+        'Sales Org.': 'SalesOrg',
+        'Distr. Ch.': 'DistrCh',
+        'Price List': 'PriceList',
+        'Dealer Group': 'DealerGroup',
+        'Country': 'Country',
+        'Car Type': 'CarType',
+        'Engine': 'Engine',
+        'Sales Version': 'SalesVersion',
+        'Body': 'Body',
+        'Gearbox': 'Gearbox',
+        'Steering': 'Steering',
+        'Market Code': 'MarketCode',
+        'Model Year': 'ModelYear',
+        'Structure week': 'StructureWeek',
+        'Date From': 'DateFrom',
+        'Date To': 'DateTo',
+        'Currency': 'Currency',
+        'Color': 'Color',
+        'Option': 'Options',
+        'Upholstery': 'Upholstery',
+        'Package': 'Package',
+        'S-Note': 'SNote',
+        'MSRP': 'MSRP',
+        'TAX2': 'TAX2',
+        'VAT': 'VAT',
+        'TAX1': 'TAX1',
+        'Price Before Tax': 'PriceBeforeTax',
+        'Wholesale Price': 'WholesalePrice',
+        'Transfer Price': 'TransferPrice',
+        'VisaFile': 'VisaFile',
+        'CountryCode': 'CountryCode'
+    }
+
+    return column_map

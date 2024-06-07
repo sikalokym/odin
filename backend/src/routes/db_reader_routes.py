@@ -3,8 +3,8 @@ from flask import Blueprint, request, jsonify
 
 from src.database.db_operations import DBOperations
 from src.database.services import get_engine_cats
-from src.storage.blob import get_available_visa_files
-from src.utils.db_utils import filter_df_by_model_year, filter_model_year_by_translation
+from src.ingest.visa_files.services import get_available_visa_files
+from src.utils.db_utils import filter_df_by_model_year, filter_model_year_by_translation, get_column_map
 
 
 bp_db_reader = Blueprint('db_reader', __name__, url_prefix='/api/db/<country>/<model_year>')
@@ -497,9 +497,9 @@ def get_custom_local_options(country, model_year):
 def get_visa_files(country, model_year):
     try:
         # Load available Visa files
-        visa_files = get_available_visa_files(country, model_year)
+        df_visa = get_available_visa_files(country, model_year)
         
-        records = visa_files.to_dict(orient='records')
+        records = df_visa.to_dict(orient='records')
         return jsonify(records), 200
     except Exception as e:
         return str(e), 500

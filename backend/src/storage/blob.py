@@ -58,20 +58,6 @@ def load_available_visa_files(country_code):
     visa_files = {visa_name: blob_name for visa_name, blob_name in zip(visa_names, blob_names)}
     return visa_files
 
-def get_available_visa_files(country_code, model_year):
-    """
-    Loads the list of available Visa files from the specified container.
-
-    Args:
-        country_code (str): The country code to filter the blob names.
-
-    Returns:
-        list: A list of blob names without the file extensions.
-    """
-    raw_visa_files = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), columns=['VisaFile', '[Car Type] as CarType'], conditions=[f"CountryCode = '{country_code}'", f"[Model Year] = '{model_year}'"])
-
-    return raw_visa_files
-    
 def load_visa_files(country_code):
     """
     Loads Visa files from a specified container and returns a concatenated DataFrame.

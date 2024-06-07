@@ -4,6 +4,8 @@ from src.database.db_operations import DBOperations
 
 import configparser
 
+from src.utils.db_utils import get_column_map
+
 config = configparser.ConfigParser()
 config.read('config/data_model.cfg')
 
@@ -35,10 +37,11 @@ def ingest_visa_data(spec_markt):
     Returns:
         None
     """
-    df_raw_visa = blob.load_visa_files(spec_markt)
-    df_visa = df_raw_visa.copy()
+    df_visa = blob.load_visa_files(spec_markt)
+    c_map = get_column_map()
+    df_visa.columns = [c_map[col] for col in df_visa.columns]
     
-    DBOperations.instance.upsert_data_from_df(df_raw_visa, config.get('RELATIONS', 'RAW_VISA'), df_visa.columns.tolist(), df_visa.columns.tolist())
+    DBOperations.instance.upsert_data_from_df(df_visa, config.get('RELATIONS', 'RAW_VISA'), df_visa.columns.tolist(), df_visa.columns.tolist())
     
     columns = ['Model', 'Engine', 'SalesVersion', 'Body', 'Gearbox', 'Steering', 'MarketCode', 'ModelYear', 'StartDate', 'EndDate', 'Color', 'Options', 'Upholstery', 'Package', 'Price', 'PriceBeforeTax']
     df_processed = preprocess.process_visa_df(df_visa, columns)
@@ -81,3 +84,21 @@ def assign_prices(country_code):
     Assigns prices from the Visa dataframe using DBOperations instance.
     """
     DBOperations.instance.assign_prices_from_visa_dataframe(country_code)
+
+def get_available_visa_files(country_code, model_year):
+    """
+    Loads the list of available Visa files from the specified container.
+
+    Args:
+        country_code (str): The country code to filter the blob names.
+
+    Returns:
+        list: A list of blob names without the file extensions.
+    """
+    raw_visa_files = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), columns=['VisaFile', 'CarType'], conditions=[f"CountryCode = '{country_code}'", f"[Model Year] = '{model_year}'"])
+    c_map = get_column_map()
+    
+    # flip the dictionary
+    c_map = {v: k for k, v in c_map.items()}
+    raw_visa_files.columns = [c_map[col] for col in raw_visa_files.columns]
+    return raw_visa_files
