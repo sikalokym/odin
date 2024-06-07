@@ -96,9 +96,5 @@ def get_available_visa_files(country_code, model_year):
         list: A list of blob names without the file extensions.
     """
     raw_visa_files = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), columns=['VisaFile', 'CarType'], conditions=[f"CountryCode = '{country_code}'", f"ModelYear = '{model_year}'"])
-    c_map = get_column_map()
-    
-    # flip the dictionary
-    c_map = {v: k for k, v in c_map.items()}
-    raw_visa_files.columns = [c_map[col] for col in raw_visa_files.columns]
+
     return raw_visa_files
