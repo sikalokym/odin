@@ -85,7 +85,7 @@ def assign_prices(country_code):
     """
     DBOperations.instance.assign_prices_from_visa_dataframe(country_code)
 
-def get_available_visa_files(country_code, model_year):
+def get_available_visa_files(country_code, model_year, visa_columns=None):
     """
     Loads the list of available Visa files from the specified container.
 
@@ -95,6 +95,19 @@ def get_available_visa_files(country_code, model_year):
     Returns:
         list: A list of blob names without the file extensions.
     """
-    raw_visa_files = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), columns=['VisaFile', 'CarType'], conditions=[f"CountryCode = '{country_code}'", f"ModelYear = '{model_year}'"])
+    raw_visa_files = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), columns=visa_columns, conditions=[f"CountryCode = '{country_code}'", f"ModelYear = '{model_year}'"])
 
     return raw_visa_files
+
+def remove_visa_file(country_code, visa_file):
+    """
+    Removes a visa file from the system and all its assigned prices.
+
+    Args:
+        country_code (str): The country code of the visa file to be deleted.
+        visa_file (str): The name of the visa file to be deleted.
+    """
+    raw_visa_table_name = DBOperations.instance.config.get('RELATIONS', 'RAW_VISA')
+    delete_query = f"DELETE FROM {raw_visa_table_name} WHERE VisaFile = ? AND CountryCode = {country_code}"
+    with DBOperations.instance.get_cursor() as cursor:
+        cursor.execute(delete_query, (visa_file,))

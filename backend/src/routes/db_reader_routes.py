@@ -497,7 +497,8 @@ def get_custom_local_options(country, model_year):
 def get_visa_files(country, model_year):
     try:
         # Load available Visa files
-        df_visa = get_available_visa_files(country, model_year)
+        visa_columns = ['VisaFile', 'CarType']
+        df_visa = get_available_visa_files(country, model_year, visa_columns)
         
         df_visa.drop_duplicates(inplace=True)
         
@@ -505,3 +506,11 @@ def get_visa_files(country, model_year):
         return jsonify(records), 200
     except Exception as e:
         return str(e), 500
+
+# get visa file data
+@bp_db_reader.route('/visa-file', methods=['GET'])
+def get_visa_file_data(country, model_year):
+    visa_file = request.args.get('VisaFile')
+    conditions = [f"VisaFile = '{visa_file}'", f"CountryCode = {country}"]
+    df_visa_file = get_available_visa_files(country, model_year)
+    return df_visa_file.to_json(orient='records')

@@ -1,5 +1,7 @@
 import pandas as pd
 
+from src.utils.db_utils import get_column_map
+
 
 def process_visa_df(df, cols):
     """
@@ -43,7 +45,10 @@ def process_visa_df(df, cols):
 def is_visa_file(excel):
     try:
         df = pd.read_excel(excel, usecols='A:AD', dtype=str)
+        c_map = get_column_map()
+        assert set(c_map.keys()) == set(df.columns), "Column sets do not match"
         process_visa_df(df, ['Model'])
         return True
-    except:
+    except Exception as e:
+        print(f"Assertion error: {e}")
         return False

@@ -530,12 +530,39 @@ def delete_custom_local_options(id):
     delete_query = f"DELETE FROM {table_name} WHERE ID = ?"
     with DBOperations.instance.get_cursor() as cursor:
         cursor.execute(delete_query, (id,))
+
+# Update visa file data
+@bp_db_writer.route('/visa', methods=['POST'])
+def upsert_visa_file(country, model_year):
+    data = request.json
+    if not data:
+        return 'No data provided', 400
+    if 'ID' not in data:
+        return 'ID is required', 400
+    try:
+        data['StartDate'] = int (data['StartDate']) if data.get('StartDate') and data['StartDate'] != '' else 0
+        data['EndDate'] = int (data['EndDate']) if data.get('EndDate') and data['EndDate'] != '' else 999999
         
+        # Create a DataFrame with a single row
+        df_new_entry = pd.DataFrame([data])
+
+        # Extract columns for upsert
+        all_columns = df_new_entry.columns.tolist()
+        conditional_columns = ['ID']
+
+        # Perform the upsert
+        DBOperations.instance.upsert_data_from_df(df_new_entry, DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), all_columns, conditional_columns)
+    except Exception as e:
+        return str(e), 500
+    
+    return 'Visa file created successfully', 200
+ 
 @bp_db_writer.route('/visa', methods=['DELETE'])
 def delete_visa_file(country):
-    visa_file_name = request.args.get('file_name')
+    visa_file_name = request.args.get('VisaFile')
     table_name = DBOperations.instance.config.get('RELATIONS', 'RAW_VISA')
     delete_query = f"DELETE FROM {table_name} WHERE VisaFile = ? AND CountryCode = {country}"
     with DBOperations.instance.get_cursor() as cursor:
         cursor.execute(delete_query, (visa_file_name,))
+    
     return {"message": "Record deleted successfully"}, 200
