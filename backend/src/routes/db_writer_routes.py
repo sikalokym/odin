@@ -3,7 +3,7 @@ from flask import Blueprint, request
 import pandas as pd
 
 from src.database.db_operations import DBOperations
-from src.utils.db_utils import filter_df_by_model_year
+from src.utils.db_utils import filter_df_by_model_year, get_column_map
 
 
 bp_db_writer = Blueprint('db_writer', __name__, url_prefix='/api/db/<country>/<model_year>/write')
@@ -540,18 +540,14 @@ def upsert_visa_file(country, model_year):
     if 'ID' not in data:
         return 'ID is required', 400
     try:
-        data['StartDate'] = int (data['StartDate']) if data.get('StartDate') and data['StartDate'] != '' else 0
-        data['EndDate'] = int (data['EndDate']) if data.get('EndDate') and data['EndDate'] != '' else 999999
-        
-        # Create a DataFrame with a single row
-        df_new_entry = pd.DataFrame([data])
+        df_upsert_entry = pd.DataFrame([data])
 
         # Extract columns for upsert
-        all_columns = df_new_entry.columns.tolist()
+        all_columns = df_upsert_entry.columns.tolist()
         conditional_columns = ['ID']
 
         # Perform the upsert
-        DBOperations.instance.upsert_data_from_df(df_new_entry, DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), all_columns, conditional_columns)
+        DBOperations.instance.upsert_data_from_df(df_upsert_entry, DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), all_columns, conditional_columns)
     except Exception as e:
         return str(e), 500
     

@@ -511,6 +511,7 @@ def get_visa_files(country, model_year):
 @bp_db_reader.route('/visa-file', methods=['GET'])
 def get_visa_file_data(country, model_year):
     visa_file = request.args.get('VisaFile')
-    conditions = [f"VisaFile = '{visa_file}'", f"CountryCode = {country}"]
-    df_visa_file = get_available_visa_files(country, model_year)
+    conditions = [f"VisaFile = '{visa_file}'", f"CountryCode = {country}", f"ModelYear = {model_year}"]
+
+    df_visa_file = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=conditions)
     return df_visa_file.to_json(orient='records')
