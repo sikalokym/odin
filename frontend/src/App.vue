@@ -11,24 +11,27 @@
 import NavBar from './components/shared/NavBar.vue';
 import { usePNOStore } from './stores/pno.js'
 import { useEntitiesStore } from './stores/entities.js'
+import { useAuthStore } from './stores/auth.js'
 
 export default {
   name: 'App',
   components: {
     NavBar
   },
-  async created() {
+  async mounted() {
     
     const pnoStore = usePNOStore()
     const entitiesStore = useEntitiesStore()
+    const authStore = useAuthStore()
 
-    let country = await entitiesStore.fetchSupportedCountries()
-    if (country === undefined) {
+    let user_allowed_countries = authStore.getCountriesRoles()
+    user_allowed_countries = user_allowed_countries.map((country) => country.country)
+    let countries = await entitiesStore.fetchSupportedCountries(user_allowed_countries)
+    if (countries === undefined) {
       console.error('Error fetching supported countries')
       return
     }
-    console.log(country)
-    await pnoStore.setCountry(country)
+    await pnoStore.setCountries(countries)
     await pnoStore.fetchAvailableModelYears().then(() => {
       console.log('Available model years fetched')
     }).catch((error) => {

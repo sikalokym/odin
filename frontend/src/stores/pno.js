@@ -66,7 +66,7 @@ export const usePNOStore = defineStore({
   },
   actions: {
     async fetchAvailableModelYears() {
-      let path = `/setup/${this.country}/available_model_years`
+      let path = `/setup/${this.country.Code}/available_model_years`
       return await index.get(path).then((response) => {
         this.available_model_years = response.data
         console.log("Available model years fetched")
@@ -75,7 +75,7 @@ export const usePNOStore = defineStore({
       })
     },
     async fetchEngineCats(model) {
-      let path = `/db/${this.country}/${this.model_year}/engine_cats?model=${model}`
+      let path = `/db/${this.country.Code}/${this.model_year}/engine_cats?model=${model}`
       return await index.get(path).then((response) => {
         this.engine_cats = response.data
       }).catch((error) => {
@@ -83,7 +83,7 @@ export const usePNOStore = defineStore({
       })
     },
     async fetchPnos() {
-      let path = `/db/${this.country}/${this.model_year}/pnos`
+      let path = `/db/${this.country.Code}/${this.model_year}/pnos`
       return await index.get(path).then((response) => {
         this.pnos = response.data
       }).catch((error) => {
@@ -92,7 +92,7 @@ export const usePNOStore = defineStore({
     },
     // PNO specific
     async fetchPnosFeatures(model, engine, salesversion, gearbox) {
-      let path = `/db/${this.country}/${this.model_year}/features?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
+      let path = `/db/${this.country.Code}/${this.model_year}/features?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
       return await index.get(path).then((response) => {
         this.pnosFeatures = response.data
       }).catch((error) => {
@@ -100,7 +100,7 @@ export const usePNOStore = defineStore({
       })
     },
     async fetchPnosOptions(model, engine, salesversion, gearbox) {
-      let path = `/db/${this.country}/${this.model_year}/options?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
+      let path = `/db/${this.country.Code}/${this.model_year}/options?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
       return await index.get(path).then((response) => {
         this.pnosOptions = response.data
       }).catch((error) => {
@@ -108,7 +108,7 @@ export const usePNOStore = defineStore({
       })
     },
     async fetchPnosColors(model, engine, salesversion, gearbox) {
-      let path = `/db/${this.country}/${this.model_year}/colors?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
+      let path = `/db/${this.country.Code}/${this.model_year}/colors?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
       return await index.get(path).then((response) => {
         this.pnosColors = response.data
       }).catch((error) => {
@@ -116,7 +116,7 @@ export const usePNOStore = defineStore({
       })
     },
     async fetchPnosUpholstery(model, engine, salesversion, gearbox) {
-      let path = `/db/${this.country}/${this.model_year}/upholstery?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
+      let path = `/db/${this.country.Code}/${this.model_year}/upholstery?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
       return await index.get(path).then((response) => {
         this.pnosUpholstery = response.data
       }).catch((error) => {
@@ -124,7 +124,7 @@ export const usePNOStore = defineStore({
       })
     },
     async fetchPnosPackages(model, engine, salesversion, gearbox) {
-      let path = `/db/${this.country}/${this.model_year}/packages?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
+      let path = `/db/${this.country.Code}/${this.model_year}/packages?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
       return await index.get(path).then((response) => {
         this.pnosPackages = response.data
       }).catch((error) => {
@@ -132,7 +132,7 @@ export const usePNOStore = defineStore({
       })
     },
     async fetchPnosChangelog(model, engine, salesversion, gearbox) {
-      let path = `/db/${this.country}/${this.model_year}/changelog?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
+      let path = `/db/${this.country.Code}/${this.model_year}/changelog?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
       return await index.get(path).then((response) => {
         response.data.forEach(item => {
           let date = new Date(item.ChangeDate);
@@ -157,7 +157,7 @@ export const usePNOStore = defineStore({
         updates.ID = ID;
       }
       let subpath = (ID !== null) ? 'update/customfeatures' : 'features';
-      let path = `/db/${this.country}/${this.model_year}/write/${subpath}`
+      let path = `/db/${this.country.Code}/${this.model_year}/write/${subpath}`
       return index.post(path, updates);
     },
     async pushNewCustomFeature(model, markettext, category, startDate, endDate) {
@@ -170,7 +170,7 @@ export const usePNOStore = defineStore({
       if (model !== '') {
         updates.Model = model;
       }
-      let path = `/db/${this.country}/${this.model_year}/write/insert/customfeatures`
+      let path = `/db/${this.country.Code}/${this.model_year}/write/insert/customfeatures`
       return index.post(path, updates);
     },
     async deleteCustomFeature(model, ID) {
@@ -180,7 +180,7 @@ export const usePNOStore = defineStore({
       if (model !== '') {
         updates.Model = model;
       }
-      let path = `/db/${this.country}/${this.model_year}/write/delete/customfeatures`
+      let path = `/db/${this.country.Code}/${this.model_year}/write/delete/customfeatures`
       return index.post(path, updates);
     },
     async pushUpdateOption(model, option, translation) {
@@ -191,7 +191,7 @@ export const usePNOStore = defineStore({
       if (model !== '') {
         updates.Model = model;
       }
-      let path = `/db/${this.country}/${this.model_year}/write/options`
+      let path = `/db/${this.country.Code}/${this.model_year}/write/options`
       return index.post(path, updates);
     },
     async pushUpdateColor(model, color, translation) {
@@ -202,7 +202,7 @@ export const usePNOStore = defineStore({
       if (model !== '') {
         updates.Model = model;
       }
-      let path = `/db/${this.country}/${this.model_year}/write/colors`
+      let path = `/db/${this.country.Code}/${this.model_year}/write/colors`
       return index.post(path, updates);
     },
     async pushUpdateUpholstery(model, upholstery, translation, customcategory) {
@@ -214,7 +214,7 @@ export const usePNOStore = defineStore({
       if (model !== '') {
         updates.Model = model;
       }
-      let path = `/db/${this.country}/${this.model_year}/write/upholstery`
+      let path = `/db/${this.country.Code}/${this.model_year}/write/upholstery`
       return index.post(path, updates);
     },
     async pushUpdatePackage(model, packagecode, translation) {
@@ -225,12 +225,15 @@ export const usePNOStore = defineStore({
       if (model !== '') {
         updates.Model = model;
       }
-      let path = `/db/${this.country}/${this.model_year}/write/packages`
+      let path = `/db/${this.country.Code}/${this.model_year}/write/packages`
       return index.post(path, updates);
     },
-    // General Setup
-    setCountry(newCountry) {
-      this.country = newCountry;
+    async setCountries(supported_countries) {
+      this.supported_countries = supported_countries;
+      this.country = supported_countries[0] || '';
+    },
+    async setCountry(newCountry) {
+        this.country = newCountry;
     },
     setModelYear(newModelYear) {
       this.model_year = newModelYear;

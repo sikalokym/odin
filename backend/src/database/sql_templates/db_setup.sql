@@ -6,8 +6,8 @@ CREATE TABLE SupportedCountry (
 );
 
 -- Insert a new row into the SupportedCountry table
-INSERT INTO SupportedCountry (Code, CountryName)
-VALUES ('231', 'Germany');
+-- INSERT INTO SupportedCountry (Code, CountryName)
+-- VALUES ('231', 'Germany');
 
 -- Create the Model table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Model')

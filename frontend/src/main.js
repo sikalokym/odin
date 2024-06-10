@@ -4,13 +4,15 @@ import { createPinia } from 'pinia'
 
 import router from './router'
 import { initializeMsal } from './authConfig';
+import { ensureAuthenticated } from './authService';
 
 
-let app = createApp(App)
 const pinia = createPinia()
 
-initializeMsal().then(() => {
-    app.use(router);
+initializeMsal().then(async ()=> {
+    let app = createApp(App)
     app.use(pinia);
+    app.use(router);
+    await ensureAuthenticated()
     app.mount('#app');
   });

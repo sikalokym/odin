@@ -81,7 +81,7 @@
     <div class="country bottom-div">
       <label for="country" class="countrylabel">Change Country: </label>
       <select v-model="selectedCountry" @change="changeCountry(this.selectedCountry)">
-        <option value="231" selected disabled>Germany</option>
+        <option v-for="country in supported_countries" :key="country" :value="country">{{ country.CountryName }}</option>
       </select>
     </div>
   </aside>
@@ -1050,7 +1050,7 @@ export default {
       pnoStore: usePNOStore(),
       entitiesStore: useEntitiesStore(),
       countries: useEntitiesStore().countries,
-      selectedCountry: '231',
+      selectedCountry: '',
       sortOrder: 1,
       sortColumn: '',
       searchTerm: '',
@@ -1074,6 +1074,7 @@ export default {
   async created() {
     this.pnoStore.setModelYear('0');
     this.entitiesStore.setModelYear('0');
+    this.selectedCountry = this.pnoStore.country;
   },
   computed: {
     filteredPnos() {
@@ -1094,7 +1095,7 @@ export default {
     model_years() {
       return this.pnoStore.available_model_years
     },
-    countries() {
+    supported_countries() {
       return this.pnoStore.supported_countries
     },
     visa_files() {

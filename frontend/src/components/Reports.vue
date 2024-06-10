@@ -78,7 +78,7 @@ export default {
       pnoStore: usePNOStore(),
       entitiesStore: useEntitiesStore(),
       countries: useEntitiesStore().countries,
-      selectedCountry: '231',
+      selectedCountry: '',
     }
   },
   async created() {
@@ -95,10 +95,6 @@ export default {
     model_years() {
       return this.pnoStore.available_model_years
     },
-    countries() {
-      return this.pnoStore.supported_countries
-    },
-    // Unique values for tables
     tableChangelog() {
       return this.pnoStore.pnosChangelog
     },

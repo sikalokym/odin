@@ -101,7 +101,7 @@
     <div class="bottom-div">
       <label for="country" class="countrylabel">Change Country: </label>
       <select v-model="selectedCountry" @change="changeCountry(this.selectedCountry)">
-        <option value="231" selected disabled>Germany</option>
+        <option v-for="country in supported_countries" :key="country" :value="country">{{ country.CountryName }}</option>
       </select>
     </div>
   </aside>
@@ -130,7 +130,7 @@ export default {
       pnoStore: usePNOStore(),
       entitiesStore: useEntitiesStore(),
       countries: [],
-      selectedCountry: '231',
+      selectedCountry: '',
     }
   },
   async created() {
@@ -141,6 +141,7 @@ export default {
     }).catch((error) => {
       console.error('Error fetching sales channels', error)
     })
+    this.selectedCountry = this.pnoStore.country;
   },
   computed: {
     filteredPnos() {
@@ -154,6 +155,9 @@ export default {
     },
     model_years() {
       return this.pnoStore.available_model_years
+    },
+    supported_countries() {
+      return this.pnoStore.supported_countries
     },
     validity_years() {
       if (this.model_year === '0') {
@@ -207,7 +211,7 @@ export default {
     async exportVariantBinder() {
       this.exportInProgress = true;
       const link = document.createElement('a');
-      link.href = `${axios.endpoint}/231/export/variant_binder?date=${this.validity_year}${this.validity_week}&model=${this.model}&engines_category=${this.engine}`;
+      link.href = `${axios.endpoint}/${this.selectedCountry.Code}/export/variant_binder?date=${this.validity_year}${this.validity_week}&model=${this.model}&engines_category=${this.engine}`;
       link.setAttribute('download', 'VariantBinder_.xlsx');
       document.body.appendChild(link);
       link.click();
@@ -218,7 +222,7 @@ export default {
     async exportPricelist() {
       this.exportInProgress = true;
       const link = document.createElement('a');
-      link.href = `${axios.endpoint}/231/export/sap-price-list?date=${this.validity_year}${this.validity_week}&code=${this.sales_channel}`;
+      link.href = `${axios.endpoint}/${this.selectedCountry.Code}/export/sap-price-list?date=${this.validity_year}${this.validity_week}&code=${this.sales_channel}`;
       console.log(link.href);
       link.setAttribute('download', 'SAP_Price_Lists.zip');
       document.body.appendChild(link);
@@ -228,9 +232,9 @@ export default {
         this.exportInProgress = false;
       }, 10000);
     },
-    changeCountry(newCountry) {
-      this.pnoStore.setCountry(newCountry);
-      this.entitiesStore.setCountry(newCountry);
+    async changeCountry(newCountry) {
+      await this.pnoStore.setCountry(newCountry);
+      await this.entitiesStore.setCountry(newCountry);
     },
   }
 };
