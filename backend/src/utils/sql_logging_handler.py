@@ -42,7 +42,7 @@ def setup_logger_config(logger):
     # Create a handler that saves the logs to a file and saves them for 7 days
     new_handler = logging.handlers.TimedRotatingFileHandler('logs/app.log', when='D', interval=1, backupCount=7)
     new_handler.setLevel(logging.DEBUG)
-    new_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    new_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
     logger.addHandler(new_handler)
 
     # Create a handler that saves the logs to a database
