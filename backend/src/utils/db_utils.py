@@ -314,7 +314,7 @@ def filter_df_by_model_year(df, model_year):
             return df
     elif not isinstance(model_year, int):
         raise ValueError("Model year must be an integer or string.")
-    return df[(df['StartDate'].apply(get_model_year_from_date) == model_year) | (df['EndDate'].apply(get_model_year_from_date) == model_year)]
+    return df[((df['StartDate'].apply(get_model_year_from_date) <= model_year) & (df['EndDate'].apply(get_model_year_from_date) >= model_year)) | (df['StartDate'].apply(get_model_year_from_date) == model_year) | (df['EndDate'].apply(get_model_year_from_date) == model_year)]
     
 def filter_model_year_by_translation(df, conditional_columns):
     """
