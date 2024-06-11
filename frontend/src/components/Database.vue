@@ -94,11 +94,15 @@
       <button v-if="displaytable === 'Features' && model_year !== '0' && !customFeatureTable"
         @click="showCustomFeatureTable">Add custom feature</button>
       <!-- Upload Visa File -->
-      <button v-if="displaytable === 'VISA Files' && model_year !== '0'" @click="$refs.file.click()">Upload VISA
+      <button v-if="displaytable === 'VISA Files' && model_year !== '0' && !visaTable" @click="$refs.file.click()">Upload VISA
         file</button>
       <input type='file' class="visaupload" id="getFile" ref="file" style="display:none"
         accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" @change="uploadVisa">
-      <!-- Displaying discounts for sales channel -->
+      <!-- Displaying Name of VISA File -->
+      <button v-if="visaTable" @click="this.visaTable = false">Return to VISA Files</button>
+      <div v-if="displaytable === 'VISA Files' && model_year !== '0' && visaTable" style="margin-left: 10px;"><strong>[Model {{
+      this.activeVisaFile.CarType + " || " + this.activeVisaFile.VisaFile }}]</strong></div>
+        <!-- Displaying discounts for sales channel -->
       <div v-if="displaytable === 'Sales Channels' && model_year !== '0' && discountTable"><strong>[{{
       this.activeSalesChannel.Code + " " + this.activeSalesChannel.ChannelName }}]</strong> Discounts</div>
       <div v-if="displaytable === 'Sales Channels' && model_year !== '0' && xCodesTable"><strong>[{{
@@ -645,8 +649,8 @@
         </tr>
       </tbody>
     </table>
-    <!-- VISA File Table -->
-    <table v-if="displaytable === 'VISA Files' && model_year !== '0'">
+    <!-- VISA Files Table -->
+    <table v-if="displaytable === 'VISA Files' && model_year !== '0' && !visaTable">
       <thead v-if="model_year !== '0'">
         <tr>
           <th>
@@ -675,11 +679,386 @@
           <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
             {{ pno.CarType }}
           </td>
-          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: left;">
-            {{ pno.VisaFile }}
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: left;" @click="fetchVISAFile(pno)">
+            <span style="cursor: pointer;">{{ pno.VisaFile }}</span>
           </td>
           <td style="background-color: #f4f4f4;">
-            <span @click="deleteVISAFile(pno.VisaFile)" style="cursor: pointer; color: red;">[X]</span>
+            <span @click.stop="deleteVISAFile(pno.VisaFile)" style="cursor: pointer; color: red;">[X]</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <!-- VISA File Table -->
+    <table v-if="displaytable === 'VISA Files' && model_year !== '0' && visaTable">
+      <thead v-if="model_year !== '0'">
+        <tr>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Active
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Active', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Active', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Sales Org
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('SalesOrg', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('SalesOrg', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              DistrCh
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('DistrCh', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('DistrCh', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              PriceList
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('PriceList', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('PriceList', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              DealerGroup
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('DealerGroup', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('DealerGroup', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Country
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Country', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Country', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              CarType
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('CarType', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('CarType', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Engine
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Engine', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Engine', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              SalesVersion
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('SalesVersion', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('SalesVersion', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Body
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Body', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Body', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Gearbox
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Gearbox', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Gearbox', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Steering
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Steering', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Steering', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              MarketCode
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('MarketCode', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('MarketCode', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              ModelYear
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('ModelYear', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('ModelYear', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              StructureWeek
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('StructureWeek', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('StructureWeek', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              DateFrom
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('DateFrom', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('DateFrom', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              DateTo
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('DateTo', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('DateTo', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Currency
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Currency', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Currency', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Color
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Color', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Color', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Options
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Options', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Options', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Upholstery
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Upholstery', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Upholstery', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Package
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Package', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Package', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              SNote
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('SNote', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('SNote', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              MSRP
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('MSRP', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('MSRP', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              TAX2
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('TAX2', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('TAX2', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              VAT
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('VAT', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('VAT', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              TAX1
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('TAX1', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('TAX1', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              PriceBeforeTax
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('PriceBeforeTax', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('PriceBeforeTax', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              WholesalePrice
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('WholesalePrice', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('WholesalePrice', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              TransferPrice
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('TransferPrice', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('TransferPrice', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th style="width: 10px">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="pno in visa_file" :key="pno.id" :class="{ 'editing': pno.edited }">
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Active" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.SalesOrg" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.DistrCh" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.PriceList" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.DealerGroup" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Country" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.CarType" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Engine" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.SalesVersion" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Body" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Gearbox" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Steering" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.MarketCode" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.ModelYear" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.StructureWeek" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.DateFrom" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.DateTo" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Currency" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Color" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Options" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Upholstery" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Package" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.SNote" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.MSRP" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.TAX2" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.VAT" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.TAX1" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.PriceBeforeTax" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.WholesalePrice" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.TransferPrice" @input="pno.edited = true" @change="pushUpdateVISAFileInformation(pno)" />
+          </td>
+          <td style="background-color: #f4f4f4;">
+            <span @click="deleteVISAFileInformation(pno)" style="cursor: pointer; color: red;">[X]</span>
           </td>
         </tr>
       </tbody>
@@ -1057,7 +1436,9 @@ export default {
       customFeatureTable: false,
       discountTable: false,
       xCodesTable: false,
+      visaTable: false,
       selectedRow: null,
+      activeVisaFile: [],
       activeSalesChannel: [],
       newsaleschannel: [],
       newdiscount: [],
@@ -1100,6 +1481,18 @@ export default {
     },
     visa_files() {
       return this.entitiesStore.visafiles.filter(file_name =>
+        Object.values(file_name).some(value =>
+          String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
+        )
+      ).sort((a, b) => {
+        if (a[this.sortColumn] === undefined || a[this.sortColumn] === null) return 1;
+        if (b[this.sortColumn] === undefined || b[this.sortColumn] === null) return -1;
+        if (a[this.sortColumn] < b[this.sortColumn]) return -1 * this.sortOrder;
+        if (a[this.sortColumn] > b[this.sortColumn]) return 1 * this.sortOrder;
+      });
+    },
+    visa_file() {
+      return this.entitiesStore.visafile.filter(file_name =>
         Object.values(file_name).some(value =>
           String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
         )
@@ -1367,7 +1760,6 @@ export default {
         console.error('Error fetching data', error);
       }
     },
-
     async fetchPnoSpecifics() {
       this.customFeatureTable = false;
       try {
@@ -1427,6 +1819,19 @@ export default {
       }
     },
 
+    async fetchVISAFile(pno) {
+      this.visaTable = true;
+      this.activeVisaFile = {
+        CarType: pno.CarType,
+        VisaFile: pno.VisaFile,
+      };
+      try {
+        await this.entitiesStore.fetchVISAFile(pno.VisaFile);
+        console.log('Visa file information fetched');
+      } catch (error) {
+        console.error('Error fetching data', error);
+      }
+    },
 
     async reset() {
       this.model_year = '0';
@@ -1436,6 +1841,7 @@ export default {
       this.gearbox = '';
       this.displaytable = '';
       this.customFeatureTable = false;
+      this.visaTable = false;
       this.discountTable = false;
       this.xCodesTable = false;
       this.selectedRow = null;
@@ -1452,6 +1858,7 @@ export default {
       this.salesversion = '';
       this.gearbox = '';
       this.customFeatureTable = false;
+      this.visaTable = false;
       this.discountTable = false;
       this.xCodesTable = false;
       this.selectedRow = null;
@@ -1538,6 +1945,25 @@ export default {
         StartDate: null,
         EndDate: null,
       };
+    },
+    // VISA Files
+    async pushUpdateVISAFileInformation(pno) { 
+      await this.entitiesStore.pushUpdateVISAFileInformation(pno.ID, pno.Active, pno.SalesOrg, pno.DistrCh, pno.PriceList, pno.DealerGroup, pno.Country, pno.CarType, pno.Engine, pno.SalesVersion, pno.Body, pno.Gearbox, pno.Steering, pno.MarketCode, pno.ModelYear, pno.StructureWeek, pno.DateFrom, pno.DateTo, pno.Currency, pno.Color, pno.Options, pno.Upholstery, pno.Package, pno.SNote, pno.MSRP, pno.TAX2, pno.VAT, pno.TAX1, pno.PriceBeforeTax, pno.WholesalePrice, pno.TransferPrice, pno.VisaFile, pno.CountryCode, pno.LoadingDate); 
+      pno.edited = false; 
+      await this.entitiesStore.fetchVISAFile(pno.VisaFile).then(() => {
+        console.log('VISA file information fetched')
+      }).catch((error) => {
+        console.error('Error fetching discounts', error)
+      })
+    },
+    async deleteVISAFileInformation(pno) {
+      await this.entitiesStore.deleteVISAFileInformation(pno.ID)
+      pno.edited = false
+      await this.entitiesStore.fetchVISAFile(pno.VisaFile).then(() => {
+        console.log('VISA file information fetched')
+      }).catch((error) => {
+        console.error('Error fetching discounts', error)
+      })
     },
     // Sales Channels
     async pushUpdateSalesChannel(pno) {

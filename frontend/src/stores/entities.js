@@ -10,6 +10,7 @@ export const useEntitiesStore = defineStore({
         gearboxes: [],
         supported_countries: [],
         visafiles: [],
+        visafile: [],
         discounts: [],
         customlocaloptions: [],
         saleschannels: [],
@@ -71,6 +72,16 @@ export const useEntitiesStore = defineStore({
             let path = `/db/${this.country.Code}/${this.model_year}/visa-files`
             return await index.get(path).then((response) => {
                 this.visafiles = response.data
+            }).catch((error) => {
+                console.log(error)
+            })
+        },
+        async fetchVISAFile(visafile) {
+            //Visa File contains spaces, so we need to encode it.
+            visafile = encodeURIComponent(visafile)
+            let path = `/db/${this.country.Code}/${this.model_year}/visa-file?&VisaFile=${visafile}`
+            return await index.get(path).then((response) => {
+                this.visafile = response.data
             }).catch((error) => {
                 console.log(error)
             })
@@ -142,6 +153,52 @@ export const useEntitiesStore = defineStore({
             }
             let path = `/db/${this.country.Code}/${this.model_year}/write/gearboxes`
             return index.post(path, updates);
+        },
+        async pushUpdateVISAFileInformation(ID, Active, SalesOrg, DistrCh, PriceList, DealerGroup, Country, CarType, Engine, SalesVersion, Body, Gearbox, Steering, MarketCode, ModelYear, StructureWeek, DateFrom, DateTo, Currency, Color, Options, Upholstery, Package, SNote, MSRP, TAX2, VAT, TAX1, PriceBeforeTax, WholesalePrice, TransferPrice, VisaFile, CountryCode, LoadingDate) {
+            let updates = {
+                Active: Active,
+                SalesOrg: SalesOrg,
+                DistrCh: DistrCh,
+                PriceList: PriceList,
+                DealerGroup: DealerGroup,
+                Country: Country,
+                CarType: CarType,
+                Engine: Engine,
+                SalesVersion: SalesVersion,
+                Body: Body,
+                Gearbox: Gearbox,
+                Steering: Steering,
+                MarketCode: MarketCode,
+                ModelYear: ModelYear,
+                StructureWeek: StructureWeek,
+                DateFrom: DateFrom,
+                DateTo: DateTo,
+                Currency: Currency,
+                Color: Color,
+                Options: Options,
+                Upholstery: Upholstery,
+                Package: Package,
+                SNote: SNote,
+                MSRP: MSRP,
+                TAX2: TAX2,
+                VAT: VAT,
+                TAX1: TAX1,
+                PriceBeforeTax: PriceBeforeTax,
+                WholesalePrice: WholesalePrice,
+                TransferPrice: TransferPrice,
+                VisaFile: VisaFile,
+                CountryCode: CountryCode,
+                LoadingDate: LoadingDate
+            }
+            if (ID !== null) {
+                updates.ID = ID;
+            }
+            let path = `/db/${this.country.Code}/${this.model_year}/write/visa`
+            return index.post(path, updates);
+        },
+        async deleteVISAFileInformation(ID) {
+            let path = `/db/${this.country.Code}/${this.model_year}/write/visa?ID=${ID}`
+            return index.delete(path);
         },
         async pushUpdateSalesChannel(ID, Code, ChannelName, Comment, StartDate, EndDate) {
             let updates = {

@@ -2,7 +2,7 @@
   <nav class="navbar">
     <div class="nav-logo">
       <img src="@/assets/pmt_logo.png" alt="Logo">
-      <span class="name">Product Management Tool</span>
+      <span class="name">Overall Data Import Navigator</span>
     </div>
     <div class="brand-logo">
       <img src="@/assets/brand_logo.svg" alt="brand-logo">

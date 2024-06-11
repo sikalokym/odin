@@ -1,6 +1,6 @@
 <template>
   <main class="main-content">
-    <h1>Welcome to the Product Management Tool</h1>
+    <h1>Welcome to the Overall Data Import Navigator</h1>
   </main>
 </template>
 
