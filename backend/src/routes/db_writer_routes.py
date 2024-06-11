@@ -538,7 +538,7 @@ def upsert_visa_file(country, model_year):
     if not data:
         return 'No data provided', 400
     if 'ID' not in data:
-        return 'ID is required', 400
+        data['ID'] = str(uuid.uuid4())
     try:
         df_upsert_entry = pd.DataFrame([data])
 
