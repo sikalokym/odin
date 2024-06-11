@@ -59,6 +59,7 @@ router.beforeEach(async (to, from, next) => {
 		let curr_country = entStore.country;
 		if (!curr_country) {
 			next('/');
+			return;
 		}
 		console.log('Current country:', curr_country);
 		if (to.matched.some(record => record.meta.requiresRole)) {
