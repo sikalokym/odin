@@ -6,7 +6,7 @@ if (process.env.NODE_ENV === 'development') {
 } else {
 	ENDPOINT = 'https://pmt-portal-backend.azurewebsites.net' + ENDPOINT;
 }
-const MAX_RETRIES = 1;
+const MAX_RETRIES = 2;
 
 async function makeRequestWithRetry(call, path, data, config, retries = MAX_RETRIES) {
 	try {
@@ -16,6 +16,7 @@ async function makeRequestWithRetry(call, path, data, config, retries = MAX_RETR
 		if (retries <= 0) {
 			throw error;
 		}
+		await new Promise((resolve) => setTimeout(resolve, 500));
 		return makeRequestWithRetry(call, path, data, config, retries - 1);
 	}
 }
