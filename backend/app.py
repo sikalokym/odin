@@ -61,15 +61,14 @@ def before_request():
             DBOperations.create_instance(logger=logger)
         open_reqs += 1
 
-@app.after_request
-def after_request(response):
+@app.teardown_request
+def teardown_request(exception):
     global last_request_time, open_reqs
     last_request_time = time.time()
     with reqs_lock:
         open_reqs -= 1
         if open_reqs == 0:
             Thread(target=close_db_connection_after_inactivity).start()
-    return response
 
 @app.route('/', methods=['GET'])
 def welcome():
