@@ -1,5 +1,6 @@
 import logging
 import logging.handlers
+import os
 from src.database.db_operations import DBOperations
 
 class SQLLoggingHandler(logging.Handler):
@@ -40,6 +41,9 @@ class SQLLoggingHandler(logging.Handler):
 
 def setup_logger_config(logger):
     # Create a handler that saves the logs to a file and saves them for 7 days
+
+    if not os.path.exists('logs'):
+        os.makedirs('logs')
     new_handler = logging.handlers.TimedRotatingFileHandler('logs/app.log', when='D', interval=1, backupCount=7)
     new_handler.setLevel(logging.DEBUG)
     new_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
