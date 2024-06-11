@@ -58,8 +58,7 @@ router.beforeEach(async (to, from, next) => {
 		let entStore = useEntitiesStore();
 		let curr_country = entStore.country;
 		if (!curr_country) {
-			await entStore.fetchSupportedCountries(roles.map(role => role.country.toLowerCase()));
-			curr_country = useEntitiesStore().country;
+			next('/');
 		}
 		console.log('Current country:', curr_country);
 		if (to.matched.some(record => record.meta.requiresRole)) {
