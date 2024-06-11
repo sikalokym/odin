@@ -11,7 +11,7 @@ import src.utils.scheduler as scheduler
 from flask import Flask, render_template_string
 from flask_cors import CORS
 import time
-import threading
+from threading import Thread, Lock
 
 app = Flask(__name__)
 CORS(app)
@@ -39,34 +39,36 @@ WELCOME_PAGE_TEMPLATE = """
 </html>
 """
 
-last_request_time = time.time()  # Global variable to store the last request timestamp
-open_db_connection = False  # Global variable to store the status of the database connection
+last_request_time = time.time()
+open_reqs = 0
+reqs_lock = Lock()
 
 def close_db_connection_after_inactivity():
-    global last_request_time
-    global open_db_connection
-    while open_db_connection:
-        current_time = time.time()
-        if current_time - last_request_time >= 60:
-            DatabaseConnection.close_connection()
-            open_db_connection = False
-        time.sleep(10)
-
+    global last_request_time, open_reqs
+    while True:
+        with reqs_lock:
+            if open_reqs > 0:
+                break
+            elif time.time() - last_request_time >= 60:
+                DatabaseConnection.close_connection()
+                break
+            
 @app.before_request
 def before_request():
-    global open_db_connection
-    if not open_db_connection:
-        DBOperations.create_instance(logger=logger)
-    open_db_connection = False
+    global open_reqs
+    with reqs_lock:
+        if open_reqs == 0:
+            DBOperations.create_instance(logger=logger)
+        open_reqs += 1
 
 @app.after_request
 def after_request(response):
-    global last_request_time
+    global last_request_time, open_reqs
     last_request_time = time.time()
-    global open_db_connection
-    if not open_db_connection:
-        open_db_connection = True
-        threading.Thread(target=close_db_connection_after_inactivity, daemon=True).start()
+    with reqs_lock:
+        open_reqs -= 1
+        if open_reqs == 0:
+            Thread(target=close_db_connection_after_inactivity).start()
     return response
 
 @app.route('/', methods=['GET'])
