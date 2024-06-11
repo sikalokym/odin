@@ -347,7 +347,9 @@ def get_model_year_from_date(date):
     Returns:
         int: The model year corresponding to the given date.
     """
-    if not date:
+    if date == 0:
+        return 0
+    elif not date:
         return 9999
     year, week = divmod(date, 100)
     if week < 17:
