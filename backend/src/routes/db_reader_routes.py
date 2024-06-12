@@ -514,4 +514,5 @@ def get_visa_file_data(country, model_year):
     conditions = [f"VisaFile = '{visa_file}'", f"CountryCode = {country}", f"ModelYear = {model_year}"]
 
     df_visa_file = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=conditions)
+    df_visa_file.drop(columns=['LoadingDate', 'CountryCode'], inplace=True)
     return df_visa_file.to_json(orient='records')

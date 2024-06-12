@@ -573,12 +573,12 @@ def rename_visa_file(country, model_year):
     new_name = data.get('NewName', None)
     if not old_name or not new_name:
         return 'OldName and NewName are required', 400
-    df_visa = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=[f'CountryCode = {country}', f"VisaFile = '{old_name}'", f"ModelYear = '{model_year}'"])
+    df_visa = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), columns=['ID', 'VisaFile'], conditions=[f'CountryCode = {country}', f"VisaFile = '{old_name}'", f"ModelYear = '{model_year}'"])
     if df_visa.empty:
         return 'Visa file not found', 203
     try:
         df_visa['VisaFile'] = new_name
-        DBOperations.instance.upsert_data_from_df(df_visa, DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), ['VisaFile'], ['ID'])
+        DBOperations.instance.upsert_data_from_df(df_visa, DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), ['ID', 'VisaFile'], ['ID'])
     except Exception as e:
         return str(e), 500
     
