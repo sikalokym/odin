@@ -557,8 +557,44 @@ def upsert_visa_file(country, model_year):
 def delete_visa_file(country):
     visa_file_name = request.args.get('VisaFile')
     table_name = DBOperations.instance.config.get('RELATIONS', 'RAW_VISA')
+    # df_visa = DBOperations.instance.get_table_df(table_name, conditions=[f'CountryCode = {country}', f"VisaFile = '{visa_file_name}'"])
     delete_query = f"DELETE FROM {table_name} WHERE VisaFile = ? AND CountryCode = {country}"
     with DBOperations.instance.get_cursor() as cursor:
         cursor.execute(delete_query, (visa_file_name,))
     
     return {"message": "Record deleted successfully"}, 200
+
+@bp_db_writer.route('/visa/rename', methods=['POST'])
+def rename_visa_file(country, model_year):
+    data = request.json
+    if not data:
+        return 'No data provided', 400
+    old_name = data.get('OldName', None)
+    new_name = data.get('NewName', None)
+    if not old_name or not new_name:
+        return 'OldName and NewName are required', 400
+    df_visa = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=[f'CountryCode = {country}', f"VisaFile = '{old_name}'", f"ModelYear = '{model_year}'"])
+    if df_visa.empty:
+        return 'Visa file not found', 203
+    try:
+        df_visa['VisaFile'] = new_name
+        DBOperations.instance.upsert_data_from_df(df_visa, DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), ['VisaFile'], ['ID'])
+    except Exception as e:
+        return str(e), 500
+    
+    return 'Visa file created successfully', 200
+
+@bp_db_writer.route('/visa/data', methods=['DELETE'])
+def delete_visa_data(country, model_year):
+    visa_entry_id = request.args.get('ID')
+    if not visa_entry_id:
+        return {"error": "Discount ID is required"}, 400
+    try:
+        table_name = DBOperations.instance.config.get('RELATIONS', 'RAW_VISA')
+        delete_query = f"DELETE FROM {table_name} WHERE ID = ?"
+        with DBOperations.instance.get_cursor() as cursor:
+            cursor.execute(delete_query, (id,))
+        return {"message": "Record deleted successfully"}, 200
+    except Exception as e:
+        DBOperations.instance.logger.error(f"Error deleting record: {e}")
+        return {"error": str(e)}, 500
