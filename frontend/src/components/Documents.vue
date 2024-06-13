@@ -2,8 +2,8 @@ reset<template>
   <aside class="sidebar">
     <span class="title" style="font-size: 32px;">Specifications</span>
     <div style="margin-top: 10px;">
-      <button v-on:click="setVariantBinderFilters"
-        :class="{ 'highlighted': showFilters === 'VariantBinder' }">Variant Binder</button>
+      <button v-on:click="setVariantBinderFilters" :class="{ 'highlighted': showFilters === 'VariantBinder' }">Variant
+        Binder</button>
       <button v-on:click="setPricelistFilters" style="margin-left: 10px;"
         :class="{ 'highlighted': showFilters === 'Pricelist' }">SAP Pricelist
       </button>
@@ -11,15 +11,14 @@ reset<template>
     <div v-if="showFilters === 'VariantBinder'">
       <!-- Filter for model years -->
       <label class="modelyear" style="width: 180px;">Model Year</label><br>
-      <select name="model_year" id="model_year" v-model="model_year" 
-        @change="() => { refreshModelyear(); }"
+      <select name="model_year" id="model_year" v-model="model_year" @change="() => { refreshModelyear(); }"
         style="width:180px; height:30px; position: absolute;">
         <option disabled value="0">Please select Model Year...</option>
         <option v-for="model_year in model_years" :key="model_year" :value="model_year">{{ model_year }}</option>
       </select>
       <!-- Filter for models -->
       <label class="model" style="width: 180px;">Model</label><br>
-      <select name="model" id="model" v-model="model" @change="() => { refreshEnginecats(); getPnosVariantBinder();}"
+      <select name="model" id="model" v-model="model" @change="() => { refreshEnginecats(); getPnosVariantBinder(); }"
         style="width:180px; height:30px; position: absolute;">
         <option disabled value="">Please Select Model...</option>
         <option v-for="model in models.sort()" :key="model" :value="model">{{ model }}</option>
@@ -37,12 +36,14 @@ reset<template>
       <label class="validity_date" style="width: 180px;">Validity Date</label>
       <div class="validity"
         style="display: flex; gap: 10px; position:absolute; left: 50%; transform: translateX(-50%);">
-        <select name="validity_year" id="validity_year" v-model="validity_year" @change="getPnosVariantBinder" style="width:85px; height:30px;">
+        <select name="validity_year" id="validity_year" v-model="validity_year" @change="getPnosVariantBinder"
+          style="width:85px; height:30px;">
           <option disabled value="">Year</option>
           <option v-for="validity_year in validity_years" :key="validity_year" :value="validity_year">{{ validity_year
             }}</option>
         </select>
-        <select name="validity_week" id="validity_week" v-model="validity_week" @change="getPnosVariantBinder" style="width:85px; height:30px;">
+        <select name="validity_week" id="validity_week" v-model="validity_week" @change="getPnosVariantBinder"
+          style="width:85px; height:30px;">
           <option disabled value="">Week</option>
           <option v-for="n in validity_weeks" :key="n" :value="String(n).padStart(2, '0')">{{ String(n).padStart(2, '0')
             }}</option>
@@ -72,37 +73,39 @@ reset<template>
         <option disabled value="">Select Sales Channel...</option>
         <option value="All">All</option>
         <option v-for="sales_channel in sales_channels" :key="sales_channel" :value="sales_channel.Code">{{
-          sales_channel.Code }}</option>
+        sales_channel.Code }}</option>
       </select>
       <br><br>
-        <!-- Filter for validity date of the Pricelsit export -->
-        <label class="validity_date" style="width: 180px;">Validity Date</label>
-        <div class="validity"
-          style="display: flex; gap: 10px; position:absolute; left: 50%; transform: translateX(-50%);">
-          <select name="validity_year" id="validity_year" v-model="validity_year" style="width:85px; height:30px;">
-            <option disabled value="">Year</option>
-            <option v-for="validity_year in validity_years" :key="validity_year" :value="validity_year">{{ validity_year
-              }}</option>
-          </select>
-          <select name="validity_week" id="validity_week" v-model="validity_week" style="width:85px; height:30px;">
-            <option disabled value="">Week</option>
-            <option v-for="n in validity_weeks" :key="n" :value="String(n).padStart(2, '0')">{{ String(n).padStart(2, '0')
-              }}</option>
-          </select>
-        </div>
+      <!-- Filter for validity date of the Pricelsit export -->
+      <label class="validity_date" style="width: 180px;">Validity Date</label>
+      <div class="validity"
+        style="display: flex; gap: 10px; position:absolute; left: 50%; transform: translateX(-50%);">
+        <select name="validity_year" id="validity_year" v-model="validity_year" style="width:85px; height:30px;">
+          <option disabled value="">Year</option>
+          <option v-for="validity_year in validity_years" :key="validity_year" :value="validity_year">{{ validity_year
+            }}</option>
+        </select>
+        <select name="validity_week" id="validity_week" v-model="validity_week" style="width:85px; height:30px;">
+          <option disabled value="">Week</option>
+          <option v-for="n in validity_weeks" :key="n" :value="String(n).padStart(2, '0')">{{ String(n).padStart(2, '0')
+            }}</option>
+        </select>
+      </div>
       <br><br><br>
 
       <!-- Export Pricelist Button -->
       <button
         style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translateX(-50%); margin-top: 24px;"
-        @click="exportPricelist" :disabled="exportInProgress || this.pnoStore.model_year === '0' || this.sales_channel === ''">Export
+        @click="exportPricelist"
+        :disabled="exportInProgress || this.pnoStore.model_year === '0' || this.sales_channel === ''">Export
         Pricelist</button>
     </div>
     <!-- Country Select Dropdown Menu -->
     <div class="bottom-div">
       <label for="country" class="countrylabel">Change Country: </label>
       <select v-model="selectedCountry" @change="changeCountry(this.selectedCountry)">
-        <option v-for="country in supported_countries" :key="country" :value="country">{{ country.CountryName }}</option>
+        <option v-for="country in supported_countries" :key="country" :value="country">{{ country.CountryName }}
+        </option>
       </select>
     </div>
   </aside>
@@ -166,7 +169,7 @@ reset<template>
             {{ pno.Gearbox }}
           </td>
           <td style="background-color: #f4f4f4;">
-            <input type="checkbox" v-model="pno.InExport"/>
+            <input type="checkbox" v-model="pno.InExport" />
           </td>
         </tr>
       </tbody>
@@ -236,10 +239,10 @@ export default {
       }
     },
     variantBinderPnosExport() {
-    return this.variantBinderPnos
-      .filter(pno => pno.InExport)
-      .map(pno => pno.ID)
-      .join(',');
+      return this.variantBinderPnos
+        .filter(pno => pno.InExport)
+        .map(pno => pno.ID)
+        .join(',');
     },
     canExport() {
       return !this.exportInProgress && this.model_year !== '0' && this.model !== '' && this.validity_year !== '' && this.validity_week !== '';
@@ -266,7 +269,7 @@ export default {
       this.variantBinderPnos = [];
       this.sales_channel = '';
     },
-      setPricelistFilters() {
+    setPricelistFilters() {
       this.showFilters = 'Pricelist';
       this.model = '';
       this.model_year = '0';
@@ -300,9 +303,9 @@ export default {
       console.log('Engine cats refreshed')
     },
     async getPnosVariantBinder() {
-      if (this.model_year == '0' || this.model == '' || this.validity_year == '' || this.validity_week == '') { 
+      if (this.model_year == '0' || this.model == '' || this.validity_year == '' || this.validity_week == '') {
         return;
-      }  
+      }
       let path = `/${this.selectedCountry.Code}/export/variant_binder/pnos?date=${this.validity_year}${this.validity_week}&model=${this.model}&engines_category=${this.engine}`;
       return await axios.get(path).then((response) => {
         this.variantBinderPnos = response.data.map(pno => ({
@@ -353,7 +356,7 @@ export default {
 }
 
 .main-content {
-  z-index: 1; 
+  z-index: 1;
   position: relative;
   margin-left: 312px;
   padding: 2rem;
