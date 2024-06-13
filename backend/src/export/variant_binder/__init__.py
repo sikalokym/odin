@@ -6,7 +6,16 @@ from src.export.variant_binder import prices_sheet, options_sheet, upholstery_co
 from src.utils.db_utils import filter_df_by_timestamp, get_model_year_from_date
 
 
-def extract_variant_binder(country, model, engines_types, time):
+def extract_variant_binder_pnos(country, model, engines_types, time):
+    try:
+        valid_engines = get_valid_engines(country, engines_types, time)
+        valid_pnos = get_valid_pnos(country, model, time, valid_engines)
+        return valid_pnos
+    except Exception as e:
+        DBOperations.instance.logger.error(f"Error getting VB Data: {e}")
+        raise Exception(f"Error getting VB Data: {e}")
+    
+def extract_variant_binder(country, model, engines_types, time, pno_ids):
     wb = Workbook()
 
     # Remove the default sheet created
@@ -16,6 +25,8 @@ def extract_variant_binder(country, model, engines_types, time):
     try:
         valid_engines = get_valid_engines(country, engines_types, time)
         valid_pnos = get_valid_pnos(country, model, time, valid_engines)
+        # filter the valid pnos by the given pno_ids
+        valid_pnos = valid_pnos[valid_pnos['ID'].isin(pno_ids)]
         sales_versions = get_sales_versions(country, valid_pnos, time)
         title, model_id = get_model_name(country, model, time)
     except Exception as e:
