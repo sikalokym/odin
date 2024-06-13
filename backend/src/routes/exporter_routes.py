@@ -1,14 +1,13 @@
-import datetime
 import io
 import zipfile
-from flask import Blueprint, request, send_file
 import pandas as pd
+from datetime import datetime
+from flask import Blueprint, request, send_file
 from src.database.db_operations import DBOperations
+from src.storage.blob import load_available_visa_files
+from src.utils.ingest_utils import is_valid_engine_category
 from src.export.sap_price_list import get_sap_price_list
 from src.export.variant_binder import extract_variant_binder, extract_variant_binder_pnos
-from src.storage.blob import load_available_visa_files
-from src.utils.db_utils import filter_model_year_by_translation
-from src.utils.ingest_utils import is_valid_engine_category
 
 
 bp_exporter = Blueprint('export', __name__, url_prefix='/api/<country>/export')
@@ -57,11 +56,11 @@ def variant_binder(country):
 @bp_exporter.route('/sap-price-list', methods=['GET'])
 def sap_price_list(country):
     code = request.args.get('code', 'All')
-    time = request.args.get('date', datetime.datetime.now().strftime("%Y%U"))
+    time = request.args.get('date', datetime.now().strftime("%Y%U"))
 
     conditions = [f'CountryCode = {country}', f'StartDate <= {time}', f'EndDate >= {time}']
     if code != 'All':
-        conditions.append(f'Code = {code}')
+        conditions.append(f"Code = '{code}'")
     df_channels = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SC'), columns=['ID', 'Code', 'ChannelName'], conditions=conditions)
     if df_channels.empty:
         return 'Invalid code' if code != 'All' else f'No Sales Channel with the code {code} found', 400

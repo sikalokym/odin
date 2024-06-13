@@ -6,7 +6,7 @@ def get_engine_cats(country, model_year, model):
     conditions = [f'CountryCode = {country}']
     
     if model:
-        conditions.append(f'Model = {model}')
+        conditions.append(f"Model = '{model}'")
 
     pno_engins = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), columns=['Engine', 'StartDate'], conditions=conditions)
     pno_engins['ModelYear'] = pno_engins['StartDate'].apply(get_model_year_from_date)

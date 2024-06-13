@@ -200,7 +200,7 @@ def fetch_vb_price_data(country, df_valid_pnos, time):
     en_codes = df_price['Engine'].unique().tolist()
     conditions = [f'CountryCode = {country}']
     if len(en_codes) == 1:
-        conditions.append(f'Code = {en_codes[0]}')
+        conditions.append(f"Code = '{en_codes[0]}'")
     else:
         conditions.append(f'Code in {tuple(en_codes)}')
     df_en = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), conditions=conditions)

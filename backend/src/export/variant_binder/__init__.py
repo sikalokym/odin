@@ -172,7 +172,7 @@ def get_valid_pnos(country, model, time, engines_types):
         DBOperations.instance.logger.info(f"No engines found for the given engine category {engines_types}")
         return
     elif len(allowed_engines) == 1:
-        conditions.append(f'Engine = {allowed_engines[0]}')
+        conditions.append(f"Engine = '{allowed_engines[0]}'")
     else:
         conditions.append(f'Engine in {tuple(allowed_engines)}')
 

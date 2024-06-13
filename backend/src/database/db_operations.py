@@ -31,7 +31,7 @@ class DBOperations:
             yield cursor
             self.conn.commit()
         except Exception as e:
-            self.logger.error('Database operation failed', exc_info=True)
+            self.logger.error(f'Database operation failed: {e}', exc_info=True)
             self.conn.rollback()
             raise e
         finally:
