@@ -1,6 +1,7 @@
 import logging
 import configparser
 from contextlib import contextmanager
+from cachetools import cached, TTLCache
 import pandas as pd
 import src.utils.db_utils as utils
 from src.database.db_connection import DatabaseConnection
@@ -8,6 +9,7 @@ from src.database.db_connection import DatabaseConnection
 
 class DBOperations:
     instance = None
+    cache = TTLCache(maxsize=100, ttl=10)
 
     @classmethod
     def create_instance(cls, logger=None, test=False):
@@ -53,6 +55,11 @@ class DBOperations:
         else:
             raise ValueError('Conditions must be a list')
         
+        return self.get_table_df_cached(table_name, columns, conditions)
+        
+    @cached(cache)
+    def get_table_df_cached(self, table_name, columns, conditions):
+        
         with self.get_cursor() as cursor:
             cursor.execute(f"SELECT {columns} FROM {table_name} WHERE {conditions};")
             data = cursor.fetchall()
@@ -71,6 +78,7 @@ class DBOperations:
         self.insert_data_into_staging(table_name, df, columns, conditional_columns)
         self.merge_data_from_staging(table_name, columns, conditional_columns)
         self.drop_temp_staging_table(table_name)
+        self.cache.clear()
 
     def create_temp_staging_table(self, target_table_name, cols):
         try:
