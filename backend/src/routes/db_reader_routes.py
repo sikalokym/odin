@@ -40,6 +40,20 @@ def get_pnos(country, model_year):
     if df_pnos.empty:
         return jsonify([])
     
+    ids = df_pnos['Model'].tolist()
+    conditions = [f'CountryCode = {country}']
+    if len(ids) == 1:
+        conditions.append(f"Code = '{ids[0]}'")
+    else:
+        conditions.append(f"Code in {tuple(ids)}")
+    
+    df_models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), columns=['Code', 'CustomName', 'StartDate', 'EndDate'], conditions=conditions)
+    df_models = filter_df_by_model_year(df_models, model_year)
+    df_models = filter_model_year_by_translation(df_models, conditional_columns=['CustomName'])
+    df_models = df_models.drop(columns=['StartDate', 'EndDate'], axis=1)
+    
+    df_pnos = df_pnos.merge(df_models, how='left', left_on='Model', right_on='Code')
+    df_pnos.drop(columns=['Code'], axis=1, inplace=True)
     df_pnos.drop_duplicates(inplace=True)
     return df_pnos.to_json(orient='records')
 
