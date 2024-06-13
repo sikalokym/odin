@@ -5,15 +5,15 @@ from flask import Blueprint, request, send_file
 import pandas as pd
 from src.database.db_operations import DBOperations
 from src.export.sap_price_list import get_sap_price_list
-from src.export.variant_binder import extract_variant_binder
+from src.export.variant_binder import extract_variant_binder, extract_variant_binder_pnos
 from src.storage.blob import load_available_visa_files
 from src.utils.ingest_utils import is_valid_engine_category
 
 
 bp_exporter = Blueprint('export', __name__, url_prefix='/api/<country>/export')
 
-@bp_exporter.route('/variant_binder', methods=['GET'])
-def variant_binder(country):
+@bp_exporter.route('/variant_binder/pnos', methods=['GET'])
+def variant_binder_pnos(country):
     time = request.args.get('date')
     model = request.args.get('model')
     engines_types = request.args.get('engines_category')
@@ -32,7 +32,23 @@ def variant_binder(country):
         return 'Invalid engine category', 400
     
     try:
-        xlsx_file, title = extract_variant_binder(country, model, engines_types, int(time))
+        df_pnos = extract_variant_binder_pnos(country, model, engines_types, int(time))
+    except Exception as e:
+        return str(e), 500
+    return df_pnos.to_json(orient='records'), 200
+
+@bp_exporter.route('/variant_binder', methods=['GET'])
+def variant_binder(country):
+    model = request.args.get('model')
+    engines_types = request.args.get('engines_category')
+    time = request.args.get('date')
+    pnos = request.args.get('pnos')
+    if not pnos:
+        return 'PNOs are required', 400
+    pnos = pnos.split(',')
+    
+    try:
+        xlsx_file, title = extract_variant_binder(country, model, engines_types, int(time), pnos)
     except Exception as e:
         return str(e), 500
     return send_file(xlsx_file, download_name=title, as_attachment=True), 200
