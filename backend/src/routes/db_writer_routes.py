@@ -3,6 +3,7 @@ from flask import Blueprint, request
 import pandas as pd
 
 from src.database.db_operations import DBOperations
+from src.ingest.cpam.services import get_supported_countries
 from src.utils.db_utils import filter_df_by_model_year, get_column_map
 
 
@@ -12,7 +13,7 @@ bp_db_writer = Blueprint('db_writer', __name__, url_prefix='/api/db/<country>/<m
 @bp_db_writer.before_request
 def check_country():
     country = request.view_args.get('country')
-    supported_countries = DBOperations.instance.get_table_df(DBOperations.instance.config.get('SETTINGS', 'CountryCodes'), columns=['Code'], conditions=[f'Code = {country}'])
+    supported_countries = get_supported_countries(country)
     if supported_countries.empty:
         return 'Country code is missing or invalid', 400
     
