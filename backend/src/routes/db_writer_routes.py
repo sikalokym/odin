@@ -8,6 +8,14 @@ from src.utils.db_utils import filter_df_by_model_year, get_column_map
 
 bp_db_writer = Blueprint('db_writer', __name__, url_prefix='/api/db/<country>/<model_year>/write')
 
+# if country is not in the url, return an error message before calling the function
+@bp_db_writer.before_request
+def check_country():
+    country = request.view_args.get('country')
+    supported_countries = DBOperations.instance.get_table_df(DBOperations.instance.config.get('SETTINGS', 'CountryCodes'), columns=['Code'], conditions=[f'Code = {country}'])
+    if supported_countries.empty:
+        return 'Country code is missing or invalid', 400
+    
 @bp_db_writer.route('/models', methods=['POST'])
 def write_models(country, model_year):
     data = request.get_json()
