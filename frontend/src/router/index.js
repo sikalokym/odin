@@ -78,7 +78,6 @@ router.beforeEach(async (to, from, next) => {
 		}
 	} catch (error) {
 		console.error('Authentication error:', error);
-		next('/');
 	}
 });
 

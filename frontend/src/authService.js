@@ -1,14 +1,23 @@
 import msalInstance from './authConfig';
 import { useAuthStore } from './stores/auth';
 
+let isInteractionInProgress = false;
+
 export const login = async () => {
+    if (isInteractionInProgress) {
+        console.error('Login interaction already in progress');
+        return;
+    }
     try {
+        isInteractionInProgress = true;
         const loginResponse = await msalInstance.loginPopup({
             scopes: ['User.Read', 'Group.Read.All'],
         });
         msalInstance.setActiveAccount(loginResponse.account);
     } catch (error) {
         console.error('Login failed:', error);
+    } finally {
+        isInteractionInProgress = false;
     }
 };
 
@@ -45,8 +54,9 @@ export const fetchCountriesRoles = async () => {
         }
     } catch (error) {
         console.error('Token acquisition error:', error);
-        if (error.errorCode === 'monitor_window_timeout' || error.errorCode === 'interaction_required') {
+        if ((error.errorCode === 'monitor_window_timeout' || error.errorCode === 'interaction_required') && !isInteractionInProgress) {
             try {
+                isInteractionInProgress = true;
                 const tokenResponse = await msalInstance.acquireTokenPopup({
                     scopes: ['User.Read', 'Group.Read.All'],
                     account,
@@ -72,13 +82,14 @@ export const fetchCountriesRoles = async () => {
             } catch (popupError) {
                 console.error('Token acquisition via popup failed:', popupError);
                 return [];
+            } finally {
+                isInteractionInProgress = false;
             }
         } else {
             return [];
         }
     }
 };
-
 
 export const parseGroupNames = (groups) => {
     return groups.map(group => {

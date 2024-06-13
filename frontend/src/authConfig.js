@@ -4,7 +4,7 @@ let redirectUri = '';
 if (process.env.NODE_ENV === 'development') {
     redirectUri = 'http://localhost:8080';
 } else {
-    redirectUri = 'https://pmt-portal.azurewebsites.net';
+    redirectUri = 'https://odin-portal.azurewebsites.net';
 }
 
 const msalConfig = {
