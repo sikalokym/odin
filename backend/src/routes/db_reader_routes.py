@@ -55,7 +55,7 @@ def get_pnos(country, model_year):
     df_pnos = df_pnos.merge(df_models, how='left', left_on='Model', right_on='Code')
     df_pnos.drop(columns=['Code'], axis=1, inplace=True)
     df_pnos.drop_duplicates(inplace=True)
-    return df_pnos.to_json(orient='records')
+    return df_pnos.to_json(orient='records'), 200
 
 @bp_db_reader.route('/models', methods=['GET'])
 def get_models(country, model_year):

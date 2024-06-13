@@ -7,6 +7,7 @@ from src.database.db_operations import DBOperations
 from src.export.sap_price_list import get_sap_price_list
 from src.export.variant_binder import extract_variant_binder, extract_variant_binder_pnos
 from src.storage.blob import load_available_visa_files
+from src.utils.db_utils import filter_model_year_by_translation
 from src.utils.ingest_utils import is_valid_engine_category
 
 
@@ -33,9 +34,9 @@ def variant_binder_pnos(country):
     
     try:
         df_pnos = extract_variant_binder_pnos(country, model, engines_types, int(time))
+        return df_pnos.to_json(orient='records'), 200
     except Exception as e:
         return str(e), 500
-    return df_pnos.to_json(orient='records'), 200
 
 @bp_exporter.route('/variant_binder', methods=['GET'])
 def variant_binder(country):
