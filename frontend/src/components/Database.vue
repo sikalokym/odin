@@ -680,7 +680,7 @@
           </td>
           <td class="VISAColumn" style="background-color: #f4f4f4; text-align: left;">
             <input v-model="pno.VisaFile" @focus="saveOriginalVISAFileName(pno)" @change="pushUpdateVISAFile(pno)"
-              style="cursor: pointer; min-width: 700px;" />
+              style="min-width: 700px;" />
           </td>
           <td style="background-color: #f4f4f4;">
             <span @click.stop="fetchVISAFile(pno)" style="cursor: pointer; margin-right: 10px;">[Details]</span>

@@ -21,7 +21,7 @@ reset<template>
       <select name="model" id="model" v-model="model" @change="() => { refreshEnginecats(); getPnosVariantBinder(); }"
         style="width:180px; height:30px; position: absolute;">
         <option disabled value="">Please Select Model...</option>
-        <option v-for="model in models.sort()" :key="model" :value="model">{{ model }}</option>
+        <option v-for="model in models.sort()" :key="model[0]" :value="model[0]">{{ '[' + model[0] + '] ' + model[1] }}</option>
       </select>
       <!-- Filter for engine categories -->
       <label class="engine" style="width: 180px;">Engine Category</label><br>
@@ -212,7 +212,12 @@ export default {
       return this.pnoStore.filteredPnos(this.model, '0', '0', '0')
     },
     models() {
-      return this.pnoStore.models
+      let models = this.pnoStore.modelCustomNameTuples
+      let modelNames = this.pnoStore.customNames
+      return models
+    },
+    modelNames() {
+      return this.pnoStore.customNames()
     },
     engine_cats() {
       return this.pnoStore.engine_cats

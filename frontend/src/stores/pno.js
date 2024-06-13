@@ -19,6 +19,17 @@ export const usePNOStore = defineStore({
   }),
   getters: {
     models: (state) => [...new Set(state.pnos.map(vehicle => vehicle.Model))],
+    customNames: (state) => [...new Set(state.pnos.map(vehicle => vehicle.CustomName))],
+    modelCustomNameTuples: (state) => {
+        const tuples = [];
+        state.pnos.forEach(vehicle => {
+            const tuple = [vehicle.Model, vehicle.CustomName];
+            if (!tuples.some(t => t[0] === tuple[0] && t[1] === tuple[1])) {
+                tuples.push(tuple);
+            }
+        });
+        return tuples;
+    },
     engines: (state) => [...new Set(state.pnos.map(vehicle => vehicle.Engine))],
     salesversions: (state) => [...new Set(state.pnos.map(vehicle => vehicle.Salesversion))],
     gearboxes: (state) => [...new Set(state.pnos.map(vehicle => vehicle.Gearbox))],
