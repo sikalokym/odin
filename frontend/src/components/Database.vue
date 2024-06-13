@@ -2174,7 +2174,46 @@ export default {
       this.entitiesStore.deleteVISAFile(pno.VisaFile)
     },
     addVISAFileInformation() {
-      this.newvisafileinformation.push({ ID: '', Active: '', SalesOrg: '', DistrCh: '', PriceList: '', DealerGroup: '', Country: '', CarType: '', Engine: '', SalesVersion: '', Body: '', Gearbox: '', Steering: '', MarketCode: '', ModelYear: '', StructureWeek: '', DateFrom: '', DateTo: '', Currency: '', Color: '', Options: '', Upholstery: '', Package: '', SNote: '', MSRP: '', TAX2: '', VAT: '', TAX1: '', PriceBeforeTax: '', WholesalePrice: '', TransferPrice: '', edited: true });
+      if (this.visa_file && this.visa_file.length > 0) {
+        const firstPno = this.visa_file[0];
+        this.newvisafileinformation.push({
+          ID: '',
+          Active: firstPno.Active || '',
+          SalesOrg: firstPno.SalesOrg || '',
+          DistrCh: firstPno.DistrCh || '',
+          PriceList: firstPno.PriceList || '',
+          DealerGroup: firstPno.DealerGroup || '',
+          Country: firstPno.Country || '',
+          CarType: firstPno.CarType || '',
+          Engine: '',
+          SalesVersion: '',
+          Body: '',
+          Gearbox: '',
+          Steering: '',
+          MarketCode: firstPno.MarketCode || '',
+          ModelYear: firstPno.ModelYear || '',
+          StructureWeek: firstPno.StructureWeek || '',
+          DateFrom: firstPno.DateFrom || '',
+          DateTo: firstPno.DateTo || '',
+          Currency: firstPno.Currency || '',
+          Color: '',
+          Options: '',
+          Upholstery: '',
+          Package: '',
+          SNote: '',
+          MSRP: '',
+          TAX2: '',
+          VAT: '',
+          TAX1: '',
+          PriceBeforeTax: '',
+          WholesalePrice: '',
+          TransferPrice: '',
+          edited: true
+        });
+      } else {
+        // Handle the case where visa_file is empty or undefined
+        // You might want to push an object with default values or show an error message
+      }
       this.entitiesStore.fetchVISAFile(this.activeVisaFile.VisaFile).then(() => {
         console.log('VISA file information fetched')
       }).catch((error) => {
