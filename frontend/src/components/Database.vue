@@ -63,16 +63,8 @@
     <!-- Filter Reset Button -->
     <button style="display:block;width:180px; height:50px; display: inline-block; margin-top: 64px;"
       @click="reset">Reset Filters</button>
-
     <hr class="divider" style="margin-top: 40px;">
-
     <span style="font-size: 32px;">Manage Sources</span>
-    <!-- VISA Upload Button -->
-    <button style="display:block;width:180px; height:50px; display: inline-block; margin-top:20px;"
-      onclick="document.getElementById('getFile').click()">Upload VISA file</button>
-    <input type='file' class="visaupload" id="getFile" ref="file" style="display:none"
-      accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" v-on:change="uploadVisa">
-
     <!-- CPAM Refresh Button -->
     <button style="display:block;width:180px; height:50px; display: inline-block; margin-top:10px;"
       @click="refreshCPAM">Refresh CPAM data</button>
@@ -100,6 +92,7 @@
         accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" @change="uploadVisa">
       <!-- Displaying Name of VISA File -->
       <button v-if="visaTable" @click="this.visaTable = false">Return to VISA Files</button>
+      <button v-if="visaTable" @click="addVISAFileInformation" style="margin-left: 10px;">Add Row</button>
       <div v-if="displaytable === 'VISA Files' && model_year !== '0' && visaTable" style="margin-left: 10px;"><strong>[Model {{
       this.activeVisaFile.CarType + " || " + this.activeVisaFile.VisaFile }}]</strong></div>
         <!-- Displaying discounts for sales channel -->
@@ -674,19 +667,20 @@
           <th style="width: 10px">Action</th>
         </tr>
       </thead>
-      <tbody>
+    <tbody>
         <tr v-for="pno in visa_files" :key="pno.id" :class="{ 'editing': pno.edited }">
-          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
-            {{ pno.CarType }}
-          </td>
-          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: left;" @click="fetchVISAFile(pno)">
-            <span style="cursor: pointer;">{{ pno.VisaFile }}</span>
-          </td>
-          <td style="background-color: #f4f4f4;">
-            <span @click.stop="deleteVISAFile(pno.VisaFile)" style="cursor: pointer; color: red;">[X]</span>
-          </td>
+            <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+                {{ pno.CarType }}
+            </td>
+            <td class="VISAColumn" style="background-color: #f4f4f4; text-align: left;">
+              <input v-model="pno.VisaFile" @focus="saveOriginalVISAFileName(pno)" @change="pushUpdateVISAFile(pno)" style="cursor: pointer; min-width: 700px;"/>
+            </td>
+            <td style="background-color: #f4f4f4;">
+                <span @click.stop="fetchVISAFile(pno)" style="cursor: pointer; margin-right: 10px;">[Details]</span>
+                <span @click.stop="deleteVISAFile(pno)" style="cursor: pointer; color: red;">[X]</span>
+            </td>
         </tr>
-      </tbody>
+    </tbody>
     </table>
     <!-- VISA File Table -->
     <table v-if="displaytable === 'VISA Files' && model_year !== '0' && visaTable">
@@ -1059,6 +1053,103 @@
           </td>
           <td style="background-color: #f4f4f4;">
             <span @click="deleteVISAFileInformation(pno)" style="cursor: pointer; color: red;">[X]</span>
+          </td>
+        </tr>
+      </tbody>
+      <tbody>
+        <tr v-for="pno in newvisafileinformation" :key="pno.id" :class="{ 'editing': pno.edited }">
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Active" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.SalesOrg" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.DistrCh" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.PriceList" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.DealerGroup" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Country" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.CarType" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Engine" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.SalesVersion" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Body" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Gearbox" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Steering" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.MarketCode" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.ModelYear" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.StructureWeek" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.DateFrom" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.DateTo" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Currency" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Color" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Options" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Upholstery" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.Package" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.SNote" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.MSRP" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.TAX2" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.VAT" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.TAX1" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.PriceBeforeTax" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.WholesalePrice" @input="pno.edited = true" />
+          </td>
+          <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
+            <input type="text" v-model="pno.TransferPrice" @input="pno.edited = true" />
+          </td>
+          <td style="background-color: #f4f4f4;">
+            <span @click="createVISAFileInformation(pno)" style="cursor: pointer;">[Save]</span>
           </td>
         </tr>
       </tbody>
@@ -1437,9 +1528,11 @@ export default {
       discountTable: false,
       xCodesTable: false,
       visaTable: false,
+      originalVISAFileName: '',
       selectedRow: null,
       activeVisaFile: [],
       activeSalesChannel: [],
+      newvisafileinformation: [],
       newsaleschannel: [],
       newdiscount: [],
       newcustomlocaloption: [],
@@ -1845,6 +1938,7 @@ export default {
       this.discountTable = false;
       this.xCodesTable = false;
       this.selectedRow = null;
+      this.newvisafileinformation = [];
       this.newsaleschannel = [];
       this.newdiscount = [];
       this.newcustomlocaloption = [];
@@ -1862,6 +1956,7 @@ export default {
       this.discountTable = false;
       this.xCodesTable = false;
       this.selectedRow = null;
+      this.newvisafileinformation = [];
       this.newsaleschannel = [];
       this.newdiscount = [];
       this.newcustomlocaloption = [];
@@ -1946,9 +2041,33 @@ export default {
         EndDate: null,
       };
     },
-    // VISA Files
+    // VISA 
+    async saveOriginalVISAFileName(pno) {
+      this.originalVISAFileName = pno.VisaFile;
+    },
+    async pushUpdateVISAFile(pno) {
+      await this.entitiesStore.pushUpdateVISAFile(this.originalVISAFileName, pno.VisaFile);
+      this.originalVISAFileName = '';
+      pno.edited = false;
+      await this.entitiesStore.fetchVISAFiles().then(() => {
+        console.log('VISA files fetched')
+      }).catch((error) => {
+        console.error('Error fetching VISA files', error)
+      })
+    },
+    async createVISAFileInformation(pno) { 
+      pno.ID = null;
+      await this.entitiesStore.pushUpdateVISAFileInformation(pno.ID, pno.Active, pno.SalesOrg, pno.DistrCh, pno.PriceList, pno.DealerGroup, pno.Country, pno.CarType, pno.Engine, pno.SalesVersion, pno.Body, pno.Gearbox, pno.Steering, pno.MarketCode, pno.ModelYear, pno.StructureWeek, pno.DateFrom, pno.DateTo, pno.Currency, pno.Color, pno.Options, pno.Upholstery, pno.Package, pno.SNote, pno.MSRP, pno.TAX2, pno.VAT, pno.TAX1, pno.PriceBeforeTax, pno.WholesalePrice, pno.TransferPrice, this.activeVisaFile.VisaFile); 
+      pno.edited = false; 
+      this.newvisafileinformation = [];
+      await this.entitiesStore.fetchVISAFile(this.activeVisaFile.VisaFile).then(() => {
+        console.log('VISA file information fetched')
+      }).catch((error) => {
+        console.error('Error fetching discounts', error)
+      })
+    },
     async pushUpdateVISAFileInformation(pno) { 
-      await this.entitiesStore.pushUpdateVISAFileInformation(pno.ID, pno.Active, pno.SalesOrg, pno.DistrCh, pno.PriceList, pno.DealerGroup, pno.Country, pno.CarType, pno.Engine, pno.SalesVersion, pno.Body, pno.Gearbox, pno.Steering, pno.MarketCode, pno.ModelYear, pno.StructureWeek, pno.DateFrom, pno.DateTo, pno.Currency, pno.Color, pno.Options, pno.Upholstery, pno.Package, pno.SNote, pno.MSRP, pno.TAX2, pno.VAT, pno.TAX1, pno.PriceBeforeTax, pno.WholesalePrice, pno.TransferPrice, pno.VisaFile, pno.CountryCode, pno.LoadingDate); 
+      await this.entitiesStore.pushUpdateVISAFileInformation(pno.ID, pno.Active, pno.SalesOrg, pno.DistrCh, pno.PriceList, pno.DealerGroup, pno.Country, pno.CarType, pno.Engine, pno.SalesVersion, pno.Body, pno.Gearbox, pno.Steering, pno.MarketCode, pno.ModelYear, pno.StructureWeek, pno.DateFrom, pno.DateTo, pno.Currency, pno.Color, pno.Options, pno.Upholstery, pno.Package, pno.SNote, pno.MSRP, pno.TAX2, pno.VAT, pno.TAX1, pno.PriceBeforeTax, pno.WholesalePrice, pno.TransferPrice, pno.VisaFile); 
       pno.edited = false; 
       await this.entitiesStore.fetchVISAFile(pno.VisaFile).then(() => {
         console.log('VISA file information fetched')
@@ -2051,8 +2170,16 @@ export default {
         console.error('Error fetching X codes', error)
       })
     },
-    deleteVISAFile(file_name) {
-      this.entitiesStore.deleteVISAFile(file_name)
+    deleteVISAFile(pno) {
+      this.entitiesStore.deleteVISAFile(pno.VisaFile)
+    },
+    addVISAFileInformation() {
+      this.newvisafileinformation.push({ ID: '', Active: '', SalesOrg: '', DistrCh: '', PriceList: '', DealerGroup: '', Country: '', CarType: '', Engine: '', SalesVersion: '', Body: '', Gearbox: '', Steering: '', MarketCode: '', ModelYear: '', StructureWeek: '', DateFrom: '', DateTo: '', Currency: '', Color: '', Options: '', Upholstery: '', Package: '', SNote: '', MSRP: '', TAX2: '', VAT: '', TAX1: '', PriceBeforeTax: '', WholesalePrice: '', TransferPrice: '', edited: true });
+      this.entitiesStore.fetchVISAFile(this.activeVisaFile.VisaFile).then(() => {
+        console.log('VISA file information fetched')
+      }).catch((error) => {
+        console.error('Error fetching discounts', error)
+      })
     },
     addSalesChannel() {
       this.newsaleschannel.push({ Code: '', ChannelName: '', Comment: '', StartDate: '', EndDate: '', edited: true });
@@ -2111,6 +2238,8 @@ export default {
 
 <style scoped>
 .main-content {
+  z-index: 1; 
+  position: relative;
   margin-left: 312px;
   padding: 2rem;
   flex-grow: 1;

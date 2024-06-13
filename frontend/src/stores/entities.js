@@ -154,6 +154,16 @@ export const useEntitiesStore = defineStore({
             let path = `/db/${this.country.Code}/${this.model_year}/write/gearboxes`
             return index.post(path, updates);
         },
+        async pushUpdateVISAFile(OldName, NewName) {
+            let updates = {
+                OldName: OldName,
+                NewName: NewName,
+            }
+            console.log(OldName)
+            console.log(NewName)
+            let path = `/db/${this.country.Code}/${this.model_year}/write/visa/rename`
+            return index.post(path, updates);
+        },
         async pushUpdateVISAFileInformation(ID, Active, SalesOrg, DistrCh, PriceList, DealerGroup, Country, CarType, Engine, SalesVersion, Body, Gearbox, Steering, MarketCode, ModelYear, StructureWeek, DateFrom, DateTo, Currency, Color, Options, Upholstery, Package, SNote, MSRP, TAX2, VAT, TAX1, PriceBeforeTax, WholesalePrice, TransferPrice, VisaFile, CountryCode, LoadingDate) {
             let updates = {
                 Active: Active,
@@ -197,7 +207,7 @@ export const useEntitiesStore = defineStore({
             return index.post(path, updates);
         },
         async deleteVISAFileInformation(ID) {
-            let path = `/db/${this.country.Code}/${this.model_year}/write/visa?ID=${ID}`
+            let path = `/db/${this.country.Code}/${this.model_year}/write/visa/data?ID=${ID}`
             return index.delete(path);
         },
         async pushUpdateSalesChannel(ID, Code, ChannelName, Comment, StartDate, EndDate) {
@@ -258,11 +268,8 @@ export const useEntitiesStore = defineStore({
             return index.delete(path);
         },
         async deleteVisaFile(file_name) {
-            let updates = {
-                file_name: file_name,
-            }
-            let path = `/db/${this.country.Code}/${this.model_year}/write/visa`
-            return index.post(path, updates);
+            let path = `/db/${this.country.Code}/${this.model_year}/write/visa?VisaFile=${file_name}`
+            return index.delete(path);
         },
     },
 })
