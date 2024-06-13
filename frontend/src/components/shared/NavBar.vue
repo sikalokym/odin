@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar">
     <div class="nav-logo">
-      <img src="@/assets/pmt_logo.png" alt="Logo">
+      <img src="@/assets/odin_logo.png" alt="Logo">
       <span class="name">Overall Data Import Navigator</span>
     </div>
     <div class="brand-logo">
