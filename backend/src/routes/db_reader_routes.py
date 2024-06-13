@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 
 from src.database.db_operations import DBOperations
 from src.database.services import get_engine_cats
+from src.ingest.cpam.services import get_supported_countries
 from src.ingest.visa_files.services import get_available_visa_files
 from src.utils.db_utils import filter_df_by_model_year, filter_model_year_by_translation
 
@@ -13,7 +14,7 @@ bp_db_reader = Blueprint('db_reader', __name__, url_prefix='/api/db/<country>/<m
 @bp_db_reader.before_request
 def check_country():
     country = request.view_args.get('country')
-    supported_countries = DBOperations.instance.get_table_df(DBOperations.instance.config.get('SETTINGS', 'CountryCodes'), columns=['Code'], conditions=[f'Code = {country}'])
+    supported_countries = get_supported_countries(country)
     if supported_countries.empty:
         return jsonify({"error": "Country code is missing or invalid"}), 400
 

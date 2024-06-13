@@ -1,6 +1,9 @@
 import logging
 import time
 import configparser
+import pandas as pd
+
+from cachetools import TTLCache, cached
 
 from src.database.db_operations import DBOperations
 import src.ingest.cpam.api as cpam
@@ -106,12 +109,22 @@ def ingest_cpam_data(year, car_type, country_code, maf, sw):
 
     assign_prices(country_code)
 
-def get_supported_countries():
+# Create a cache with a Time-To-Live (TTL) of 10 minutes and a maximum size of 100 entries
+cache = TTLCache(maxsize=100, ttl=600)
+
+@cached(cache)
+def get_supported_countries(country_code=None):
     """
     Gets the list of supported countries.
 
     Returns:
         list: A list of supported countries.
     """
-    countries = DBOperations.instance.get_table_df(DBOperations.instance.config.get('SETTINGS', 'CountryCodes'), columns=['Code', 'CountryName'])
-    return countries
+    try:
+        conditions = ['1=1'] if not country_code else [f'Code = {country_code}']
+        
+        countries = DBOperations.instance.get_table_df(DBOperations.instance.config.get('SETTINGS', 'CountryCodes'), columns=['Code', 'CountryName'], conditions=conditions)
+        return countries
+    except Exception as e:
+        logger.error(f'Failed to get supported countries: {e}', extra={'country_code': 'All'})
+        return pd.DataFrame()
