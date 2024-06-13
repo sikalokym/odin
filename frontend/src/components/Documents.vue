@@ -319,7 +319,10 @@ export default {
     async exportVariantBinder() {
       this.exportInProgress = true;
       const link = document.createElement('a');
-      link.href = `${axios.endpoint}/${this.selectedCountry.Code}/export/variant_binder?date=${this.validity_year}${this.validity_week}&model=${this.model}&engines_category=${this.engine}&pnos=${this.variantBinderPnosExport}`;
+      let link_href = `${axios.endpoint}/${this.selectedCountry.Code}/export/variant_binder?date=${this.validity_year}${this.validity_week}&model=${this.model}&engines_category=${this.engine}&pnos=${this.variantBinderPnosExport}`;
+      link_href = encodeURI(link_href);
+      link.href = link_href;
+
       link.setAttribute('download', 'VariantBinder_.xlsx');
       document.body.appendChild(link);
       link.click();
