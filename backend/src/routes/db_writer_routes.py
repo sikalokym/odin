@@ -541,6 +541,7 @@ def upsert_visa_file(country, model_year):
         data['ID'] = str(uuid.uuid4())
     try:
         df_upsert_entry = pd.DataFrame([data])
+        df_upsert_entry['CountryCode'] = country
 
         # Extract columns for upsert
         all_columns = df_upsert_entry.columns.tolist()
@@ -564,8 +565,8 @@ def delete_visa_file(country):
     
     return {"message": "Record deleted successfully"}, 200
 
-@bp_db_writer.route('/visa/rename', methods=['POST'])
-def rename_visa_file(country, model_year):
+@bp_db_writer.route('/visa/old-rename', methods=['POST'])
+def old_rename_visa_file(country, model_year):
     data = request.json
     if not data:
         return 'No data provided', 400
@@ -583,6 +584,46 @@ def rename_visa_file(country, model_year):
         return str(e), 500
     
     return 'Visa file created successfully', 200
+
+@bp_db_writer.route('/visa/rename', methods=['POST'])
+def rename_visa_file(country, model_year):
+    data = request.json
+    if not data:
+        return 'No data provided', 400
+    old_name = data.get('OldName', None)
+    new_name = data.get('NewName', None)
+    if not old_name or not new_name:
+        return 'OldName and NewName are required', 400
+
+    try:
+        # Fetch the table name from the config
+        table_name = DBOperations.instance.config.get('RELATIONS', 'RAW_VISA')
+        
+        # Check if the record exists
+        df_visa = DBOperations.instance.get_table_df(
+            table_name, 
+            conditions=[f"CountryCode = '{country}'", f"VisaFile = '{old_name}'", f"ModelYear = '{model_year}'"]
+        )
+        
+        if df_visa.empty:
+            return 'Visa file not found', 203
+        
+        # Directly update the VisaFile column
+        update_query = f"""
+        UPDATE {table_name}
+        SET VisaFile = ?
+        WHERE CountryCode = ? AND VisaFile = ? AND ModelYear = ?
+        """
+        
+        # Execute the update query
+        with DBOperations.instance.get_cursor() as cursor:
+            cursor.execute(update_query, (new_name, country, old_name, model_year))
+        
+        return 'Visa file renamed successfully', 200
+    
+    except Exception as e:
+        DBOperations.instance.logger.error(f"Error renaming visa file: {e}")
+        return str(e), 500
 
 @bp_db_writer.route('/visa/data', methods=['DELETE'])
 def delete_visa_data(country, model_year):
