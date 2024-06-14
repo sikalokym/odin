@@ -391,8 +391,8 @@ def upsert_sales_channel(country, model_year):
         return 'No data provided', 400
     if 'ID' not in data:
         data['ID'] = str(uuid.uuid4())
-    data['StartDate'] = int (data['StartDate']) if data.get('StartDate') and data['StartDate'] != '' else 0
-    data['EndDate'] = int (data['EndDate']) if data.get('EndDate') and data['EndDate'] != '' else 999999
+    data['StartDate'] = int (data['StartDate']) if data.get('StartDate') and data['StartDate'] != '' else 202001
+    data['EndDate'] = int (data['EndDate']) if data.get('EndDate') and data['EndDate'] != '' else 209952
 
     try:
         data['CountryCode'] = country
@@ -496,8 +496,8 @@ def upsert_custom_local_option(country, model_year):
     try:
         data['FeatureRetailPrice'] = float(data['FeatureRetailPrice']) if data.get('FeatureRetailPrice') and data['FeatureRetailPrice'] != '' else 0
         data['FeatureWholesalePrice'] = float(data['FeatureWholesalePrice']) if data.get('FeatureWholesalePrice') and data['FeatureWholesalePrice'] != '' else 0
-        data['StartDate'] = int (data['StartDate']) if data.get('StartDate') and data['StartDate'] != '' else 0
-        data['EndDate'] = int (data['EndDate']) if data.get('EndDate') and data['EndDate'] != '' else 999999
+        data['StartDate'] = int (data['StartDate']) if data.get('StartDate') and data['StartDate'] != '' else 202001
+        data['EndDate'] = int (data['EndDate']) if data.get('EndDate') and data['EndDate'] != '' else 209952
         
         # Create a DataFrame with a single row
         df_new_entry = pd.DataFrame([data])
@@ -555,6 +555,8 @@ def upsert_visa_file(country, model_year):
         # Extract columns for upsert
         all_columns = df_upsert_entry.columns.tolist()
         conditional_columns = ['ID']
+        
+        # update_prices()
 
         # Perform the upsert
         DBOperations.instance.upsert_data_from_df(df_upsert_entry, DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), all_columns, conditional_columns)
