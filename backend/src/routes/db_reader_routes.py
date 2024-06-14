@@ -523,9 +523,23 @@ def get_visa_files(country, model_year):
         df_visa = get_available_visa_files(country, model_year, visa_columns)
         
         df_visa.drop_duplicates(inplace=True)
+            
+        codes = df_visa['CarType'].tolist()
+        conditions = [f'CountryCode = {country}']
+        if len(codes) == 1:
+            conditions.append(f"Code = '{codes[0]}'")
+        else:
+            conditions.append(f"Code in {tuple(codes)}")
         
-        records = df_visa.to_dict(orient='records')
-        return jsonify(records), 200
+        df_models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), columns=['Code', 'CustomName', 'StartDate', 'EndDate'], conditions=conditions)
+        df_models = filter_df_by_model_year(df_models, model_year)
+        df_models = filter_model_year_by_translation(df_models, conditional_columns=['CustomName'])
+        df_models = df_models.drop(columns=['StartDate', 'EndDate'], axis=1)
+        
+        df_visa = df_visa.merge(df_models, how='left', left_on='CarType', right_on='Code')
+        df_visa.drop(columns=['Code'], axis=1, inplace=True)
+        df_visa.drop_duplicates(inplace=True)
+        return df_visa.to_json(orient='records'), 200
     except Exception as e:
         return str(e), 500
 
