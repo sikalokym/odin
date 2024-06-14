@@ -643,7 +643,7 @@ def delete_visa_data(country, model_year):
         table_name = DBOperations.instance.config.get('RELATIONS', 'RAW_VISA')
         delete_query = f"DELETE FROM {table_name} WHERE ID = ?"
         with DBOperations.instance.get_cursor() as cursor:
-            cursor.execute(delete_query, (id,))
+            cursor.execute(delete_query, (visa_entry_id,))
         return {"message": "Record deleted successfully"}, 200
     except Exception as e:
         DBOperations.instance.logger.error(f"Error deleting record: {e}")
