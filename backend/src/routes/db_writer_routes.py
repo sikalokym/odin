@@ -4,7 +4,7 @@ import pandas as pd
 
 from src.database.db_operations import DBOperations
 from src.ingest.cpam.services import get_supported_countries
-from src.utils.db_utils import filter_df_by_model_year, get_column_map
+from src.utils.db_utils import filter_df_by_model_year, get_column_map, validate_and_format_date
 
 
 bp_db_writer = Blueprint('db_writer', __name__, url_prefix='/api/db/<country>/<model_year>/write')
@@ -496,8 +496,8 @@ def upsert_custom_local_option(country, model_year):
     try:
         data['FeatureRetailPrice'] = float(data['FeatureRetailPrice']) if data.get('FeatureRetailPrice') and data['FeatureRetailPrice'] != '' else 0
         data['FeatureWholesalePrice'] = float(data['FeatureWholesalePrice']) if data.get('FeatureWholesalePrice') and data['FeatureWholesalePrice'] != '' else 0
-        data['DateFrom'] = data['DateFrom'] if data.get('DateFrom') and data['DateFrom'] != '' else '2020-01-01'
-        data['DateTo'] = data['DateTo'] if data.get('DateTo') and data['DateTo'] != '' else '2099-12-31'
+        data['DateFrom'] = validate_and_format_date(data.get('DateFrom', ''), '2020-01-01')
+        data['DateTo'] = validate_and_format_date(data.get('DateTo', ''), '2099-12-31')
         
         # Create a DataFrame with a single row
         df_new_entry = pd.DataFrame([data])
