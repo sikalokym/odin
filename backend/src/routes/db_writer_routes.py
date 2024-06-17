@@ -391,8 +391,8 @@ def upsert_sales_channel(country, model_year):
         return 'No data provided', 400
     if 'ID' not in data:
         data['ID'] = str(uuid.uuid4())
-    data['DateFrom'] = data['DateFrom'] if data.get('DateFrom') and data['DateFrom'] != '' else '2020-01-01'
-    data['DateTo'] = data['DateTo'] if data.get('DateTo') and data['DateTo'] != '' else '2099-12-31'
+    data['DateFrom'] = validate_and_format_date(data.get('DateFrom', ''), '2020-01-01')
+    data['DateTo'] = validate_and_format_date(data.get('DateTo', ''), '2099-12-31')
 
     try:
         data['CountryCode'] = country

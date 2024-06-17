@@ -514,6 +514,14 @@ def get_custom_local_options(country, model_year):
 
     df_custom_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['ID', 'FeatureCode', 'FeatureRetailPrice', 'FeatureWholesalePrice', 'AffectedVisaFile', 'DateFrom', 'DateTo'], conditions=conditions)
     
+    # Convert DateFrom and DateTo columns to datetime format
+    df_custom_local_options['DateFrom'] = pd.to_datetime(df_custom_local_options['DateFrom'])
+    df_custom_local_options['DateTo'] = pd.to_datetime(df_custom_local_options['DateTo'])
+    
+    # Format DateFrom and DateTo columns
+    df_custom_local_options['DateFrom'] = df_custom_local_options['DateFrom'].dt.strftime('%Y-%m-%d')
+    df_custom_local_options['DateTo'] = df_custom_local_options['DateTo'].dt.strftime('%Y-%m-%d')
+    
     # split AffectedVisaFile column by comma if not All else return a list with no elements
     df_custom_local_options['AffectedVisaFile'] = df_custom_local_options['AffectedVisaFile'].replace('All', None)
     df_custom_local_options['AffectedVisaFile'] = df_custom_local_options['AffectedVisaFile'].map(lambda x: x.split(',') if x else [])
