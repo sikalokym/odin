@@ -74,7 +74,7 @@ router.beforeEach(async (to, from, next) => {
 				next('/');
 			}
 		} else {
-			next();
+			next('/');
 		}
 	} catch (error) {
 		console.error('Authentication error:', error);
