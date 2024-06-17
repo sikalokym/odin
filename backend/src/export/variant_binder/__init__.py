@@ -12,7 +12,7 @@ def extract_variant_binder_pnos(country, model, engines_types, time):
         valid_pnos = get_valid_pnos(country, model, time, valid_engines)
         
         codes = valid_pnos['Model'].tolist()
-        conditions = [f'CountryCode = {country}', f'StartDate <= {time}', f'EndDate >= {time}']
+        conditions = [f"CountryCode = '{country}'", f'StartDate <= {time}', f'EndDate >= {time}']
         if len(codes) == 1:
             conditions.append(f"Code = '{codes[0]}'")
         else:
@@ -32,7 +32,7 @@ def extract_variant_binder_pnos(country, model, engines_types, time):
         DBOperations.instance.logger.error(f"Error getting VB Data: {e}")
         raise Exception(f"Error getting VB Data: {e}")
     
-def extract_variant_binder(country, model, engines_types, time, pno_ids):
+def extract_variant_binder(country, model, engines_types, time, pno_ids=None):
     wb = Workbook()
 
     # Remove the default sheet created
@@ -43,7 +43,8 @@ def extract_variant_binder(country, model, engines_types, time, pno_ids):
         valid_engines = get_valid_engines(country, engines_types, time)
         valid_pnos = get_valid_pnos(country, model, time, valid_engines)
         # filter the valid pnos by the given pno_ids
-        valid_pnos = valid_pnos[valid_pnos['ID'].isin(pno_ids)]
+        if pno_ids:
+            valid_pnos = valid_pnos[valid_pnos['ID'].isin(pno_ids)]
         sales_versions = get_sales_versions(country, valid_pnos, time)
         title, model_id = get_model_name(country, model, time)
     except Exception as e:
@@ -98,7 +99,7 @@ def extract_variant_binder(country, model, engines_types, time, pno_ids):
     return output, vb_title
     
 def get_model_name(country, model, time):
-    models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), ['ID', 'MarketText', 'CustomName', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f'Code = {model}'])
+    models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), ['ID', 'MarketText', 'CustomName', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'", f"Code = '{model}'"])
 
     # filter models where StartDate and End Data wrap the current time for the given model
     df_model = filter_df_by_timestamp(models, time)
@@ -111,7 +112,7 @@ def get_model_name(country, model, time):
         raise Exception(f"No model found for model {model}")
 
 def get_sales_versions(country, pnos, time):
-    df_sv = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), conditions=[f'CountryCode = {country}'])
+    df_sv = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), conditions=[f"CountryCode = '{country}'"])
     df_pno_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'PNO_Custom'))
     if df_pno_price.empty:
         raise Exception("No price data found")
@@ -142,7 +143,7 @@ def get_sales_versions(country, pnos, time):
     return df_final
 
 def get_valid_engines(country, engine_cat, time):
-    df_all_engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), conditions=[f'CountryCode = {country}'])
+    df_all_engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), conditions=[f"CountryCode = '{country}'"])
     df_engines = filter_df_by_timestamp(df_all_engines, time)
     if engine_cat == '':
         other_engines = df_engines[df_engines['EngineCategory'].isna()]
@@ -166,7 +167,7 @@ def get_valid_engines(country, engine_cat, time):
     return df_engines.groupby('EngineType').agg({'Code': list, 'CustomName': list, 'Performance': list, 'ID': list}).reset_index()
 
 def get_valid_pnos(country, model, time, engines_types):
-    conditions=[f'CountryCode = {country}', f'Model = {model}', f'Steering = 1']
+    conditions=[f"CountryCode = '{country}'", f"Model = '{model}'", f"Steering = '1'"]
     allowed_engines = engines_types['Code'].explode('Code').unique().tolist()
     if not allowed_engines:
         DBOperations.instance.logger.info(f"No engines found for the given engine category {engines_types}")
