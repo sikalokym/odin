@@ -5,6 +5,7 @@ from datetime import datetime
 from flask import Blueprint, request, send_file
 from src.database.db_operations import DBOperations
 from src.storage.blob import load_available_visa_files
+from src.utils.db_utils import get_column_map
 from src.utils.ingest_utils import is_valid_engine_category
 from src.export.sap_price_list import get_sap_price_list
 from src.export.variant_binder import extract_variant_binder, extract_variant_binder_pnos
@@ -108,3 +109,27 @@ def sap_price_list(country):
 
     zip_buffer.seek(0)
     return send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='sap_price_list.zip')
+
+@bp_exporter.route('/visa', methods=['GET'])
+def export_visa_file(country):
+    visa_file_name = request.args.get('VisaFile')
+    if not visa_file_name:
+        return "VisaFile is required", 400
+    try:
+        table_name = DBOperations.instance.config.get('RELATIONS', 'RAW_VISA')
+        df_visa = DBOperations.instance.get_table_df(table_name, conditions=[f"CountryCode = '{country}'", f"VisaFile = '{visa_file_name}'"])
+        if df_visa.empty:
+            return "Visa file not found", 404
+        df_visa = df_visa.drop(columns=['CountryCode', 'VisaFile', 'ID', 'LoadingDate'])
+        c_map = get_column_map(reverse=True)
+        df_visa.columns = [c_map.get(col, col) for col in df_visa.columns]
+        # Create a buffer to hold the Excel file
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df_visa.to_excel(writer, index=False)
+        
+        output.seek(0)
+        download_name = visa_file_name if visa_file_name.endswith('.xlsx') else f'{visa_file_name}.xlsx'
+        return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', as_attachment=True, download_name=download_name)
+    except Exception as e:
+        return str(e), 500
