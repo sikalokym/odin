@@ -402,7 +402,7 @@ def log_df(df, msg_prefix, callable_logger, country_code=None):
 
         callable_logger(msg, extra={'country_code': country_code})
 
-def get_column_map():
+def get_column_map(reverse=False):
     """
     Returns a dictionary mapping the old column names of visa files to the new column names.
 
@@ -444,5 +444,13 @@ def get_column_map():
         'VisaFile': 'VisaFile',
         'CountryCode': 'CountryCode'
     }
-
+    if reverse:
+        return {v: k for k, v in column_map.items()}
     return column_map
+
+def fill_custom_name(group):
+    unique_not_null = group['CustomName'].dropna().unique()
+    if len(unique_not_null) == 1:
+        return group['CustomName'].fillna(unique_not_null[0])
+    else:
+        return group['CustomName'].fillna('')
