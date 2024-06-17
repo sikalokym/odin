@@ -690,8 +690,8 @@
       </tbody>
     </table>
     <!-- VISA File Table -->
-    <table v-if="displaytable === 'VISA Files' && model_year !== '0' && visaTable">
-      <thead v-if="model_year !== '0'">
+    <table v-if="displaytable === 'VISA Files' && model_year !== '0' && visaTable" style="position: sticky; top: 0; background-color: white; z-index: 100;">
+      <thead v-if="model_year !== '0'" style="position: sticky; top: 0; background-color: white; z-index: 100;">
         <tr>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
@@ -704,7 +704,7 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              Sales Org
+              Sales Org.
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('SalesOrg', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('SalesOrg', -1)" style="cursor: pointer;">↓</span>
@@ -713,7 +713,7 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              DistrCh
+              Distr. Ch.
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('DistrCh', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('DistrCh', -1)" style="cursor: pointer;">↓</span>
@@ -722,7 +722,7 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              PriceList
+              Price List
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('PriceList', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('PriceList', -1)" style="cursor: pointer;">↓</span>
@@ -731,7 +731,7 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              DealerGroup
+              Dealer Group
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('DealerGroup', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('DealerGroup', -1)" style="cursor: pointer;">↓</span>
@@ -749,7 +749,7 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              CarType
+              Car Type
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('CarType', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('CarType', -1)" style="cursor: pointer;">↓</span>
@@ -767,7 +767,7 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              SalesVersion
+              Sales Version
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('SalesVersion', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('SalesVersion', -1)" style="cursor: pointer;">↓</span>
@@ -803,7 +803,7 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              MarketCode
+              Market Code
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('MarketCode', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('MarketCode', -1)" style="cursor: pointer;">↓</span>
@@ -812,7 +812,7 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              ModelYear
+              Model Year
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('ModelYear', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('ModelYear', -1)" style="cursor: pointer;">↓</span>
@@ -821,7 +821,7 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              StructureWeek
+              Structure Week
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('StructureWeek', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('StructureWeek', -1)" style="cursor: pointer;">↓</span>
@@ -830,7 +830,7 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              DateFrom
+              Date From
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('DateFrom', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('DateFrom', -1)" style="cursor: pointer;">↓</span>
@@ -839,7 +839,7 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              DateTo
+              Date To
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('DateTo', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('DateTo', -1)" style="cursor: pointer;">↓</span>
@@ -893,7 +893,7 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              SNote
+              S-Note
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('SNote', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('SNote', -1)" style="cursor: pointer;">↓</span>
@@ -938,7 +938,7 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              PriceBeforeTax
+              Price Before Tax
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('PriceBeforeTax', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('PriceBeforeTax', -1)" style="cursor: pointer;">↓</span>
@@ -947,7 +947,7 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              WholesalePrice
+              Wholesale Price
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('WholesalePrice', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('WholesalePrice', -1)" style="cursor: pointer;">↓</span>
@@ -956,7 +956,7 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              TransferPrice
+              Transfer Price
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('TransferPrice', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('TransferPrice', -1)" style="cursor: pointer;">↓</span>
@@ -2302,7 +2302,7 @@ export default {
       const file = this.$refs.file.files[0];
       const formData = new FormData();
       formData.append('visa', file);
-      index.post(`/${this.pnoStore.country}/ingest/visa/upload`, formData);
+      index.post(`/${this.pnoStore.country.Code}/ingest/visa/upload`, formData);
     },
     refreshCPAM() {
       index.get('/ingest/cpam');

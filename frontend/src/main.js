@@ -9,10 +9,10 @@ import { ensureAuthenticated } from './authService';
 
 const pinia = createPinia()
 
-initializeMsal().then(async ()=> {
-    let app = createApp(App)
-    app.use(pinia);
-    app.use(router);
-    await ensureAuthenticated()
-    app.mount('#app');
-  });
+initializeMsal().then(async () => {
+  let app = createApp(App)
+  app.use(pinia);
+  app.use(router);
+  await ensureAuthenticated()
+  app.mount('#app');
+});
