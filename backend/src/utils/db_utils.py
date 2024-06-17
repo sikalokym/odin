@@ -457,7 +457,6 @@ def fill_custom_name(group):
         return group['CustomName'].fillna('')
 
 def validate_and_format_date(date_str, default_date):
-    try:
-        return datetime.strptime(date_str, '%Y-%m-%d').strftime('%Y-%m-%d')
-    except ValueError:
+    if (date_str is None) or (date_str == ''):
         return default_date
+    return date_str.split('T')[0]
