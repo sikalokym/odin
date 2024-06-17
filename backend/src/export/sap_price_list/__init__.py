@@ -37,8 +37,15 @@ def get_sap_price_list(name, df_sales_channels, df_discount_options):
         res_df['Price List'] = row['Code']
         df_local_options = df_discount_options[df_discount_options['ChannelID'] == row['ID']]
         res_df = add_local_codes(res_df, df_local_options)
-        res_df['Date From'] = row['DateFrom']
-        res_df['Date To'] = row['DateTo']
+        
+        # Convert the dates to datetime format
+        res_df['DateFrom'] = pd.to_datetime(row['DateFrom'])
+        res_df['DateTo'] = pd.to_datetime(row['DateTo'])
+
+        # Format the dates as yyyy.mm.dd
+        res_df['DateFrom'] = res_df['DateFrom'].dt.strftime('%Y.%m.%d')
+        res_df['DateTo'] = res_df['DateTo'].dt.strftime('%Y.%m.%d')
+        
         res_df.name = f"{row['Code']}+#+{row['ChannelName']}"
         dfs.append(res_df)
  
