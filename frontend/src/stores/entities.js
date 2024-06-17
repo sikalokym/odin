@@ -267,7 +267,7 @@ export const useEntitiesStore = defineStore({
             let path = `/db/${this.country.Code}/${this.model_year}/write/custom-local-options?ID=${ID}`
             return index.delete(path);
         },
-        async deleteVisaFile(file_name) {
+        async deleteVISAFile(file_name) {
             let path = `/db/${this.country.Code}/${this.model_year}/write/visa?VisaFile=${file_name}`
             return index.delete(path);
         },
