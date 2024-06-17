@@ -684,6 +684,7 @@
           </td>
           <td style="background-color: #f4f4f4;">
             <span @click.stop="fetchVISAFile(pno)" style="cursor: pointer; margin-right: 10px;">[Details]</span>
+            <span @click.stop="downloadVISAFile(pno)" style="cursor: pointer; color: green; margin-right: 10px;">[Download]</span>
             <span @click.stop="deleteVISAFile(pno)" style="cursor: pointer; color: red;">[X]</span>
           </td>
         </tr>
@@ -1224,19 +1225,19 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              Start Date
+              Date From
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('StartDate', 1)" style="cursor: pointer;">↑</span>
-                <span @click="sortTable('StartDate', -1)" style="cursor: pointer;">↓</span>
+                <span @click="sortTable('DateFrom', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('DateFrom', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              End Date
+              Date To
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('EndDate', 1)" style="cursor: pointer;">↑</span>
-                <span @click="sortTable('EndDate', -1)" style="cursor: pointer;">↓</span>
+                <span @click="sortTable('DateTo', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('DateTo', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -1257,12 +1258,12 @@
               @change="pushUpdateSalesChannel(pno)" />
           </td>
           <td>
-            <input type="StartDate" v-model="pno.StartDate" @input="pno.edited = true"
-              @change="pushUpdateSalesChannel(pno)" />
+            <VueDatePicker v-model="pno.DateFrom" :format="format" :enable-time-picker="false" 
+                          @input="pno.edited = true" @update:model-value="pushUpdateSalesChannel(pno)" />
           </td>
           <td>
-            <input type="EndDate" v-model="pno.EndDate" @input="pno.edited = true"
-              @change="pushUpdateSalesChannel(pno)" />
+            <VueDatePicker v-model="pno.DateTo" :format="format" :enable-time-picker="false" 
+                          @input="pno.edited = true" @update:model-value="pushUpdateSalesChannel(pno)" />
           </td>
           <td style="background-color: #f4f4f4;">
             <span @click="fetchDiscounts(pno)" style="cursor: pointer; margin-right: 10px;">[%]</span>
@@ -1283,10 +1284,12 @@
             <input type="Comment" v-model="pno.Comment" @input="pno.edited = true" />
           </td>
           <td>
-            <input type="StartDate" v-model="pno.StartDate" @input="pno.edited = true" />
+            <VueDatePicker v-model="pno.DateFrom" :format="format" :enable-time-picker="false" 
+                           @input="pno.edited = true" />
           </td>
           <td>
-            <input type="EndDate" v-model="pno.EndDate" @input="pno.edited = true" />
+            <VueDatePicker v-model="pno.DateTo" :format="format" :enable-time-picker="false" 
+                           @input="pno.edited = true" />
           </td>
           <td style="background-color: #f4f4f4;">
             <span @click="createSalesChannel(pno)" style="cursor: pointer;">[Save]</span>
@@ -1452,7 +1455,7 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              Start Date
+              Date From
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('StartDate', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('StartDate', -1)" style="cursor: pointer;">↓</span>
@@ -1461,7 +1464,7 @@
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              End Date
+              Date To
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('EndDate', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('EndDate', -1)" style="cursor: pointer;">↓</span>
@@ -1491,10 +1494,12 @@
               placeholder="All" multiple></v-select>
           </td>
           <td>
-            <input type="StartDate" v-model="pno.StartDate" @input="pno.edited = true" @change="pushUpdateXCode(pno)" />
+            <VueDatePicker v-model="pno.DateFrom" :format="format" :enable-time-picker="false" 
+                          @input="pno.edited = true" @update:model-value="pushUpdateXCode(pno)" />
           </td>
           <td>
-            <input type="EndDate" v-model="pno.EndDate" @input="pno.edited = true" @change="pushUpdateXCode(pno)" />
+            <VueDatePicker v-model="pno.DateTo" :format="format" :enable-time-picker="false" 
+                          @input="pno.edited = true" @update:model-value="pushUpdateXCode(pno)" />
           </td>
           <td style="background-color: #f4f4f4;">
             <span @click="deleteXCode(pno)" style="cursor: pointer; color: red;">[X]</span>
@@ -1518,10 +1523,12 @@
             :reduce="label => label" placeholder="All" multiple></v-select>
         </td>
         <td>
-          <input type="StartDate" v-model="pno.StartDate" @input="pno.edited = true" />
+          <VueDatePicker v-model="pno.DateFrom" :format="format" :enable-time-picker="false" 
+                          @input="pno.edited = true" />
         </td>
         <td>
-          <input type="EndDate" v-model="pno.EndDate" @input="pno.edited = true" />
+          <VueDatePicker v-model="pno.DateTo" :format="format" :enable-time-picker="false" 
+                          @input="pno.edited = true" />
         </td>
         <td style="background-color: #f4f4f4;">
           <span @click="createXCode(pno)" style="cursor: pointer;">[Save]</span>
@@ -1540,14 +1547,18 @@
 <script>
 import { usePNOStore } from '../stores/pno.js'
 import { useEntitiesStore } from '../stores/entities.js'
+import axios from '../api/index.js'
 import index from '../api/index.js'
 import "vue-select/dist/vue-select.css"
 import vSelect from "vue-select"
-
+import VueDatePicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
+ 
 export default {
   name: 'DatabaseView',
   components: {
-    vSelect
+    vSelect,
+    VueDatePicker
   },
   data() {
     return {
@@ -1837,6 +1848,12 @@ export default {
     },
   },
   methods: {
+    format(Date) {
+      const day = String(Date.getDate()).padStart(2, '0');
+      const month = String(Date.getMonth() + 1).padStart(2, '0');
+      const year = Date.getFullYear();
+      return `${day}-${month}-${year}`;
+    },
 
     async handleModelYearChange() {
       await this.refreshModelyear();
@@ -1965,6 +1982,21 @@ export default {
       } catch (error) {
         console.error('Error fetching data', error);
       }
+    },
+
+    async downloadVISAFile(pno) {
+      console.log(pno);
+      const visaFile = encodeURIComponent(pno.VisaFile);
+      const link = document.createElement('a');
+      let link_href = `${axios.endpoint}/${this.selectedCountry.Code}/export/visa?VisaFile=${visaFile}`;
+      link.href = link_href;
+
+      link.setAttribute('download', 'VisaFile_.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        this.exportInProgress = false;
+      }, 10000);
     },
 
     async reset() {
@@ -2127,12 +2159,12 @@ export default {
     },
     // Sales Channels
     async pushUpdateSalesChannel(pno) {
-      await this.entitiesStore.pushUpdateSalesChannel(pno.ID, pno.Code, pno.ChannelName, pno.Comment, pno.StartDate, pno.EndDate)
+      await this.entitiesStore.pushUpdateSalesChannel(pno.ID, pno.Code, pno.ChannelName, pno.Comment, pno.DateFrom, pno.DateTo)
       pno.edited = false
     },
     async createSalesChannel(pno) {
       pno.ID = null
-      await this.entitiesStore.pushUpdateSalesChannel(pno.ID, pno.Code, pno.ChannelName, pno.Comment, pno.StartDate, pno.EndDate)
+      await this.entitiesStore.pushUpdateSalesChannel(pno.ID, pno.Code, pno.ChannelName, pno.Comment, pno.DateFrom, pno.DateTo)
       pno.edited = false
       this.newsaleschannel = [];
       await this.entitiesStore.fetchSalesChannels().then(() => {
@@ -2183,7 +2215,7 @@ export default {
     },
     // XCodes
     async pushUpdateXCode(pno) {
-      await this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeSalesChannel.ChannelID, pno.FeatureCode, pno.FeatureRetailPrice, pno.FeatureWholesalePrice, pno.AffectedVisaFile, pno.StartDate, pno.EndDate)
+      await this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeSalesChannel.ChannelID, pno.FeatureCode, pno.FeatureRetailPrice, pno.FeatureWholesalePrice, pno.AffectedVisaFile, pno.DateFrom, pno.DateTo)
       pno.edited = false
       await this.entitiesStore.fetchCustomLocalOptions(this.activeSalesChannel.ChannelID).then(() => {
         console.log('X codes fetched')
@@ -2193,7 +2225,7 @@ export default {
     },
     async createXCode(pno) {
       pno.ID = null
-      await this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeSalesChannel.ChannelID, pno.FeatureCode, pno.FeatureRetailPrice, pno.FeatureWholesalePrice, pno.AffectedVisaFile, pno.StartDate, pno.EndDate)
+      await this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeSalesChannel.ChannelID, pno.FeatureCode, pno.FeatureRetailPrice, pno.FeatureWholesalePrice, pno.AffectedVisaFile, pno.DateFrom, pno.DateTo)
       pno.edited = false
       this.newcustomlocaloption = [];
       await this.entitiesStore.fetchCustomLocalOptions(this.activeSalesChannel.ChannelID).then(() => {
@@ -2262,7 +2294,7 @@ export default {
       })
     },
     addSalesChannel() {
-      this.newsaleschannel.push({ Code: '', ChannelName: '', Comment: '', StartDate: '', EndDate: '', edited: true });
+      this.newsaleschannel.push({ Code: '', ChannelName: '', Comment: '', DateFrom: new Date('2020-01-01'), DateTo: new Date('2099-12-31'), edited: true });
     },
     addDiscount() {
       this.newdiscount.push({ DiscountPercentage: '', RetailPrice: '', WholesalePrice: '', AffectedVisaFile: '', PNOSpecific: '', edited: true });
@@ -2273,7 +2305,7 @@ export default {
       })
     },
     addCustomLocalOption() {
-      this.newcustomlocaloption.push({ FeatureCode: '', FeatureRetailPrice: '', FeatureWholesalePrice: '', AffectedVisaFile: '', StartDate: '', EndDate: '', edited: true });
+      this.newcustomlocaloption.push({ FeatureCode: '', FeatureRetailPrice: '', FeatureWholesalePrice: '', AffectedVisaFile: '', DateFrom: new Date('2020-01-01'), DateTo: new Date('2099-12-31'), edited: true });
     },
     handleSelectChange(pno) {
       if (pno.AffectedVisaFile.includes('All')) {

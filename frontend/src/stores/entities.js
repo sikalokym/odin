@@ -210,13 +210,13 @@ export const useEntitiesStore = defineStore({
             let path = `/db/${this.country.Code}/${this.model_year}/write/visa/data?ID=${ID}`
             return index.delete(path);
         },
-        async pushUpdateSalesChannel(ID, Code, ChannelName, Comment, StartDate, EndDate) {
+        async pushUpdateSalesChannel(ID, Code, ChannelName, Comment, DateFrom, DateTo) {
             let updates = {
                 Code: Code,
                 ChannelName: ChannelName,
                 Comment: Comment,
-                StartDate: StartDate,
-                EndDate: EndDate
+                DateFrom: DateFrom,
+                DateTo: DateTo
             };
             if (ID !== null) {
                 updates.ID = ID;
@@ -247,15 +247,15 @@ export const useEntitiesStore = defineStore({
             let path = `/db/${this.country.Code}/${this.model_year}/write/discounts?ID=${ID}`
             return index.delete(path);
         },
-        async pushUpdateCustomLocalOptions(ID, SalesChannelID, FeatureCode, FeatureRetailPrice, FeatureWholesalePrice, AffectedVisaFile, StartDate, EndDate) {
+        async pushUpdateCustomLocalOptions(ID, SalesChannelID, FeatureCode, FeatureRetailPrice, FeatureWholesalePrice, AffectedVisaFile, DateFrom, DateTo) {
             let updates = {
                 ChannelID: SalesChannelID,
                 FeatureCode: FeatureCode,
                 FeatureRetailPrice: FeatureRetailPrice,
                 FeatureWholesalePrice: FeatureWholesalePrice,
                 AffectedVisaFile: AffectedVisaFile,
-                StartDate: StartDate,
-                EndDate: EndDate
+                DateFrom: DateFrom,
+                DateTo: DateTo
             }
             if (ID !== null) {
                 updates.ID = ID;
