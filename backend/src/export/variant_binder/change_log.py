@@ -12,7 +12,7 @@ def get_sheet(ws, entities_ids_dict, pnos_ids, relations_ids, title, time, count
 
     time_str = str(time) + '0'
     date = pd.to_datetime(time_str, format='%Y%U%w').date()
-    conditions = [f'CountryCode = {country}', f"CAST(ChangeDate AS DATE) < '{date}'"]
+    conditions = [f"CountryCode = '{country}'", f"CAST(ChangeDate AS DATE) < '{date}'"]
     or_conditions = []
     for table, ids in entities_ids_dict.items():
         table_name = DBOperations.instance.config.get('TABLES', table)

@@ -190,7 +190,7 @@ def fetch_vb_price_data(country, df_valid_pnos, time):
     df_vb_prices = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'PNO_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax'])
     df_price = df_valid_pnos.merge(df_vb_prices, left_on='ID', right_on='RelationID', how='left')
     
-    df_gb = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'G'), conditions=[f'CountryCode = {country}'])
+    df_gb = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'G'), conditions=[f"CountryCode = '{country}'"])
     df_gb = df_gb[df_gb['Code'].isin(df_price['Gearbox'].tolist())]
     df_gb = filter_df_by_timestamp(df_gb, time)
     df_gb['CustomName'] = df_gb['CustomName'].combine_first(df_gb['MarketText'])
@@ -198,7 +198,7 @@ def fetch_vb_price_data(country, df_valid_pnos, time):
     df_gb = df_gb[['Code', 'CustomName']]
 
     en_codes = df_price['Engine'].unique().tolist()
-    conditions = [f'CountryCode = {country}']
+    conditions = [f"CountryCode = '{country}'"]
     if len(en_codes) == 1:
         conditions.append(f"Code = '{en_codes[0]}'")
     else:

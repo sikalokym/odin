@@ -24,7 +24,7 @@ def write_models(country, model_year):
         return 'No data provided', 400
     
     # Create a DataFrame from the list of JSON objects
-    df_models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), conditions=[f'CountryCode = {country}'])
+    df_models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), conditions=[f"CountryCode = '{country}'"])
     df_models = filter_df_by_model_year(df_models, model_year)
     update_columns = ['CustomName']
 
@@ -44,7 +44,7 @@ def write_engines(country, model_year):
         return 'No data provided', 400
     
     # Create a DataFrame from the list of JSON objects
-    df_engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), conditions=[f'CountryCode = {country}'])
+    df_engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), conditions=[f"CountryCode = '{country}'"])
     df_engines = filter_df_by_model_year(df_engines, model_year)
     update_columns = ['CustomName', 'Performance', 'EngineCategory', 'EngineType']
 
@@ -64,7 +64,7 @@ def write_sales_versions(country, model_year):
         return 'No data provided', 400
     
     # Create a DataFrame from the list of JSON objects
-    df_sales_versions = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), conditions=[f'CountryCode = {country}'])
+    df_sales_versions = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), conditions=[f"CountryCode = '{country}'"])
     df_sales_versions = filter_df_by_model_year(df_sales_versions, model_year)
     update_columns = ['CustomName']
 
@@ -84,7 +84,7 @@ def write_gearboxes(country, model_year):
         return 'No data provided', 400
     
     # Create a DataFrame from the list of JSON objects
-    df_gearboxes = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'G'), conditions=[f'CountryCode = {country}'])
+    df_gearboxes = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'G'), conditions=[f"CountryCode = '{country}'"])
     df_gearboxes = filter_df_by_model_year(df_gearboxes, model_year)
     update_columns = ['CustomName']
 
@@ -106,7 +106,7 @@ def write_features(country, model_year):
     code = data['Code']
 
     model = data.get('Model', None)
-    pnos_conditions = [f'CountryCode = {country}']
+    pnos_conditions = [f"CountryCode = '{country}'"]
     if model:
         pnos_conditions.append(f"Model = '{model}'")
 
@@ -168,7 +168,7 @@ def write_customfeatures(country, model_year):
     model = data['Model']
 
     # Create a DataFrame from the list of JSON objects
-    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}', f"Model = '{model}'"])
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'", f"Model = '{model}'"])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     ids = df_pnos['ID'].tolist()
 
@@ -218,7 +218,7 @@ def write_options(country, model_year):
     code = data['Code']
 
     model = data.get('Model', None)
-    pnos_conditions = [f'CountryCode = {country}']
+    pnos_conditions = [f"CountryCode = '{country}'"]
     if model:
         pnos_conditions.append(f"Model = '{model}'")
 
@@ -262,7 +262,7 @@ def write_colors(country, model_year):
     code = data['Code']
 
     model = data.get('Model', None)
-    pnos_conditions = [f'CountryCode = {country}']
+    pnos_conditions = [f"CountryCode = '{country}'"]
     if model:
         pnos_conditions.append(f"Model = '{model}'")
 
@@ -306,7 +306,7 @@ def write_upholstery(country, model_year):
     code = data['Code']
 
     model = data.get('Model', None)
-    pnos_conditions = [f'CountryCode = {country}']
+    pnos_conditions = [f"CountryCode = '{country}'"]
     if model:
         pnos_conditions.append(f"Model = '{model}'")
 
@@ -348,7 +348,7 @@ def write_packages(country, model_year):
         return 'No data provided', 400
     
     model = data.get('Model', None)
-    pnos_conditions = [f'CountryCode = {country}']
+    pnos_conditions = [f"CountryCode = '{country}'"]
     if model:
         pnos_conditions.append(f"Model = '{model}'")
     # Create a DataFrame from the list of JSON objects
@@ -569,7 +569,7 @@ def upsert_visa_file(country, model_year):
 def delete_visa_file(country):
     visa_file_name = request.args.get('VisaFile')
     table_name = DBOperations.instance.config.get('RELATIONS', 'RAW_VISA')
-    # df_visa = DBOperations.instance.get_table_df(table_name, conditions=[f'CountryCode = {country}', f"VisaFile = '{visa_file_name}'"])
+    # df_visa = DBOperations.instance.get_table_df(table_name, conditions=[f"CountryCode = '{country}'", f"VisaFile = '{visa_file_name}'"])
     delete_query = f"DELETE FROM {table_name} WHERE VisaFile = ? AND CountryCode = {country}"
     with DBOperations.instance.get_cursor() as cursor:
         cursor.execute(delete_query, (visa_file_name,))
@@ -585,7 +585,7 @@ def old_rename_visa_file(country, model_year):
     new_name = data.get('NewName', None)
     if not old_name or not new_name:
         return 'OldName and NewName are required', 400
-    df_visa = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), columns=['ID', 'VisaFile'], conditions=[f'CountryCode = {country}', f"VisaFile = '{old_name}'", f"ModelYear = '{model_year}'"])
+    df_visa = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), columns=['ID', 'VisaFile'], conditions=[f"CountryCode = '{country}'", f"VisaFile = '{old_name}'", f"ModelYear = '{model_year}'"])
     if df_visa.empty:
         return 'Visa file not found', 203
     try:

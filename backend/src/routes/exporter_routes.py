@@ -58,7 +58,7 @@ def sap_price_list(country):
     code = request.args.get('code', 'All')
     time = request.args.get('date', datetime.now().strftime("%Y%U"))
 
-    conditions = [f'CountryCode = {country}', f'StartDate <= {time}', f'EndDate >= {time}']
+    conditions = [f"CountryCode = '{country}'", f'StartDate <= {time}', f'EndDate >= {time}']
     if code != 'All':
         conditions.append(f"Code = '{code}'")
     df_channels = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SC'), columns=['ID', 'Code', 'ChannelName'], conditions=conditions)

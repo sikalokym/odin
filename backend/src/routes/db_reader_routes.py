@@ -36,13 +36,13 @@ def get_pnos(country, model_year):
     if model_year == '0':
         return jsonify([])
 
-    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), columns, conditions=[f'CountryCode = {country}'])
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), columns, conditions=[f"CountryCode = '{country}'"])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     if df_pnos.empty:
         return jsonify([])
     
     ids = df_pnos['Model'].tolist()
-    conditions = [f'CountryCode = {country}']
+    conditions = [f"CountryCode = '{country}'"]
     if len(ids) == 1:
         conditions.append(f"Code = '{ids[0]}'")
     else:
@@ -60,12 +60,12 @@ def get_pnos(country, model_year):
 
 @bp_db_reader.route('/models', methods=['GET'])
 def get_models(country, model_year):
-    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Model', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Model', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'"])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     if df_pnos.empty:
         return jsonify([])
     models = df_pnos['Model'].unique().tolist()
-    conditions = [f'CountryCode = {country}']
+    conditions = [f"CountryCode = '{country}'"]
     if not models:
         return jsonify([])
     if len(models) == 1:
@@ -85,10 +85,10 @@ def get_models(country, model_year):
 
 @bp_db_reader.route('/sales_versions', methods=['GET'])
 def get_sales_versions(country, model_year):
-    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['SalesVersion', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['SalesVersion', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'"])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     sales_versions = df_pnos['SalesVersion'].unique().tolist()
-    conditions = [f'CountryCode = {country}']
+    conditions = [f"CountryCode = '{country}'"]
     if not sales_versions:
         return jsonify([])
     if len(sales_versions) == 1:
@@ -108,12 +108,12 @@ def get_sales_versions(country, model_year):
 
 @bp_db_reader.route('/engines', methods=['GET'])
 def get_engines(country, model_year):
-    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Engine', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Engine', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'"])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     if df_pnos.empty:
         return jsonify([])
     engine_codes = df_pnos['Engine'].unique().tolist()
-    conditions = [f'CountryCode = {country}']
+    conditions = [f"CountryCode = '{country}'"]
     if not engine_codes:
         return jsonify([])
     elif len(engine_codes) == 1:
@@ -133,12 +133,12 @@ def get_engines(country, model_year):
 
 @bp_db_reader.route('/gearboxes', methods=['GET'])
 def get_gearboxes(country, model_year):
-    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Gearbox', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['Gearbox', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'"])
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     if df_pnos.empty:
         return jsonify([])
     gearbox_codes = df_pnos['Gearbox'].unique().tolist()
-    conditions = [f'CountryCode = {country}']
+    conditions = [f"CountryCode = '{country}'"]
     if not gearbox_codes:
         return jsonify([])
     if len(gearbox_codes) == 1:
@@ -163,7 +163,7 @@ def get_options(country, model_year):
     sales_version = request.args.get('sales_version')
     gearbox = request.args.get('gearbox')
 
-    conditions = [f'CountryCode = {country}']
+    conditions = [f"CountryCode = '{country}'"]
     if model:
         conditions.append(f"Model = '{model}'")
     if engine:
@@ -183,7 +183,7 @@ def get_options(country, model_year):
     else:
         conditions.append(f"PNOID in {tuple(ids)}")
 
-    df_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'OPT'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
+    df_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'OPT'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'"])
     df_options = filter_df_by_model_year(df_options, model_year)
     df_options.drop(columns=['StartDate', 'EndDate'], inplace=True)
     df_options.drop_duplicates(subset='Code', inplace=True)
@@ -237,7 +237,7 @@ def get_colors(country, model_year):
     sales_version = request.args.get('sales_version')
     gearbox = request.args.get('gearbox')
 
-    conditions = [f'CountryCode = {country}']
+    conditions = [f"CountryCode = '{country}'"]
     if model:
         conditions.append(f"Model = '{model}'")
     if engine:
@@ -258,7 +258,7 @@ def get_colors(country, model_year):
     else:
         conditions.append(f"PNOID in {tuple(ids)}")
 
-    df_colors = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'COL'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
+    df_colors = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'COL'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'"])
     df_colors = filter_df_by_model_year(df_colors, model_year)
     df_colors.drop(columns=['StartDate', 'EndDate'], inplace=True)
     df_colors.drop_duplicates(subset='Code', inplace=True)
@@ -291,7 +291,7 @@ def get_upholstery(country, model_year):
     sales_version = request.args.get('sales_version')
     gearbox = request.args.get('gearbox')
 
-    conditions = [f'CountryCode = {country}']
+    conditions = [f"CountryCode = '{country}'"]
     if model:
         conditions.append(f"Model = '{model}'")
     if engine:
@@ -311,7 +311,7 @@ def get_upholstery(country, model_year):
     else:
         conditions.append(f"PNOID in {tuple(ids)}")
 
-    df_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'UPH'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
+    df_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'UPH'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'"])
     df_upholstery = filter_df_by_model_year(df_upholstery, model_year)
     df_upholstery.drop(columns=['StartDate', 'EndDate'], inplace=True)
     df_upholstery.drop_duplicates(subset='Code', inplace=True)
@@ -345,7 +345,7 @@ def get_features(country, model_year):
     sales_version = request.args.get('sales_version')
     gearbox = request.args.get('gearbox')
 
-    conditions = [f'CountryCode = {country}']
+    conditions = [f"CountryCode = '{country}'"]
     if model:
         conditions.append(f"Model = '{model}'")
     if engine:
@@ -366,7 +366,7 @@ def get_features(country, model_year):
     else:
         conditions.append(f"PNOID in {tuple(ids)}")
 
-    df_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'FEA'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
+    df_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'FEA'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'"])
     df_features = filter_df_by_model_year(df_features, model_year)
     df_features.drop(columns=['StartDate', 'EndDate'], inplace=True)
     df_features['Code'] = df_features['Code'].str.strip()
@@ -407,7 +407,7 @@ def get_packages(country, model_year):
     sales_version = request.args.get('sales_version')
     gearbox = request.args.get('gearbox')
 
-    conditions = [f'CountryCode = {country}']
+    conditions = [f"CountryCode = '{country}'"]
     if model:
         conditions.append(f"Model = '{model}'")
     if engine:
@@ -427,7 +427,7 @@ def get_packages(country, model_year):
     else:
         conditions.append(f"PNOID in {tuple(ids)}")
 
-    df_packages = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'PKG'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
+    df_packages = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'PKG'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'"])
     df_packages = filter_df_by_model_year(df_packages, model_year)
     df_packages.drop(columns=['StartDate', 'EndDate'], inplace=True)
     df_packages.drop_duplicates(subset='Code', inplace=True)
@@ -457,7 +457,7 @@ def get_packages(country, model_year):
 def get_changelog(country, model_year):
     model = request.args.get('model')
 
-    conditions = [f'CountryCode = {country}']
+    conditions = [f"CountryCode = '{country}'"]
     if model:
         conditions.append(f"Model = '{model}'")
 
@@ -479,7 +479,7 @@ def get_changelog(country, model_year):
 
 @bp_db_reader.route('/sales-channels', methods=['GET'])
 def get_sales_channels(country, model_year):
-    df_sales_channels = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SC'), columns=['ID', 'Code', 'ChannelName', 'Comment', 'StartDate', 'EndDate'], conditions=[f'CountryCode = {country}'])
+    df_sales_channels = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SC'), columns=['ID', 'Code', 'ChannelName', 'Comment', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'"])
     df_sales_channels = filter_df_by_model_year(df_sales_channels, model_year)
     
     df_sales_channels = df_sales_channels.sort_values(by='Code', ascending=True)
@@ -521,11 +521,13 @@ def get_visa_files(country, model_year):
         # Load available Visa files
         visa_columns = ['VisaFile', 'CarType']
         df_visa = get_available_visa_files(country, model_year, visa_columns)
+        if df_visa.empty:
+            return jsonify([])
         
         df_visa.drop_duplicates(inplace=True)
             
         codes = df_visa['CarType'].tolist()
-        conditions = [f'CountryCode = {country}']
+        conditions = [f"CountryCode = '{country}'"]
         if len(codes) == 1:
             conditions.append(f"Code = '{codes[0]}'")
         else:
@@ -547,7 +549,7 @@ def get_visa_files(country, model_year):
 @bp_db_reader.route('/visa-file', methods=['GET'])
 def get_visa_file_data(country, model_year):
     visa_file = request.args.get('VisaFile')
-    conditions = [f"VisaFile = '{visa_file}'", f"CountryCode = {country}", f"ModelYear = {model_year}"]
+    conditions = [f"VisaFile = '{visa_file}'", f"CountryCode = '{country}'", f"ModelYear = '{model_year}'"]
 
     df_visa_file = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=conditions)
     df_visa_file.drop(columns=['LoadingDate', 'CountryCode'], inplace=True)
