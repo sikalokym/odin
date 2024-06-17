@@ -57,9 +57,9 @@ def variant_binder(country):
 @bp_exporter.route('/sap-price-list', methods=['GET'])
 def sap_price_list(country):
     code = request.args.get('code', 'All')
-    time = request.args.get('date', datetime.now().strftime("%Y%U"))
+    date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
 
-    conditions = [f"CountryCode = '{country}'", f'StartDate <= {time}', f'EndDate >= {time}']
+    conditions = [f"CountryCode = '{country}'", f"DateFrom <= '{date}'", f"DateTo >= '{date}'"]
     if code != 'All':
         conditions.append(f"Code = '{code}'")
     df_channels = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SC'), columns=['ID', 'Code', 'ChannelName'], conditions=conditions)
@@ -72,8 +72,8 @@ def sap_price_list(country):
         rel_conditions.append(f"ChannelID = '{channel_ids[0]}'")
     else:
         rel_conditions.append(f"ChannelID IN {tuple(channel_ids)}")
+    rel_conditions.append([f"DateFrom <= '{date}'", f"DateTo >= '{date}'"])
     df_discounts = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'DIS'), columns=['ID', 'ChannelID', 'DiscountPercentage', 'RetailPrice', 'WholesalePrice', 'PNOSpecific', 'AffectedVisaFile'], conditions=rel_conditions)
-    rel_conditions += [f"StartDate <= {time}", f"EndDate >= {time}"]
     df_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['FeatureCode', 'FeatureRetailPrice', 'FeatureWholesalePrice', 'ChannelID', 'AffectedVisaFile'], conditions=rel_conditions)
     
     available_visa_files = load_available_visa_files(country)

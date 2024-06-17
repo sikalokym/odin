@@ -391,8 +391,8 @@ def upsert_sales_channel(country, model_year):
         return 'No data provided', 400
     if 'ID' not in data:
         data['ID'] = str(uuid.uuid4())
-    data['StartDate'] = int (data['StartDate']) if data.get('StartDate') and data['StartDate'] != '' else 202001
-    data['EndDate'] = int (data['EndDate']) if data.get('EndDate') and data['EndDate'] != '' else 209952
+    data['DateFrom'] = data['DateFrom'] if data.get('DateFrom') and data['DateFrom'] != '' else '2020-01-01'
+    data['DateTo'] = data['DateTo'] if data.get('DateTo') and data['DateTo'] != '' else '2099-12-31'
 
     try:
         data['CountryCode'] = country
@@ -496,8 +496,8 @@ def upsert_custom_local_option(country, model_year):
     try:
         data['FeatureRetailPrice'] = float(data['FeatureRetailPrice']) if data.get('FeatureRetailPrice') and data['FeatureRetailPrice'] != '' else 0
         data['FeatureWholesalePrice'] = float(data['FeatureWholesalePrice']) if data.get('FeatureWholesalePrice') and data['FeatureWholesalePrice'] != '' else 0
-        data['StartDate'] = int (data['StartDate']) if data.get('StartDate') and data['StartDate'] != '' else 202001
-        data['EndDate'] = int (data['EndDate']) if data.get('EndDate') and data['EndDate'] != '' else 209952
+        data['DateFrom'] = data['DateFrom'] if data.get('DateFrom') and data['DateFrom'] != '' else '2020-01-01'
+        data['DateTo'] = data['DateTo'] if data.get('DateTo') and data['DateTo'] != '' else '2099-12-31'
         
         # Create a DataFrame with a single row
         df_new_entry = pd.DataFrame([data])
@@ -640,13 +640,13 @@ def rename_visa_file(country, model_year):
 def delete_visa_data(country, model_year):
     visa_entry_id = request.args.get('ID')
     if not visa_entry_id:
-        return {"error": "Discount ID is required"}, 400
+        return "Discount ID is required", 400
     try:
         table_name = DBOperations.instance.config.get('RELATIONS', 'RAW_VISA')
         delete_query = f"DELETE FROM {table_name} WHERE ID = ?"
         with DBOperations.instance.get_cursor() as cursor:
             cursor.execute(delete_query, (visa_entry_id,))
-        return {"message": "Record deleted successfully"}, 200
+        return "Record deleted successfully", 200
     except Exception as e:
         DBOperations.instance.logger.error(f"Error deleting record: {e}")
-        return {"error": str(e)}, 500
+        return str(e), 500

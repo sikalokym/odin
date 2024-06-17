@@ -479,9 +479,8 @@ def get_changelog(country, model_year):
 
 @bp_db_reader.route('/sales-channels', methods=['GET'])
 def get_sales_channels(country, model_year):
-    df_sales_channels = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SC'), columns=['ID', 'Code', 'ChannelName', 'Comment', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'"])
-    df_sales_channels = filter_df_by_model_year(df_sales_channels, model_year)
-    
+    df_sales_channels = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SC'), columns=['ID', 'Code', 'ChannelName', 'Comment', 'DateFrom', 'DateTo'], conditions=[f"CountryCode = '{country}'"])
+
     df_sales_channels = df_sales_channels.sort_values(by='Code', ascending=True)
 
     return df_sales_channels.to_json(orient='records')
@@ -506,7 +505,7 @@ def get_custom_local_options(country, model_year):
     channel_id = request.args.get('id')
     conditions = [f"ChannelID = '{channel_id}'"]
 
-    df_custom_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['ID', 'FeatureCode', 'FeatureRetailPrice', 'FeatureWholesalePrice', 'AffectedVisaFile', 'StartDate', 'EndDate'], conditions=conditions)
+    df_custom_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['ID', 'FeatureCode', 'FeatureRetailPrice', 'FeatureWholesalePrice', 'AffectedVisaFile', 'DateFrom', 'DateTo'], conditions=conditions)
     
     # split AffectedVisaFile column by comma if not All else return a list with no elements
     df_custom_local_options['AffectedVisaFile'] = df_custom_local_options['AffectedVisaFile'].replace('All', None)

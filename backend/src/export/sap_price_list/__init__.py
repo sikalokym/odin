@@ -1,8 +1,6 @@
 import pandas as pd
 import configparser
 from src.storage import blob
-from src.database.db_operations import DBOperations
-from src.utils.db_utils import split_df
 
 config = configparser.ConfigParser()
 config.read('config/sap_price_list.cfg')
@@ -39,6 +37,8 @@ def get_sap_price_list(name, df_sales_channels, df_discount_options):
         res_df['Price List'] = row['Code']
         df_local_options = df_discount_options[df_discount_options['ChannelID'] == row['ID']]
         res_df = add_local_codes(res_df, df_local_options)
+        res_df['Date From'] = row['DateFrom']
+        res_df['Date To'] = row['DateTo']
         res_df.name = f"{row['Code']}+#+{row['ChannelName']}"
         dfs.append(res_df)
  
