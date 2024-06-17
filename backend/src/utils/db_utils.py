@@ -1,3 +1,4 @@
+import datetime
 import numpy as np
 import pandas as pd
 
@@ -454,3 +455,9 @@ def fill_custom_name(group):
         return group['CustomName'].fillna(unique_not_null[0])
     else:
         return group['CustomName'].fillna('')
+
+def validate_and_format_date(date_str, default_date):
+    try:
+        return datetime.strptime(date_str, '%Y-%m-%d').strftime('%Y-%m-%d')
+    except ValueError:
+        return default_date

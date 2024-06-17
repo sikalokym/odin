@@ -483,6 +483,13 @@ def get_sales_channels(country, model_year):
 
     df_sales_channels = df_sales_channels.sort_values(by='Code', ascending=True)
 
+    # Convert DateFrom and DateTo columns to datetime format
+    df_sales_channels['DateFrom'] = pd.to_datetime(df_sales_channels['DateFrom'])
+    df_sales_channels['DateTo'] = pd.to_datetime(df_sales_channels['DateTo'])
+    
+    # Format DateFrom and DateTo columns
+    df_sales_channels['DateFrom'] = df_sales_channels['DateFrom'].dt.strftime('%Y-%m-%d')
+    df_sales_channels['DateTo'] = df_sales_channels['DateTo'].dt.strftime('%Y-%m-%d')
     return df_sales_channels.to_json(orient='records')
 
 @bp_db_reader.route('/discounts', methods=['GET'])
