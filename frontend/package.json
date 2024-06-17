@@ -12,6 +12,7 @@
   "dependencies": {
     "@azure/msal-browser": "^3.14.0",
     "@primer/css": "^21.2.0",
+    "@vuepic/vue-datepicker": "^8.8.0",
     "axios": "^0.28.0",
     "core-js": "^3.8.3",
     "express": "^4.19.2",
