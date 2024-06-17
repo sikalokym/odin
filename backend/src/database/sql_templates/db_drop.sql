@@ -33,7 +33,12 @@ DROP TRIGGER IF EXISTS [dbo].[trg_PNOOptionsCustom_InsertUpdate];
 DROP TRIGGER IF EXISTS [dbo].[trg_PNOPackageCustom_InsertUpdate];
 GO
 
+
 -- Drop all tables in the database
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'DataQualityLog')
+DROP TABLE [dbo].[DataQualityLog]
+GO
+
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'VisaFiles')
 DROP TABLE VisaFiles
 GO
@@ -68,10 +73,6 @@ GO
 
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'PNOColor')
 DROP TABLE [dbo].[PNOColor]
-GO
-
-IF EXISTS (SELECT * FROM sys.tables WHERE name = 'PNOModel')
-DROP TABLE [dbo].[PNOModel]
 GO
 
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'PNOUpholstery')
@@ -166,10 +167,6 @@ IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Feature')
 DROP TABLE [dbo].[Feature]
 GO
 
-IF EXISTS (SELECT * FROM sys.tables WHERE name = 'SupportedCountry')
-DROP TABLE [dbo].[SupportedCountry]
-GO
-
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'ChangeLog')
 DROP TABLE [dbo].[ChangeLog]
 GO
@@ -184,4 +181,8 @@ GO
 
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'SalesChannel')
 DROP TABLE SalesChannel
+GO
+
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'SupportedCountry')
+DROP TABLE [dbo].[SupportedCountry]
 GO

@@ -419,8 +419,8 @@ CREATE TABLE SalesChannel (
     ChannelName NVARCHAR(MAX),
     Comment NVARCHAR(MAX),
     CountryCode VARCHAR(12),
-    StartDate INT,
-    EndDate INT,
+    DateFrom DATE,
+    DateTo DATE,
     FOREIGN KEY (CountryCode) REFERENCES SupportedCountry(Code)
 );
 
@@ -446,8 +446,8 @@ CREATE TABLE CustomLocalOption (
     FeatureRetailPrice DECIMAL(19,2),
     FeatureWholesalePrice DECIMAL(19,2),
     AffectedVisaFile NVARCHAR(MAX),
-    StartDate INT,
-    EndDate INT,
+    DateFrom DATE,
+    DateTo DATE,
     FOREIGN KEY (ChannelID) REFERENCES SalesChannel(ID)
 );
 
