@@ -1867,6 +1867,7 @@ export default {
       this.engine = '';
       this.salesversion = '';
       this.gearbox = '';
+      this.visaTable = false;
 
       await this.fetchEntities().then(() => {
         console.log('VISA files fetched')
@@ -2010,6 +2011,7 @@ export default {
       this.visaTable = false;
       this.discountTable = false;
       this.xCodesTable = false;
+      this.visaTable = false;
       this.selectedRow = null;
       this.newvisafileinformation = [];
       this.newsaleschannel = [];
@@ -2028,6 +2030,7 @@ export default {
       this.visaTable = false;
       this.discountTable = false;
       this.xCodesTable = false;
+      this.visaTable = false;
       this.selectedRow = null;
       this.newvisafileinformation = [];
       this.newsaleschannel = [];
