@@ -80,7 +80,7 @@ reset<template>
       <label class="validity_date" style="width: 180px;">Validity Date</label>
       <div class="validity"
         style="display: flex; gap: 10px; position:absolute; left: 50%; transform: translateX(-50%);">
-        <select name="validity_year" id="validity_year" v-model="validity_year" style="width:85px; height:30px;">
+        <!-- <select name="validity_year" id="validity_year" v-model="validity_year" style="width:85px; height:30px;">
           <option disabled value="">Year</option>
           <option v-for="validity_year in validity_years" :key="validity_year" :value="validity_year">{{ validity_year
             }}</option>
@@ -89,7 +89,10 @@ reset<template>
           <option disabled value="">Week</option>
           <option v-for="n in validity_weeks" :key="n" :value="String(n).padStart(2, '0')">{{ String(n).padStart(2, '0')
             }}</option>
-        </select>
+        </select> -->
+        <VueDatePicker v-model="pricelistDate" :format="format" :enable-time-picker="false" 
+                 @input="pno.edited = true"
+                 style="width: 180px" />
       </div>
       <br><br><br>
 
@@ -97,7 +100,7 @@ reset<template>
       <button
         style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translateX(-50%); margin-top: 24px;"
         @click="exportPricelist"
-        :disabled="exportInProgress || this.pnoStore.model_year === '0' || this.sales_channel === ''">Export
+        :disabled="exportInProgress || this.pnoStore.model_year === '0' || this.sales_channel === '' || this.pricelistDate.length === 0">Export
         Pricelist</button>
     </div>
     <!-- Country Select Dropdown Menu -->
@@ -181,9 +184,14 @@ reset<template>
 import { usePNOStore } from '../stores/pno.js'
 import { useEntitiesStore } from '../stores/entities.js'
 import axios from '../api/index.js'
+import VueDatePicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
 
 export default {
   name: 'DocumentsView',
+  components: {
+    VueDatePicker
+  },
   data() {
     return {
       model: '',
@@ -199,6 +207,7 @@ export default {
       entitiesStore: useEntitiesStore(),
       countries: [],
       selectedCountry: '',
+      pricelistDate: [],
     }
   },
   async created() {
@@ -264,6 +273,12 @@ export default {
     },
   },
   methods: {
+    format(Date) {
+      const day = String(Date.getDate()).padStart(2, '0');
+      const month = String(Date.getMonth() + 1).padStart(2, '0');
+      const year = Date.getFullYear();
+      return `${day}-${month}-${year}`;
+    },
     setVariantBinderFilters() {
       this.showFilters = 'VariantBinder';
       this.model = '';
@@ -273,6 +288,7 @@ export default {
       this.engine = '';
       this.variantBinderPnos = [];
       this.sales_channel = '';
+      this.pricelistDate = [];
     },
     setPricelistFilters() {
       this.showFilters = 'Pricelist';
@@ -283,6 +299,7 @@ export default {
       this.engine = '';
       this.variantBinderPnos = [];
       this.sales_channel = '';
+      this.pricelistDate = [];
     },
     async refreshModelyear() {
       this.pnoStore.setModelYear(this.model_year)
@@ -337,8 +354,18 @@ export default {
     },
     async exportPricelist() {
       this.exportInProgress = true;
+      // Adjusted helper function to format date as yyyy-mm-dd
+      const formatDate = (date) => {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = (`0${d.getMonth() + 1}`).slice(-2);
+        const day = (`0${d.getDate()}`).slice(-2);
+        return `${year}-${month}-${day}`;
+      };
+    
+      const formattedDate = formatDate(this.pricelistDate);
       const link = document.createElement('a');
-      link.href = `${axios.endpoint}/${this.selectedCountry.Code}/export/sap-price-list?date=${this.validity_year}${this.validity_week}&code=${this.sales_channel}`;
+      link.href = `${axios.endpoint}/${this.selectedCountry.Code}/export/sap-price-list?date=${formattedDate}&code=${this.sales_channel}`;
       console.log(link.href);
       link.setAttribute('download', 'SAP_Price_Lists.zip');
       document.body.appendChild(link);
@@ -347,10 +374,6 @@ export default {
       setTimeout(() => {
         this.exportInProgress = false;
       }, 10000);
-    },
-    async changeCountry(newCountry) {
-      await this.pnoStore.setCountry(newCountry);
-      await this.entitiesStore.setCountry(newCountry);
     },
   }
 };
