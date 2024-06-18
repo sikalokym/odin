@@ -94,7 +94,7 @@ reset<template>
                  @input="pno.edited = true"
                  @focus="exportVisible = false"
                  @blur="exportVisible = true"
-                 style="width: 180px" />
+                 style="width: 180px; --dp-border-color: #8d8d8d;" />
       </div>
       <br><br><br>
 
