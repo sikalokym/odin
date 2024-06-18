@@ -1198,7 +1198,7 @@
         <tr>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              Code
+              Price List
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('Code', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('Code', -1)" style="cursor: pointer;">↓</span>
