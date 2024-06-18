@@ -72,8 +72,7 @@ reset<template>
         style="width:180px; height:30px; position: absolute; margin-left: -90px; ">
         <option disabled value="">Select Sales Channel...</option>
         <option value="All">All</option>
-        <option v-for="sales_channel in sales_channels" :key="sales_channel" :value="sales_channel.Code">{{
-        sales_channel.Code }}</option>
+        <option v-for="sales_channel in sales_channels" :key="sales_channel" :value="sales_channel.Code">{{"[" + sales_channel.Code + "] " + sales_channel.ChannelName }}</option>
       </select>
       <br><br>
       <!-- Filter for validity date of the Pricelsit export -->
