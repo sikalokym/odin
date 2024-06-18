@@ -2243,8 +2243,13 @@ export default {
         console.error('Error fetching X codes', error)
       })
     },
-    deleteVISAFile(pno) {
-      this.entitiesStore.deleteVISAFile(pno.VisaFile)
+    async deleteVISAFile(pno) {
+      await this.entitiesStore.deleteVISAFile(pno.VisaFile)
+      await this.entitiesStore.fetchVISAFiles().then(() => {
+        console.log('VISA files fetched')
+      }).catch((error) => {
+        console.error('Error fetching VISA files', error)
+      })
     },
     addVISAFileInformation() {
       if (this.visa_file && this.visa_file.length > 0) {
@@ -2330,11 +2335,16 @@ export default {
       this.sortColumn = column;
     },
     // Database updates 
-    uploadVisa() {
+    async uploadVisa() {
       const file = this.$refs.file.files[0];
       const formData = new FormData();
       formData.append('visa', file);
-      index.post(`/${this.pnoStore.country.Code}/ingest/visa/upload`, formData);
+      await index.post(`/${this.pnoStore.country.Code}/ingest/visa/upload`, formData);
+      this.entitiesStore.fetchVISAFiles().then(() => {
+        console.log('VISA files fetched')
+      }).catch((error) => {
+        console.error('Error fetching VISA files', error)
+      })
     },
     refreshCPAM() {
       index.get('/ingest/cpam');
