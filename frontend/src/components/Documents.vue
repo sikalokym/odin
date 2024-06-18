@@ -90,8 +90,10 @@ reset<template>
           <option v-for="n in validity_weeks" :key="n" :value="String(n).padStart(2, '0')">{{ String(n).padStart(2, '0')
             }}</option>
         </select> -->
-        <VueDatePicker v-model="pricelistDate" :format="format" :enable-time-picker="false" 
+        <VueDatePicker v-model="pricelistDate" :format="format" :enable-time-picker="false"
                  @input="pno.edited = true"
+                 @focus="exportVisible = false"
+                 @blur="exportVisible = true"
                  style="width: 180px" />
       </div>
       <br><br><br>
@@ -100,6 +102,7 @@ reset<template>
       <button
         style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translateX(-50%); margin-top: 24px;"
         @click="exportPricelist"
+        v-show="exportVisible"
         :disabled="exportInProgress || this.pnoStore.model_year === '0' || this.sales_channel === '' || this.pricelistDate.length === 0">Export
         Pricelist</button>
     </div>
@@ -203,6 +206,7 @@ export default {
       sales_channel: '',
       showFilters: 'VariantBinder',
       exportInProgress: false,
+      exportVisible: true,
       pnoStore: usePNOStore(),
       entitiesStore: useEntitiesStore(),
       countries: [],
