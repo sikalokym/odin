@@ -1506,8 +1506,7 @@
           </td>
         </tr>
       </tbody>
-    </table>
-    <tbody>
+      <tbody>
       <tr v-for="pno in newcustomlocaloption" :key="pno.id" :class="{ 'editing': pno.edited }">
         <td>
           <input type="FeatureCode" v-model="pno.FeatureCode" @input="pno.edited = true" />
@@ -1535,6 +1534,8 @@
         </td>
       </tr>
     </tbody>
+    </table>
+
     <div v-if="displaytable === 'Sales Channels' && model_year !== '0' && xCodesTable"
       style="text-align: left; margin-left: 5px;">
       <button @click="addCustomLocalOption">Add X-Code</button>
