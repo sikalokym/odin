@@ -1,13 +1,11 @@
 import io
-import zipfile
 import pandas as pd
 from datetime import datetime
 from flask import Blueprint, request, send_file
 from src.database.db_operations import DBOperations
-from src.storage.blob import load_available_visa_files
 from src.utils.db_utils import get_column_map
 from src.utils.ingest_utils import is_valid_engine_category
-from src.export.sap_price_list import get_sap_price_list
+from src.export.sap_price_list import extract_sap_price_list
 from src.export.variant_binder import extract_variant_binder, extract_variant_binder_pnos
 
 
@@ -57,57 +55,11 @@ def variant_binder(country):
 @bp_exporter.route('/sap-price-list', methods=['GET'])
 def sap_price_list(country):
     code = request.args.get('code', 'All')
-    date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
-
-    conditions = [f"CountryCode = '{country}'", f"DateFrom <= '{date}'", f"DateTo >= '{date}'"]
-    if code != 'All':
-        conditions.append(f"Code = '{code}'")
-    df_channels = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SC'), columns=['ID', 'Code', 'ChannelName'], conditions=conditions)
-    if df_channels.empty:
-        return 'Invalid code' if code != 'All' else f'No Sales Channel with the code {code} found', 400
-
-    channel_ids = df_channels['ID'].tolist()
-    rel_conditions = []
-    if len (channel_ids) == 1:
-        rel_conditions.append(f"ChannelID = '{channel_ids[0]}'")
-    else:
-        rel_conditions.append(f"ChannelID IN {tuple(channel_ids)}")
-    rel_conditions.append([f"DateFrom <= '{date}'", f"DateTo >= '{date}'"])
-    df_discounts = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'DIS'), columns=['ID', 'ChannelID', 'DiscountPercentage', 'RetailPrice', 'WholesalePrice', 'PNOSpecific', 'AffectedVisaFile'], conditions=rel_conditions)
-    df_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['FeatureCode', 'FeatureRetailPrice', 'FeatureWholesalePrice', 'ChannelID', 'AffectedVisaFile'], conditions=rel_conditions)
+    date = request.args.get('date', None)
     
-    available_visa_files = load_available_visa_files(country)
-
-    df_discounts['AffectedVisaFile'] = df_discounts['AffectedVisaFile'].replace('All', ','.join(available_visa_files.keys()))
-    df_discounts['AffectedVisaFile'] = df_discounts['AffectedVisaFile'].str.split(',')
-    df_discounts = df_discounts.explode('AffectedVisaFile')
-    df_discounts = df_discounts[df_discounts['AffectedVisaFile'].isin(available_visa_files.keys())]
-
-    df_discounts = df_discounts.merge(df_channels, left_on='ChannelID', right_on='ID', suffixes=('_discount', '_channel'))
-    df_discounts = df_discounts.drop(columns=['ID_channel', 'ID_discount'])
-    df_discounts = df_discounts.rename(columns={'ChannelID': 'ID'})
-
-    zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
-        for visa_file, df_discounts_group in df_discounts.groupby('AffectedVisaFile'):
-            df_discount_options = df_local_options[(df_local_options['ChannelID'].isin(df_discounts_group['ID'].tolist())) & (df_local_options['AffectedVisaFile'] == visa_file)]
-            dfs = get_sap_price_list(available_visa_files[visa_file], df_discounts_group, df_discount_options)
-            folder_name = visa_file
-            for df in dfs:
-                code, channel_name = df.name.split('+#+')
-                excel_filename = f'SAP - PL{code} - {channel_name}.xlsx'
-                excel_buffer = io.BytesIO()
-                with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-                    df.to_excel(writer, index=False)
-                zip_file.writestr(f'{folder_name}/{excel_filename}', excel_buffer.getvalue())
-            if len(dfs) > 1:
-                concatenated_df = pd.concat(dfs)
-                concat_excel_buffer = io.BytesIO()
-                with pd.ExcelWriter(concat_excel_buffer, engine='openpyxl') as writer:
-                    concatenated_df.to_excel(writer, index=False)
-                zip_file.writestr(f'{folder_name}/MAWISTA ALL.xlsx', concat_excel_buffer.getvalue())
-
-    zip_buffer.seek(0)
+    zip_buffer = extract_sap_price_list(country, code, date)
+    if not zip_buffer:
+        return 'No data found', 404
     return send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='sap_price_list.zip')
 
 @bp_exporter.route('/visa', methods=['GET'])
@@ -123,11 +75,25 @@ def export_visa_file(country):
         df_visa = df_visa.drop(columns=['CountryCode', 'VisaFile', 'ID', 'LoadingDate'])
         c_map = get_column_map(reverse=True)
         df_visa.columns = [c_map.get(col, col) for col in df_visa.columns]
+
+        # Create sorting key columns
+        df_visa['is_empty_all'] = (df_visa[['Color', 'Option', 'Upholstery', 'Package']] == '').all(axis=1).astype(int)
+        df_visa['is_not_empty_option'] = (df_visa['Option'] != '').astype(int)
+        df_visa['is_not_empty_package'] = (df_visa['Package'] != '').astype(int)
+        df_visa['is_not_empty_upholstery'] = (df_visa['Upholstery'] != '').astype(int)
+        df_visa['is_not_empty_color'] = (df_visa['Color'] != '').astype(int)
+
+        # Sort the DataFrame
+        df_sorted = df_visa.sort_values(
+            by=['is_empty_all', 'is_not_empty_option', 'is_not_empty_package', 'is_not_empty_upholstery', 'is_not_empty_color'],
+            ascending=[False, False, False, False, False]
+        ).drop(columns=['is_empty_all', 'is_not_empty_option', 'is_not_empty_package', 'is_not_empty_upholstery', 'is_not_empty_color'])
+
         # Create a buffer to hold the Excel file
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df_visa.to_excel(writer, index=False)
-        
+            df_sorted.to_excel(writer, index=False)
+
         output.seek(0)
         download_name = visa_file_name if visa_file_name.endswith('.xlsx') else f'{visa_file_name}.xlsx'
         return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', as_attachment=True, download_name=download_name)

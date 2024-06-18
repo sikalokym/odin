@@ -1,13 +1,98 @@
+import io
+import zipfile
 import pandas as pd
 import configparser
-from src.storage import blob
+
+from src.database.db_operations import DBOperations
+from src.ingest.visa_files.services import get_available_visa_files
+from src.utils.db_utils import get_column_map
 
 config = configparser.ConfigParser()
 config.read('config/sap_price_list.cfg')
 
-def get_sap_price_list(name, df_sales_channels, df_discount_options):
-    df_visa = blob.load_visa_file(name)
+def extract_sap_price_list(country, code, date):
+    
+    conditions = [f"CountryCode = '{country}'"]
+    if date:
+        conditions += [f"DateFrom <= '{date}'", f"DateTo >= '{date}'"]
+    if code != 'All':
+        conditions.append(f"Code = '{code}'")
+    df_channels = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SC'), columns=['ID', 'Code', 'ChannelName', 'DateFrom', 'DateTo'], conditions=conditions)
+    if df_channels.empty:
+        return 'Invalid code' if code != 'All' else f'No Sales Channel with the code {code} found', 400
 
+    channel_ids = df_channels['ID'].tolist()
+    rel_conditions = []
+    if len(channel_ids) == 1:
+        rel_conditions.append(f"ChannelID = '{channel_ids[0]}'")
+    else:
+        rel_conditions.append(f"ChannelID IN {tuple(channel_ids)}")
+    df_discounts = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'DIS'), columns=['ID', 'ChannelID', 'DiscountPercentage', 'RetailPrice', 'WholesalePrice', 'PNOSpecific', 'AffectedVisaFile'], conditions=rel_conditions)
+    
+    if date:
+        rel_conditions.append(f"DateFrom <= '{date}'")
+        rel_conditions.append(f"DateTo >= '{date}'")
+    
+    df_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['FeatureCode', 'FeatureRetailPrice', 'FeatureWholesalePrice', 'ChannelID', 'AffectedVisaFile', 'DateFrom', 'DateTo'], conditions=rel_conditions)
+
+    visa_columns = ['VisaFile', 'CarType', 'DateFrom as StartDate']
+    df_visa = get_available_visa_files(country, None, visa_columns)
+    if df_visa.empty:
+        return None
+    df_visa = df_visa.drop_duplicates()
+    
+    # Group by 'VisaFile' and sort by 'DateFrom', then rank
+    df_visa['Order'] = df_visa.sort_values(by=['CarType', 'StartDate']).groupby('CarType').cumcount() + 1
+    
+    available_visa_files = df_visa['VisaFile'].unique().tolist()
+    def process_row(visa):
+        if visa == 'All':
+            return available_visa_files
+        try:
+            car_type = visa.split('[')[1].split(']')[0]
+        except Exception:
+            DBOperations.instance.logger(f'Invalid visa file name: {visa}', extra={'country_code': country})
+        # get visa files that have the same car type from df_visa
+        return df_visa[df_visa['CarType'] == car_type]['VisaFile'].tolist()
+        
+    df_discounts['VisaFile'] = df_discounts['AffectedVisaFile'].apply(process_row)
+    df_discounts = df_discounts.explode('VisaFile')
+    df_discounts = df_discounts[df_discounts['VisaFile'].isin(available_visa_files)]
+    # assign the visa file datefrom to the discount StartDate
+    df_discounts = df_discounts.merge(df_visa[['VisaFile', 'StartDate', 'Order']], left_on='VisaFile', right_on='VisaFile', suffixes=('_discount', '_visa'))
+
+    df_discounts = df_discounts.merge(df_channels, left_on='ChannelID', right_on='ID', suffixes=('_discount', '_channel'))
+    df_discounts = df_discounts.drop(columns=['ID_channel', 'ID_discount'])
+    df_discounts = df_discounts.rename(columns={'ChannelID': 'ID'})
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
+        for visa_file, df_discounts_group in df_discounts.groupby('VisaFile'):
+            df_discount_options = df_local_options[(df_local_options['ChannelID'].isin(df_discounts_group['ID'].tolist())) & ((df_local_options['AffectedVisaFile'] == 'All') | (df_local_options['AffectedVisaFile'] == df_discounts_group['AffectedVisaFile'].iloc[0]))]
+            dfs = get_sap_price_list(visa_file, df_discounts_group, df_discount_options, country)
+            folder_name = visa_file
+            for df in dfs:
+                code, channel_name = df.name.split('+#+')
+                excel_filename = f'SAP - PL{code} - {channel_name}.xlsx'
+                excel_buffer = io.BytesIO()
+                with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                    df.to_excel(writer, index=False)
+                zip_file.writestr(f'{folder_name}/{excel_filename}', excel_buffer.getvalue())
+            if len(dfs) > 1:
+                concatenated_df = pd.concat(dfs)
+                concat_excel_buffer = io.BytesIO()
+                with pd.ExcelWriter(concat_excel_buffer, engine='openpyxl') as writer:
+                    concatenated_df.to_excel(writer, index=False)
+                zip_file.writestr(f'{folder_name}/MAWISTA ALL.xlsx', concat_excel_buffer.getvalue())
+
+    zip_buffer.seek(0)
+    return zip_buffer
+
+def get_sap_price_list(visa_file, df_sales_channels, df_discount_options, country_code):
+    df_visa = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=[f"CountryCode = '{country_code}'", f"VisaFile = '{visa_file}'"])
+    df_visa = df_visa.drop(columns=['CountryCode', 'VisaFile', 'ID', 'LoadingDate'])
+    c_map = get_column_map(reverse=True)
+    df_visa.columns = [c_map.get(col, col) for col in df_visa.columns]
     columns_to_drop = config['DEFAULT']['COLUMNS_TO_DROP'].split(',')
     df_sap_price = df_visa.drop(columns=columns_to_drop)
     df_sap_price = df_sap_price.rename(columns={'Price Before Tax': 'Retail Price'})
@@ -35,17 +120,33 @@ def get_sap_price_list(name, df_sales_channels, df_discount_options):
         if row['PNOSpecific']:
             res_df = prepare_pno_specific_discount(df_sap_price.copy())
         res_df['Price List'] = row['Code']
+        
+        if row['Order'] != 1:
+            res_df['Date From'] = pd.to_datetime(row['DateFrom'])
+            res_df['Date From'] = res_df['Date From'].dt.strftime('%Y.%m.%d')
+        
+        res_df['Date To'] = pd.to_datetime(row['DateTo'])
+        res_df['Date To'] = res_df['Date To'].dt.strftime('%Y.%m.%d')
+
         df_local_options = df_discount_options[df_discount_options['ChannelID'] == row['ID']]
         res_df = add_local_codes(res_df, df_local_options)
         
-        # Convert the dates to datetime format
-        res_df['DateFrom'] = pd.to_datetime(row['DateFrom'])
-        res_df['DateTo'] = pd.to_datetime(row['DateTo'])
-
-        # Format the dates as yyyy.mm.dd
-        res_df['DateFrom'] = res_df['DateFrom'].dt.strftime('%Y.%m.%d')
-        res_df['DateTo'] = res_df['DateTo'].dt.strftime('%Y.%m.%d')
+        # Fill na values with empty strings
+        res_df = res_df.fillna('')
         
+        # Create sorting key columns
+        res_df['is_empty_all'] = (res_df[['Color', 'Option', 'Upholstery', 'Package']] == '').all(axis=1).astype(int)
+        res_df['is_not_empty_option'] = (res_df['Option'] != '').astype(int)
+        res_df['is_not_empty_package'] = (res_df['Package'] != '').astype(int)
+        res_df['is_not_empty_upholstery'] = (res_df['Upholstery'] != '').astype(int)
+        res_df['is_not_empty_color'] = (res_df['Color'] != '').astype(int)
+
+        # Sort the DataFrame
+        res_df = res_df.sort_values(
+            by=['is_empty_all', 'is_not_empty_option', 'is_not_empty_package', 'is_not_empty_upholstery', 'is_not_empty_color'],
+            ascending=[False, False, False, False, False]
+        ).drop(columns=['is_empty_all', 'is_not_empty_option', 'is_not_empty_package', 'is_not_empty_upholstery', 'is_not_empty_color'])
+
         res_df.name = f"{row['Code']}+#+{row['ChannelName']}"
         dfs.append(res_df)
  
@@ -67,6 +168,8 @@ def add_local_codes(df, df_codes):
         new_row['Option'] = row['FeatureCode']
         new_row['Wholesale Price'] = row['FeatureWholesalePrice']
         new_row['Retail Price'] = row['FeatureRetailPrice']
+        new_row['Date From'] = row['DateFrom']
+        new_row['Date To'] = row['DateTo']
         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     return df
 

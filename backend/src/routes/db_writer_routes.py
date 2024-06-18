@@ -4,7 +4,9 @@ import pandas as pd
 
 from src.database.db_operations import DBOperations
 from src.ingest.cpam.services import get_supported_countries
-from src.utils.db_utils import filter_df_by_model_year, get_column_map, validate_and_format_date
+from src.ingest.visa_files.preprocess import process_visa_df
+from src.ingest.visa_files.services import ingest_visa_data
+from src.utils.db_utils import filter_df_by_model_year, validate_and_format_date
 
 
 bp_db_writer = Blueprint('db_writer', __name__, url_prefix='/api/db/<country>/<model_year>/write')
@@ -553,11 +555,18 @@ def upsert_visa_file(country, model_year):
         df_upsert_entry['CountryCode'] = country
 
         # Extract columns for upsert
-        all_columns = df_upsert_entry.columns.tolist()
+        all_columns = df_upsert_entry.columns.tolist()  
         conditional_columns = ['ID']
-        
-        # update_prices()
 
+        df_removed_entry = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=[f"ID = '{data['ID']}'"])
+        if not df_removed_entry.empty:
+            df_removed_entry = df_removed_entry.assign(MSRP=None, PriceBeforeTax=None)
+            
+            df_removed_entry = process_visa_df(df_removed_entry)
+            ingest_visa_data(country, df_removed_entry)
+        df_upsert_entry_processed = process_visa_df(df_upsert_entry)
+        ingest_visa_data(country, df_upsert_entry_processed)
+        
         # Perform the upsert
         DBOperations.instance.upsert_data_from_df(df_upsert_entry, DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), all_columns, conditional_columns)
     except Exception as e:
@@ -566,35 +575,20 @@ def upsert_visa_file(country, model_year):
     return 'Visa file created successfully', 200
  
 @bp_db_writer.route('/visa', methods=['DELETE'])
-def delete_visa_file(country):
+def delete_visa_file(country, model_year):
     visa_file_name = request.args.get('VisaFile')
     table_name = DBOperations.instance.config.get('RELATIONS', 'RAW_VISA')
-    # df_visa = DBOperations.instance.get_table_df(table_name, conditions=[f"CountryCode = '{country}'", f"VisaFile = '{visa_file_name}'"])
+    df_visa = DBOperations.instance.get_table_df(table_name, conditions=[f"CountryCode = '{country}'", f"VisaFile = '{visa_file_name}'"])
+    if df_visa.empty:
+        return 'Visa file not found', 203
+    df_visa = df_visa.assign(MSRP=None, PriceBeforeTax=None)
+    df_visa = process_visa_df(df_visa)
+    ingest_visa_data(country, df_visa)
     delete_query = f"DELETE FROM {table_name} WHERE VisaFile = ? AND CountryCode = {country}"
     with DBOperations.instance.get_cursor() as cursor:
         cursor.execute(delete_query, (visa_file_name,))
     
-    return {"message": "Record deleted successfully"}, 200
-
-@bp_db_writer.route('/visa/old-rename', methods=['POST'])
-def old_rename_visa_file(country, model_year):
-    data = request.json
-    if not data:
-        return 'No data provided', 400
-    old_name = data.get('OldName', None)
-    new_name = data.get('NewName', None)
-    if not old_name or not new_name:
-        return 'OldName and NewName are required', 400
-    df_visa = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), columns=['ID', 'VisaFile'], conditions=[f"CountryCode = '{country}'", f"VisaFile = '{old_name}'", f"ModelYear = '{model_year}'"])
-    if df_visa.empty:
-        return 'Visa file not found', 203
-    try:
-        df_visa['VisaFile'] = new_name
-        DBOperations.instance.upsert_data_from_df(df_visa, DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), ['ID', 'VisaFile'], ['ID'])
-    except Exception as e:
-        return str(e), 500
-    
-    return 'Visa file created successfully', 200
+    return "Record deleted successfully", 200
 
 @bp_db_writer.route('/visa/rename', methods=['POST'])
 def rename_visa_file(country, model_year):
@@ -643,6 +637,10 @@ def delete_visa_data(country, model_year):
         return "Discount ID is required", 400
     try:
         table_name = DBOperations.instance.config.get('RELATIONS', 'RAW_VISA')
+        df_delete_entry = DBOperations.instance.get_table_df(table_name, conditions=[f"ID = '{visa_entry_id}'"])
+        df_delete_entry = df_delete_entry.assign(MSRP=None, PriceBeforeTax=None)
+        df_delete_entry = process_visa_df(df_delete_entry)
+        ingest_visa_data(country, df_delete_entry)
         delete_query = f"DELETE FROM {table_name} WHERE ID = ?"
         with DBOperations.instance.get_cursor() as cursor:
             cursor.execute(delete_query, (visa_entry_id,))

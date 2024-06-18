@@ -350,29 +350,7 @@ CREATE TABLE CustomizationRules (
     FOREIGN KEY (PNOID) REFERENCES PNO(ID)
 );
 
--- Create the VisaFilesPrices table
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'VisaFilesPrices')
-CREATE TABLE VisaFilesPrices (
-    Model VARCHAR(12),
-    Engine VARCHAR(12),
-    SalesVersion VARCHAR(12),
-    Body VARCHAR(12),
-    Gearbox VARCHAR(12),
-    Steering VARCHAR(12),
-    MarketCode VARCHAR(12),
-    CountryCode VARCHAR(12),
-    ModelYear INT,
-    StartDate INT,
-    EndDate INT,
-    Color VARCHAR(12),
-    Options VARCHAR(12),
-    Upholstery VARCHAR(12),
-    Package VARCHAR(12),
-    Price DECIMAL(19,2),
-    PriceBeforeTax DECIMAL(19,2),
-);
-
--- VisaFiles
+-- Create the VisaFiles table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'VisaFiles')
 CREATE TABLE VisaFiles (
     ID UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,

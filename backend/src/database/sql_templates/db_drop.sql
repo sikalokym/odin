@@ -43,10 +43,6 @@ IF EXISTS (SELECT * FROM sys.tables WHERE name = 'VisaFiles')
 DROP TABLE VisaFiles
 GO
 
-IF EXISTS (SELECT * FROM sys.tables WHERE name = 'VisaFilesPrices')
-DROP TABLE VisaFilesPrices
-GO
-
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'CustomizationRules')
 DROP TABLE [dbo].[CustomizationRules]
 GO

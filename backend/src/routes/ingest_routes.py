@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 
 from src.ingest.cpam.services import ingest_all_cpam_data, ingest_cpam_data
-from src.ingest.visa_files.services import upload_visa_file, ingest_visa_data
+from src.ingest.visa_files.services import ingest_visa_data, ingest_visa_file
 from src.utils.ingest_utils import is_valid_car_type, is_valid_year
 
 bp_ingest = Blueprint('ingest', __name__, url_prefix='/api/<country>/ingest')
@@ -30,16 +30,18 @@ def refresh_cpam_data(country, year, car_type):
 
 @bp_ingest.route('/visa', methods=['GET'])
 def refresh_visa_data(country):
-    ingest_visa_data(country)
+    ingest_visa_data(country, None)
 
 @bp_ingest.route('/visa/upload', methods=['POST'])
 def new_visa_file(country):
-    visa = request.files['visa']
+    visa = request.files.get('visa', None)
+    if visa is None:
+        return jsonify({'error': 'No file part'}), 400
     if visa.content_type not in ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']:
         return jsonify({'error': 'Invalid file type. Only Excel files are allowed.'}), 400
     
     if visa.filename == '':
         return jsonify({"error": "No selected file"}), 400
     
-    res, code = upload_visa_file(visa, country)
+    res, code = ingest_visa_file(visa, country)
     return jsonify(res), code
