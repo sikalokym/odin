@@ -1259,11 +1259,11 @@
           </td>
           <td>
             <VueDatePicker v-model="pno.DateFrom" :format="format" :enable-time-picker="false" 
-                          @input="pno.edited = true" @update:model-value="pushUpdateSalesChannel(pno)" />
+                          @input="pno.edited = true" @update:model-value="pushUpdateSalesChannel(pno)" style="--dp-border-color: #8d8d8d;"/>
           </td>
           <td>
             <VueDatePicker v-model="pno.DateTo" :format="format" :enable-time-picker="false" 
-                          @input="pno.edited = true" @update:model-value="pushUpdateSalesChannel(pno)" />
+                          @input="pno.edited = true" @update:model-value="pushUpdateSalesChannel(pno)" style="--dp-border-color: #8d8d8d;"/>
           </td>
           <td style="background-color: #f4f4f4;">
             <span @click="fetchDiscounts(pno)" style="cursor: pointer; margin-right: 10px;">[%]</span>
@@ -1278,18 +1278,18 @@
             <input type="Code" v-model="pno.Code" @input="pno.edited = true" />
           </td>
           <td>
-            <input type="ChannelName" v-model="pno.ChannelName" @input="pno.edited = true" />
+            <input type="ChannelName" v-model="pno.ChannelName" @input="pno.edited = true" style="--dp-border-color: #8d8d8d;"/>
           </td>
           <td>
-            <input type="Comment" v-model="pno.Comment" @input="pno.edited = true" />
+            <input type="Comment" v-model="pno.Comment" @input="pno.edited = true" style="--dp-border-color: #8d8d8d;"/>
           </td>
           <td>
             <VueDatePicker v-model="pno.DateFrom" :format="format" :enable-time-picker="false" 
-                           @input="pno.edited = true" />
+                           @input="pno.edited = true" style="--dp-border-color: #8d8d8d;"/>
           </td>
           <td>
             <VueDatePicker v-model="pno.DateTo" :format="format" :enable-time-picker="false" 
-                           @input="pno.edited = true" />
+                           @input="pno.edited = true" style="--dp-border-color: #8d8d8d;"/>
           </td>
           <td style="background-color: #f4f4f4;">
             <span @click="createSalesChannel(pno)" style="cursor: pointer;">[Save]</span>
@@ -1495,11 +1495,11 @@
           </td>
           <td>
             <VueDatePicker v-model="pno.DateFrom" :format="format" :enable-time-picker="false" 
-                          @input="pno.edited = true" @update:model-value="pushUpdateXCode(pno)" />
+                          @input="pno.edited = true" @update:model-value="pushUpdateXCode(pno)" style="--dp-border-color: #8d8d8d;"/>
           </td>
           <td>
             <VueDatePicker v-model="pno.DateTo" :format="format" :enable-time-picker="false" 
-                          @input="pno.edited = true" @update:model-value="pushUpdateXCode(pno)" />
+                          @input="pno.edited = true" @update:model-value="pushUpdateXCode(pno)" style="--dp-border-color: #8d8d8d;"/>
           </td>
           <td style="background-color: #f4f4f4;">
             <span @click="deleteXCode(pno)" style="cursor: pointer; color: red;">[X]</span>
@@ -1524,11 +1524,11 @@
         </td>
         <td>
           <VueDatePicker v-model="pno.DateFrom" :format="format" :enable-time-picker="false" 
-                          @input="pno.edited = true" />
+                          @input="pno.edited = true" style="--dp-border-color: #8d8d8d;"/>
         </td>
         <td>
           <VueDatePicker v-model="pno.DateTo" :format="format" :enable-time-picker="false" 
-                          @input="pno.edited = true" />
+                          @input="pno.edited = true" style="--dp-border-color: #8d8d8d;"/>
         </td>
         <td style="background-color: #f4f4f4;">
           <span @click="createXCode(pno)" style="cursor: pointer;">[Save]</span>
