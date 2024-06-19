@@ -479,13 +479,17 @@ def get_changelog(country, model_year):
 
 @bp_db_reader.route('/sales-channels', methods=['GET'])
 def get_sales_channels(country, model_year):
-    df_sales_channels = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SC'), columns=['ID', 'Code', 'ChannelName', 'Comment', 'DateFrom', 'DateTo'], conditions=[f"CountryCode = '{country}'"])
-
+    conditions = [f"CountryCode = '{country}'"]
+    df_sales_channels = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SC'), columns=['ID', 'Code', 'ChannelName', 'Comment', 'DateFrom', 'DateTo'], conditions=conditions)
+    
     df_sales_channels = df_sales_channels.sort_values(by='Code', ascending=True)
 
     # Convert DateFrom and DateTo columns to datetime format
     df_sales_channels['DateFrom'] = pd.to_datetime(df_sales_channels['DateFrom'])
     df_sales_channels['DateTo'] = pd.to_datetime(df_sales_channels['DateTo'])
+    
+    # Filter where either start or end date are in the model year. don't use filter_df_by_model_year
+    df_sales_channels = df_sales_channels[(df_sales_channels['DateFrom'].dt.year <= int(model_year)) & (df_sales_channels['DateTo'].dt.year >= int(model_year))]
     
     # Format DateFrom and DateTo columns
     df_sales_channels['DateFrom'] = df_sales_channels['DateFrom'].dt.strftime('%Y-%m-%d')
