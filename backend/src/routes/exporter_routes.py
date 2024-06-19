@@ -40,10 +40,9 @@ def variant_binder(country):
     model = request.args.get('model')
     engines_types = request.args.get('engines_category')
     time = request.args.get('date')
-    pnos = request.args.get('pnos')
-    if not pnos:
-        return 'PNOs are required', 400
-    pnos = pnos.split(',')
+    pnos = request.args.get('pnos', None)
+    if pnos:
+        pnos = pnos.split(',')
     
     try:
         xlsx_file, title = extract_variant_binder(country, model, engines_types, int(time), pnos)
