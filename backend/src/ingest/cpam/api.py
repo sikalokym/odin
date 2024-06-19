@@ -50,8 +50,11 @@ def get_model_years(spec_market, start_model_year=''):
     logger.info('Fetching model years from CPAM')
     req = model_year_req_xml.format(CONSUMER, MODEL_YEAR, spec_market, start_model_year)
     logger.debug(req)
-
-    response = requests.post(API_URL, headers=HEADERS, data=req)
+    try:
+        response = requests.post(API_URL, headers=HEADERS, data=req)
+    except requests.exceptions.RequestException as e:
+        logger.error(f'Error fetching model years from CPAM: {e}')
+        return []
 
     if response.status_code > 500:
         logger.error('Error fetching model years from CPAM')
