@@ -89,7 +89,7 @@ reset<template>
           <option v-for="n in validity_weeks" :key="n" :value="String(n).padStart(2, '0')">{{ String(n).padStart(2, '0')
             }}</option>
         </select> -->
-        <VueDatePicker v-model="pricelistDate" :format="format" :enable-time-picker="false"
+        <VueDatePicker v-model="pricelistDate" :format="format" :enable-time-picker="false" placeholder="All dates"
                  @input="pno.edited = true"
                  @focus="exportVisible = false"
                  @blur="exportVisible = true"
@@ -102,7 +102,7 @@ reset<template>
         style="display:block;width:180px; height:50px; position: absolute; left: 50%; transform: translateX(-50%); margin-top: 24px;"
         @click="exportPricelist"
         v-show="exportVisible"
-        :disabled="exportInProgress || this.pnoStore.model_year === '0' || this.sales_channel === '' || this.pricelistDate.length === 0">Export
+        :disabled="exportInProgress || this.pnoStore.model_year === '0' || this.sales_channel === ''">Export
         Pricelist</button>
     </div>
     <!-- Country Select Dropdown Menu -->
@@ -280,7 +280,7 @@ export default {
       const day = String(Date.getDate()).padStart(2, '0');
       const month = String(Date.getMonth() + 1).padStart(2, '0');
       const year = Date.getFullYear();
-      return `${day}-${month}-${year}`;
+      return `${day}.${month}.${year}`;
     },
     setVariantBinderFilters() {
       this.showFilters = 'VariantBinder';
@@ -359,14 +359,18 @@ export default {
       this.exportInProgress = true;
       // Adjusted helper function to format date as yyyy-mm-dd
       const formatDate = (date) => {
-        const d = new Date(date);
-        const year = d.getFullYear();
-        const month = (`0${d.getMonth() + 1}`).slice(-2);
-        const day = (`0${d.getDate()}`).slice(-2);
-        return `${year}-${month}-${day}`;
+          const d = new Date(date);
+          const year = d.getFullYear();
+          const month = (`0${d.getMonth() + 1}`).slice(-2);
+          const day = (`0${d.getDate()}`).slice(-2);
+          return `${year}-${month}-${day}`;
       };
-    
-      const formattedDate = formatDate(this.pricelistDate);
+      
+      let formattedDate = formatDate(this.pricelistDate);
+      if (formattedDate === 'NaN-aN-aN') {
+          formattedDate = '';
+      };
+
       const link = document.createElement('a');
       link.href = `${axios.endpoint}/${this.selectedCountry.Code}/export/sap-price-list?date=${formattedDate}&code=${this.sales_channel}`;
       console.log(link.href);

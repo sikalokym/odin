@@ -79,7 +79,7 @@
       </select>
     </div>
   </aside>
-  <main class="main-content">
+  <main class="main-content" ref="mainContent">
     <!-- Table Filter -->
     <div style="display: flex; margin-bottom: 1em;">
       <input v-if="displaytable !== '' && model_year !== '0' && !customFeatureTable && !discountTable && !xCodesTable"
@@ -94,8 +94,8 @@
       <input type='file' class="visaupload" id="getFile" ref="file" style="display:none"
         accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" @change="uploadVisa">
       <!-- Displaying Name of VISA File -->
-      <button v-if="visaTable" @click="this.visaTable = false">Return to VISA Files</button>
-      <button v-if="visaTable" @click="addVISAFileInformation" style="margin-left: 10px;">Add Row</button>
+      <button v-if="visaTable" @click="this.visaTable = false, this.newvisafileinformation = []">Return to VISA Files</button>
+      <button v-if="visaTable" @click="addVISAFileInformation" style="margin-left: 10px; ">Add Row</button>
       <div v-if="displaytable === 'VISA Files' && model_year !== '0' && visaTable" style="margin-left: 10px;">
         <strong>[Model {{
       this.activeVisaFile.CarType + " || " + this.activeVisaFile.VisaFile }}]</strong></div>
@@ -1187,7 +1187,14 @@
             <input type="text" v-model="pno.TransferPrice" @input="pno.edited = true" />
           </td>
           <td style="background-color: #f4f4f4;">
-            <span @click="createVISAFileInformation(pno)" style="cursor: pointer;">[Save]</span>
+            <span
+              @click="!isSaveDisabled && createVISAFileInformation(pno)"
+              :style="{
+                cursor: isSaveDisabled ? 'not-allowed' : 'pointer',
+                color: isSaveDisabled ? '#c0c0c0' : '' /* Adjust the color as needed */
+              }">
+              [Save]
+            </span>
           </td>
         </tr>
       </tbody>
@@ -1847,20 +1854,36 @@ export default {
     isFormValid() {
       return this.newEntry.CustomName && this.newEntry.CustomCategory && this.newEntry.StartDate && this.newEntry.EndDate;
     },
+    isSaveDisabled() {
+    const vInfo = this.newvisafileinformation[0]
+      if (
+    (vInfo.Engine !== '' || vInfo.SalesVersion !== '' || vInfo.Gearbox !== '' || vInfo.Color !== '' || vInfo.Options !== '' || vInfo.Upholstery !== '' || vInfo.Package !== '')
+    && vInfo.MSRP !== ''
+    && vInfo.PriceBeforeTax !== ''
+    && vInfo.WholeSalePrice !== ''
+    && vInfo.TransferPrice !== '') {
+        return false;
+      }
+      return true;
+    },
   },
   methods: {
+    scrollToBottom() {
+      const mainContent = this.$refs.mainContent;
+      if (mainContent) {
+        mainContent.scrollTop = mainContent.scrollHeight;
+      }
+    },
     format(Date) {
       const day = String(Date.getDate()).padStart(2, '0');
       const month = String(Date.getMonth() + 1).padStart(2, '0');
       const year = Date.getFullYear();
-      return `${day}-${month}-${year}`;
+      return `${day}.${month}.${year}`;
     },
-
     async handleModelYearChange() {
       await this.refreshModelyear();
       this.fetchPnoSpecifics();
     },
-
     async refreshModelyear() {
       await this.pnoStore.setModelYear(this.model_year)
       await this.entitiesStore.setModelYear(this.model_year)
@@ -2000,7 +2023,6 @@ export default {
         this.exportInProgress = false;
       }, 10000);
     },
-
     async reset() {
       this.model_year = '0';
       this.model = '';
@@ -2163,12 +2185,31 @@ export default {
     },
     // Sales Channels
     async pushUpdateSalesChannel(pno) {
-      await this.entitiesStore.pushUpdateSalesChannel(pno.ID, pno.Code, pno.ChannelName, pno.Comment, pno.DateFrom, pno.DateTo)
+      const formatDate = (date) => {
+          const d = new Date(date);
+          const year = d.getFullYear();
+          const month = (`0${d.getMonth() + 1}`).slice(-2);
+          const day = (`0${d.getDate()}`).slice(-2);
+          return `${year}-${month}-${day}`;
+      };
+      let ExportDateFrom = formatDate(pno.DateFrom);
+      let ExportDateTo = formatDate(pno.DateTo);
+
+      await this.entitiesStore.pushUpdateSalesChannel(pno.ID, pno.Code, pno.ChannelName, pno.Comment, ExportDateFrom, ExportDateTo)
       pno.edited = false
     },
     async createSalesChannel(pno) {
       pno.ID = null
-      await this.entitiesStore.pushUpdateSalesChannel(pno.ID, pno.Code, pno.ChannelName, pno.Comment, pno.DateFrom, pno.DateTo)
+      const formatDate = (date) => {
+          const d = new Date(date);
+          const year = d.getFullYear();
+          const month = (`0${d.getMonth() + 1}`).slice(-2);
+          const day = (`0${d.getDate()}`).slice(-2);
+          return `${year}-${month}-${day}`;
+      };
+      let ExportDateFrom = formatDate(pno.DateFrom);
+      let ExportDateTo = formatDate(pno.DateTo);
+      await this.entitiesStore.pushUpdateSalesChannel(pno.ID, pno.Code, pno.ChannelName, pno.Comment, ExportDateFrom, ExportDateTo)
       pno.edited = false
       this.newsaleschannel = [];
       await this.entitiesStore.fetchSalesChannels().then(() => {
@@ -2219,7 +2260,16 @@ export default {
     },
     // XCodes
     async pushUpdateXCode(pno) {
-      await this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeSalesChannel.ChannelID, pno.FeatureCode, pno.FeatureRetailPrice, pno.FeatureWholesalePrice, pno.AffectedVisaFile, pno.DateFrom, pno.DateTo)
+      const formatDate = (date) => {
+          const d = new Date(date);
+          const year = d.getFullYear();
+          const month = (`0${d.getMonth() + 1}`).slice(-2);
+          const day = (`0${d.getDate()}`).slice(-2);
+          return `${year}-${month}-${day}`;
+      };
+      let ExportDateFrom = formatDate(pno.DateFrom);
+      let ExportDateTo = formatDate(pno.DateTo);
+      await this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeSalesChannel.ChannelID, pno.FeatureCode, pno.FeatureRetailPrice, pno.FeatureWholesalePrice, pno.AffectedVisaFile, ExportDateFrom, ExportDateTo)
       pno.edited = false
       await this.entitiesStore.fetchCustomLocalOptions(this.activeSalesChannel.ChannelID).then(() => {
         console.log('X codes fetched')
@@ -2229,7 +2279,16 @@ export default {
     },
     async createXCode(pno) {
       pno.ID = null
-      await this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeSalesChannel.ChannelID, pno.FeatureCode, pno.FeatureRetailPrice, pno.FeatureWholesalePrice, pno.AffectedVisaFile, pno.DateFrom, pno.DateTo)
+      const formatDate = (date) => {
+          const d = new Date(date);
+          const year = d.getFullYear();
+          const month = (`0${d.getMonth() + 1}`).slice(-2);
+          const day = (`0${d.getDate()}`).slice(-2);
+          return `${year}-${month}-${day}`;
+      };
+      let ExportDateFrom = formatDate(pno.DateFrom);
+      let ExportDateTo = formatDate(pno.DateTo);
+      await this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeSalesChannel.ChannelID, pno.FeatureCode, pno.FeatureRetailPrice, pno.FeatureWholesalePrice, pno.AffectedVisaFile, ExportDateFrom, ExportDateTo)
       pno.edited = false
       this.newcustomlocaloption = [];
       await this.entitiesStore.fetchCustomLocalOptions(this.activeSalesChannel.ChannelID).then(() => {
@@ -2256,7 +2315,7 @@ export default {
       })
     },
     addVISAFileInformation() {
-      if (this.visa_file && this.visa_file.length > 0) {
+      if (this.visa_file) {
         const firstPno = this.visa_file[0];
         this.newvisafileinformation.push({
           ID: '',
@@ -2296,6 +2355,7 @@ export default {
         // Handle the case where visa_file is empty or undefined
         // You might want to push an object with default values or show an error message
       }
+      this.scrollToBottom();
       this.entitiesStore.fetchVISAFile(this.activeVisaFile.VisaFile).then(() => {
         console.log('VISA file information fetched')
       }).catch((error) => {
