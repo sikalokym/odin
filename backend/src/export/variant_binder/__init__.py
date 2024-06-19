@@ -77,8 +77,9 @@ def extract_variant_binder(country, model, engines_types, time, pno_ids=None):
     try:
         ws_5 = wb.create_sheet("Optionen")
         df_rad = options_sheet.get_sheet(ws_5, sales_versions.copy(), title, time)
-        ws_6 = wb.create_sheet("Räder")
-        tiers_sheet.get_sheet(ws_6, sales_versions.copy(), title, df_rad)
+        if df_rad.empty:
+            ws_6 = wb.create_sheet("Räder")
+            tiers_sheet.get_sheet(ws_6, sales_versions.copy(), title, df_rad)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error creating sheet: {e}")
     try:
