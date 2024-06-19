@@ -110,6 +110,13 @@ class DBOperations:
             self.logger.error("The DataFrame is empty. No data to insert.")
             return
         
+        # Check columns exist in the DataFrame
+        try:
+            df = df[columns]
+        except KeyError as e:
+            self.logger.error(f"Error inserting data into temporary staging table: {e}")
+            raise e
+
         df.drop_duplicates(subset=conditional_columns, inplace=True)
 
         with self.get_cursor() as cursor:
