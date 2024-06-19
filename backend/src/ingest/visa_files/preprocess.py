@@ -32,9 +32,18 @@ def process_visa_df(df):
                             'DateTo': 'EndDate',
                             'MSRP': 'Price'})
 
-    # Convert 'Price' and 'PriceBeforeTax' to numeric
-    df['Price'] = pd.to_numeric(df['Price'], errors='coerce').round(2).astype(float)
-    df['PriceBeforeTax'] = pd.to_numeric(df['PriceBeforeTax'], errors='coerce').round(2).astype(float)
+    # Define a function to handle conversion, rounding, and preserve None
+    def convert_and_round(value):
+        try:
+            if pd.isna(value):
+                return None
+            return round(float(value), 2)
+        except ValueError:
+            return None
+
+    # Apply the function to the columns
+    df['Price'] = df['Price'].apply(convert_and_round)
+    df['PriceBeforeTax'] = df['PriceBeforeTax'].apply(convert_and_round)
 
     # Return the cleaned DataFrame
     return df[cols]

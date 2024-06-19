@@ -41,6 +41,10 @@ def ingest_visa_data(country_code, df_processed):
         return df_tmp
 
     df_res = pd.DataFrame()
+    
+    # replace none with empty string in ['Color', 'Options', 'Upholstery', 'Package']
+    df_processed[['Color', 'Options', 'Upholstery', 'Package']] = df_processed[['Color', 'Options', 'Upholstery', 'Package']].fillna('')
+
     # Processing different cases
     df_res = process_and_upsert(df_processed, None, ['Color', 'Options', 'Upholstery', 'Package'], df_res)
     df_res = process_and_upsert(df_processed, 'Color', ['Options', 'Upholstery', 'Package'], df_res)
