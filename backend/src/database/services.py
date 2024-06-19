@@ -5,10 +5,10 @@ from src.utils.db_utils import get_model_year_from_date
 def get_engine_cats(country, model_year, model):
     conditions = [f'CountryCode = {country}']
     
-    if model:
-        conditions.append(f"Model = '{model}'")
     engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), columns=['Code', 'EngineCategory'], conditions=conditions)
 
+    if model:
+        conditions.append(f"Model = '{model}'")
     pno_engins = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), columns=['Engine', 'StartDate'], conditions=conditions)
     
     pno_engins = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), columns=['Engine', 'StartDate'], conditions=conditions)
