@@ -37,6 +37,9 @@ def get_sheet(ws, entities_ids_dict, pnos_ids, title, time, country):
     df_pno_change_log = DBOperations.instance.get_table_df(DBOperations.instance.config.get('DQ', 'CL'), conditions=conditions)
 
     df_change_log = pd.concat([df_change_log, df_pno_change_log])
+    
+    if df_change_log.empty:
+        return None
 
     # relations_tables = ['PNO_Custom', 'PNOColorCustom', 'PNOOptionsCustom', 'PNOUpholsteryCustom', 'PNOPackageCustom']
 

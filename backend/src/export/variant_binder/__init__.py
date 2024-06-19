@@ -11,7 +11,7 @@ def extract_variant_binder_pnos(country, model, engines_types, time):
         valid_engines = get_valid_engines(country, engines_types, time)
         valid_pnos = get_valid_pnos(country, model, time, valid_engines)
         
-        codes = valid_pnos['Model'].tolist()
+        codes = valid_pnos['Model'].unique().tolist()
         conditions = [f"CountryCode = '{country}'", f'StartDate <= {time}', f'EndDate >= {time}']
         if len(codes) == 1:
             conditions.append(f"Code = '{codes[0]}'")
@@ -29,7 +29,7 @@ def extract_variant_binder_pnos(country, model, engines_types, time):
         
         return df_pnos
     except Exception as e:
-        DBOperations.instance.logger.error(f"Error getting VB Data: {e}")
+        DBOperations.instance.logger.error(f"Error getting VB Data: {e}", extra={'country': country})
         raise Exception(f"Error getting VB Data: {e}")
     
 def extract_variant_binder(country, model, engines_types, time, pno_ids=None):
@@ -48,46 +48,48 @@ def extract_variant_binder(country, model, engines_types, time, pno_ids=None):
         sales_versions = get_sales_versions(country, valid_pnos, time)
         title, model_id = get_model_name(country, model, time)
     except Exception as e:
-        DBOperations.instance.logger.error(f"Error getting VB Data: {e}")
+        DBOperations.instance.logger.error(f"Error getting VB Data: {e}", extra={'country': country})
         raise Exception(f"Error getting VB Data: {e}")
 
     if valid_pnos.empty or sales_versions.empty or valid_engines.empty:
-        DBOperations.instance.logger.info(f"No data found for model {model} and engine category {engines_types} at time {time}")
+        DBOperations.instance.logger.warning(f"No data found for model {model} and engine category {engines_types} at time {time}", extra={'country': country})
         return None
     try:
         ws_1 = wb.create_sheet("Preise")
         gb_ids = prices_sheet.get_sheet(ws_1, valid_pnos, sales_versions.copy(), title, time, valid_engines, country)
     except Exception as e:
-        DBOperations.instance.logger.error(f"Error creating sheet: {e}")
+        DBOperations.instance.logger.error(f"Error creating sheet: {e}", extra={'country': country})
     try:
         ws_2 = wb.create_sheet("Serienausstattung")
         sales_versions_sheet.get_sheet(ws_2, sales_versions.copy(), title)
     except Exception as e:
-        DBOperations.instance.logger.error(f"Error creating sheet: {e}")
+        DBOperations.instance.logger.error(f"Error creating sheet: {e}", extra={'country': country})
     try:
         ws_3 = wb.create_sheet("Pakete")
         packages_sheet.get_sheet(ws_3, sales_versions.copy(), title, time)
     except Exception as e:
-        DBOperations.instance.logger.error(f"Error creating sheet: {e}")
+        DBOperations.instance.logger.error(f"Error creating sheet: {e}", extra={'country': country})
     try:
         ws_4 = wb.create_sheet("Polster & Farben")
         upholstery_colors_sheet.get_sheet(ws_4, sales_versions.copy(), title, time)
     except Exception as e:
-        DBOperations.instance.logger.error(f"Error creating sheet: {e}")
+        DBOperations.instance.logger.error(f"Error creating sheet: {e}", extra={'country': country})
     try:
         ws_5 = wb.create_sheet("Optionen")
         df_rad = options_sheet.get_sheet(ws_5, sales_versions.copy(), title, time)
-        if df_rad.empty:
+        if not df_rad.empty:
             ws_6 = wb.create_sheet("Räder")
             tiers_sheet.get_sheet(ws_6, sales_versions.copy(), title, df_rad)
     except Exception as e:
-        DBOperations.instance.logger.error(f"Error creating sheet: {e}")
+        DBOperations.instance.logger.error(f"Error creating sheet: {e}", extra={'country': country})
     try:
         ws_7 = wb.create_sheet("Änderungen", 0)
         entities_ids_dict = {'Typ': [model_id], 'SV': sales_versions.SVID.unique().tolist(), 'En': valid_engines.ID.explode().unique().tolist(), 'G': gb_ids}
-        change_log.get_sheet(ws_7, entities_ids_dict, valid_pnos.ID.unique().tolist(), title, time, country)
+        err = change_log.get_sheet(ws_7, entities_ids_dict, valid_pnos.ID.unique().tolist(), title, time, country)
+        if err:
+            raise Exception('No data found for change log')
     except Exception as e:
-        DBOperations.instance.logger.error(f"Error creating sheet: {e}")
+        DBOperations.instance.logger.error(f"Error creating sheet: {e}", extra={'country': country})
 
     model_year = get_model_year_from_date(time)
     time = str(time)
@@ -134,7 +136,7 @@ def get_sales_versions(country, pnos, time):
     df_allowed_sv['SalesVersionNameGroup'] = df_allowed_sv['SalesVersionName'].str.split().str[0]
     df = df_allowed_sv.groupby('SalesVersionNameGroup').agg({'SalesVersionName': list, 'SalesVersionPrice': 'max'}).sort_values('SalesVersionPrice', ascending=True)
     # explode the list of names to get the names sorted by price
-    sorted_sv_names = df.explode('SalesVersionName')['SalesVersionName'].tolist()
+    sorted_sv_names = df.explode('SalesVersionName')['SalesVersionName'].unique().tolist()
 
     # now we have the names of the sales versions sorted by price
     # sort the original df by the order of the names in the sorted df
