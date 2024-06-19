@@ -1,6 +1,5 @@
 import io
 import pandas as pd
-from datetime import datetime
 from flask import Blueprint, request, send_file
 from src.database.db_operations import DBOperations
 from src.utils.db_utils import get_column_map

@@ -1,14 +1,10 @@
-from openpyxl.cell.rich_text import TextBlock, CellRichText
-from openpyxl.cell.text import InlineFont
-from openpyxl.styles import Font, PatternFill, Border, Alignment, Side
-from openpyxl.utils import get_column_letter
+from openpyxl.styles import Font, PatternFill, Alignment
 import pandas as pd
 
 from src.database.db_operations import DBOperations
-from src.utils.db_utils import filter_df_by_timestamp, format_float_string
 
 
-def get_sheet(ws, entities_ids_dict, pnos_ids, relations_ids, title, time, country):
+def get_sheet(ws, entities_ids_dict, pnos_ids, title, time, country):
 
     time_str = str(time) + '0'
     date = pd.to_datetime(time_str, format='%Y%U%w').date()
