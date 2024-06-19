@@ -1,16 +1,13 @@
-import logging
-import time
-import configparser
+from cachetools import cached, TTLCache
 import pandas as pd
-
-from cachetools import TTLCache, cached
+import configparser
+import time
 
 from src.database.db_operations import DBOperations
+from src.ingest.visa_files.services import ingest_visa_data
+from src.utils.sql_logging_handler import logger
 import src.ingest.cpam.api as cpam
-from src.ingest.visa_files.services import assign_prices
-from src.utils.ingest_utils import is_valid_car_type, is_valid_year
 
-logger = logging.getLogger(__name__)
 config = configparser.ConfigParser()
 config.read('config/cpam.cfg')
 
@@ -23,58 +20,54 @@ def ingest_all_cpam_data_from(year, country_code):
         country_code (str): The specific market for which the data needs to be ingested.
 
     Returns:
-        tuple: A tuple containing two lists - `load_successfull` and `load_unsuccessfull`.
-            `load_successfull` (list): A list of tuples representing the successfully loaded data.
+        tuple: A tuple containing two lists - `load_successful` and `load_unsuccessful`.
+            `load_successful` (list): A list of tuples representing the successfully loaded data.
                 Each tuple contains the year and car type.
-            `load_unsuccessfull` (list): A list of tuples representing the unsuccessfully loaded data.
+            `load_unsuccessful` (list): A list of tuples representing the unsuccessfully loaded data.
                 Each tuple contains the year and car type.
     """
-    load_successfull = []
-    load_unsuccessfull = []
+    load_successful = []
+    load_unsuccessful = []
     for car in cpam.get_car_types(year)['DataRows']:
         start_time_in = time.perf_counter()
         maf = config.get('SETTINGS', 'MARKET_AUTH_FLAG')
         sw = config.get('SETTINGS', 'START_WEEK')
         try:
             ingest_cpam_data(year, car['Type'], country_code, maf, sw)
-            load_successfull.append((year, car['Type']))
+            load_successful.append((year, car['Type']))
         except Exception as e:
             logger.error(f'Error processing car type {car["Type"]}: {e}', extra={'country_code': country_code})
-            load_unsuccessfull.append((year, car['Type']))
-            continue
+            load_unsuccessful.append((year, car['Type']))
         end_time = time.perf_counter()
         duration = end_time - start_time_in
         logger.debug(f'Car {car["Type"]} execution time: {duration:.2f} seconds')
-    return load_successfull, load_unsuccessfull
-
-from multiprocessing import Process, Manager
-
-def ingest_cpam_data_wrapper(year, car_type, country_code, maf, sw, load_successfull, load_unsuccessfull):
-    try:
-        ingest_cpam_data(year, car_type, country_code, maf, sw)
-        load_successfull.append((year, car_type))
-    except Exception as e:
-        logger.error(f'Error processing car type {car_type}: {e}', extra={'country_code': country_code})
-        load_unsuccessfull.append((year, car_type))
+    return load_successful, load_unsuccessful
 
 def ingest_all_cpam_data(country_code, year=None, start_model_year=''):
-    with Manager() as manager:
-        load_successfull = manager.list()
-        load_unsuccessfull = manager.list()
-        all_years = cpam.get_model_years(country_code, start_model_year=start_model_year)['Years'] if not year else [year]
-        processes = []
-        for year in all_years:
-            for car in cpam.get_car_types(year, country_code)['DataRows']:
-                maf = config.get('SETTINGS', 'MARKET_AUTH_FLAG')
-                sw = config.get('SETTINGS', 'START_WEEK')
-                p = Process(target=ingest_cpam_data_wrapper, args=(year, car['Type'], country_code, maf, sw, load_successfull, load_unsuccessfull))
-                p.start()
-                processes.append(p)
-        for p in processes:
-            p.join()
-        logger.debug('CPAM data update completed', extra={'country_code': country_code})
-        return list(load_successfull), list(load_unsuccessfull)
- 
+    load_successful = []
+    load_unsuccessful = []
+    if year:
+        all_years = [year]
+    else:
+        all_years = cpam.get_model_years(country_code, start_model_year=start_model_year)
+        if not all_years or all_years == []:
+            logger.error('No model years found', extra={'country_code': country_code})
+            return load_successful, load_unsuccessful
+    maf = config.get('SETTINGS', 'MARKET_AUTH_FLAG')
+    sw = config.get('SETTINGS', 'START_WEEK')
+    for year in all_years:
+        for car in cpam.get_car_types(year, country_code)['DataRows']:
+            if car['Type'] != '246':
+                continue
+            try:
+                ingest_cpam_data(year, car['Type'], country_code, maf, sw)
+                load_successful.append((year, car['Type']))
+            except Exception as e:
+                logger.error(f'Error processing car type {car["Type"]}: {e}', extra={'country_code': country_code})
+                load_unsuccessful.append((year, car['Type']))
+    logger.debug('CPAM data update completed', extra={'country_code': country_code})
+    return load_successful, load_unsuccessful
+
 def ingest_cpam_data(year, car_type, country_code, maf, sw):
     """
     Ingests CPAM data for a specific year, car type, spec market, MAF, and SW.
@@ -89,28 +82,22 @@ def ingest_cpam_data(year, car_type, country_code, maf, sw):
     Raises:
         ValueError: If the year or car type is invalid.
     """
-    logger.info(f'Processing car type: {car_type}', extra={'country_code': country_code})
+    logger.info(f'Processing car type: {car_type}')
 
-    is_valid = is_valid_year(year, country_code)
-    if isinstance(is_valid, str):
-        raise ValueError(is_valid)
-    elif not is_valid:
-        raise ValueError('Invalid year')
-    
-    new_entities = DBOperations.instance.collect_entity(cpam.get_dictionary(year, car_type, country_code, maf, sw)['DataRows'], country_code)
+    return
+    new_entities = DBOperations.instance.collect_entity(cpam.get_dictionary(year, car_type, country_code, maf, sw).get('DataRows', None), country_code)
     if not new_entities:
         return
-    DBOperations.instance.collect_auth(cpam.get_authorization(year, car_type, country_code, maf, sw)['DataRows'], country_code)
-    DBOperations.instance.collect_package(cpam.get_packages(year, car_type, country_code, maf, sw)['PackageDataRows'], country_code)
-    DBOperations.instance.collect_dependency(cpam.get_dependency_rules(year, car_type, country_code, maf, sw)['DataRows'], country_code)
-    DBOperations.instance.collect_feature(cpam.get_features(year, car_type, country_code, maf, sw)['DataRows'], country_code)
+    DBOperations.instance.collect_auth(cpam.get_authorization(year, car_type, country_code, maf, sw).get('DataRows', None), country_code)
+    DBOperations.instance.collect_package(cpam.get_packages(year, car_type, country_code, maf, sw).get('PackageDataRows', None), country_code)
+    DBOperations.instance.collect_dependency(cpam.get_dependency_rules(year, car_type, country_code, maf, sw).get('DataRows', None), country_code)
+    DBOperations.instance.collect_feature(cpam.get_features(year, car_type, country_code, maf, sw).get('DataRows', None), country_code)
     
     logger.debug('Data insertion completed', extra={'country_code': country_code})
 
-    assign_prices(country_code)
+    ingest_visa_data(country_code)
 
-# Create a cache with a Time-To-Live (TTL) of 10 minutes and a maximum size of 100 entries
-cache = TTLCache(maxsize=100, ttl=600)
+cache = TTLCache(maxsize=100, ttl=60)
 
 @cached(cache)
 def get_supported_countries(country_code=None):
@@ -121,7 +108,7 @@ def get_supported_countries(country_code=None):
         list: A list of supported countries.
     """
     try:
-        conditions = ['1=1'] if not country_code else [f'Code = {country_code}']
+        conditions = ['1=1'] if not country_code else [f"Code = '{country_code}'"]
         
         countries = DBOperations.instance.get_table_df(DBOperations.instance.config.get('SETTINGS', 'CountryCodes'), columns=['Code', 'CountryName'], conditions=conditions)
         return countries
