@@ -201,7 +201,7 @@ class DBOperations:
                         elif len(custom_names) == 0:
                             self.logger.warning(f"No custom name found for code {code} in {data_type}") 
                         else:
-                            group['CustomName'] = custom_names[0]
+                            group.loc[group['Code'] == code, 'CustomName'] = custom_names[0]
                             entity_columns.insert(-3, 'CustomName')
             elif data_type == 'En':
                 for code in group['Code'].unique():
