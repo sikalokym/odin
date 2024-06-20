@@ -51,6 +51,8 @@ def get_sheet(ws, sales_versions, title, time):
 
         # check if any column has a NaN value, then set all values of that column to empty string
         for col in df_options.columns:
+            if col in ['RuleCode', 'RuleBase', 'CustomName']:
+                continue
             if df_options[col].isnull().values.any():
                 df_options[col] = ''
 
@@ -176,12 +178,34 @@ def fetch_package_data(sales_versions, time):
     else:
         pno_features_conditions.append(f"Reference in {tuple(rule_codes)}")
     df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Reference as RuleCode', 'RuleName', 'CustomName'], conditions=pno_features_conditions)
-
+    
+    uph_codes = list(set(rule_codes) - set(df_pno_features.RuleCode.unique().tolist()))
+    df_pkg_uph = None
+    if len(uph_codes):
+        uph_conditions = conditions.copy() + [f"StartDate <= {time}", f"EndDate >= {time}"]
+        if len(uph_codes) == 1:
+            uph_conditions.append(f"Code = '{uph_codes[0]}'")
+        else:
+            uph_conditions.append(f"Code in {tuple(uph_codes)}")
+        df_uph = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'UPH'), columns=['ID', 'PNOID', 'Code'], conditions=uph_conditions)
+        df_uph.rename(columns={'Code': 'RuleCode'}, inplace=True)
+        rel_ids = df_uph.ID.unique().tolist()
+        uph_features_conditions = []
+        if len(rel_ids) == 1:
+            uph_features_conditions.append(f"RelationID = '{rel_ids[0]}'")
+        else:
+            uph_features_conditions.append(f"RelationID in {tuple(rel_ids)}")
+        df_uph_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), columns=['RelationID', 'CustomName'], conditions=uph_features_conditions)
+        df_uph = df_uph.merge(df_uph_relations, left_on='ID', right_on='RelationID', how='left')
+        df_uph.drop(columns=['ID', 'RelationID'], inplace=True)
+        df_pkg_uph = df_uph.merge(df_pno_package[['PNOID', 'RuleCode', 'RuleName']], on=['PNOID', 'RuleCode'], how='left', suffixes=('_uph', '_package'))
+        df_pkg_uph = df_pkg_uph.dropna(subset=['RuleName']).drop_duplicates(subset=['RuleCode', 'RuleName'])
+        
     df_merged = df_pno_features.merge(df_pno_package[['PNOID', 'RuleCode', 'RuleName']], on=['PNOID', 'RuleCode'], how='left', suffixes=('_features', '_package'))
     df_merged['RuleName'] = df_merged['RuleName_package'].combine_first(df_merged['RuleName_features'])
     df_merged.drop(columns=['RuleName_features', 'RuleName_package'], inplace=True)
     df_pno_package.drop(columns=['RuleName'], inplace=True)
-
+    df_merged = pd.concat([df_merged, df_pkg_uph], ignore_index=True)
     merged_df_with_features = df_merged.merge(df_pno_package, on=['PNOID', 'RuleCode'], how='left')
     df_pno_package_with_sv = merged_df_with_features.merge(sales_versions[['TmpCode', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='TmpCode', how='inner')
     df_pno_package_with_sv.drop(columns=['TmpCode', 'PNOID'], inplace=True)

@@ -282,11 +282,15 @@ def fetch_options_data(sales_versions, time):
     df_pno_options_with_feat_ref = df_pno_options_with_price[~df_pno_options_with_price['RelationID'].isna()].copy()
     df_pno_options_without_feat_ref = df_pno_options_with_price[df_pno_options_with_price['RelationID'].isna()].copy()
     df_pno_options_without_feat_ref.loc[:, 'Reference'] = df_pno_options_without_feat_ref['Code']
-
+    pno_ids_to_drop = df_pno_options_without_feat_ref[df_pno_options_without_feat_ref['RuleName'] == '%'][['PNOID', 'Reference']].drop_duplicates()
+    # remove leading zeros from the Reference column
+    pno_ids_to_drop['Reference'] = pno_ids_to_drop['Reference'].apply(lambda x: x.lstrip('0'))
     df_pno_options_feat_merged = df_pno_features.merge(df_pno_options_with_feat_ref, 
                                       how='left',
                                       left_on=['PNOID', 'Reference'],
                                       right_on=['PNOID', 'OptCode'])
+    # Drop the rows with the same PNOID and Reference as the ones in pno_ids_to_drop
+    df_pno_options_feat_merged = df_pno_options_feat_merged[~df_pno_options_feat_merged[['PNOID', 'Reference']].apply(tuple, axis=1).isin(pno_ids_to_drop.apply(tuple, axis=1))]
     
     df_pno_options_merged = pd.concat([df_pno_options_feat_merged, df_pno_options_without_feat_ref], ignore_index=True)
     
@@ -296,7 +300,7 @@ def fetch_options_data(sales_versions, time):
     df_pno_options_merged['RuleName'] = df_pno_options_merged['RuleName'].combine_first(df_pno_options_merged['FeatRule'])
     df_pno_options_merged.drop(columns=['PNOID', 'OptCode', 'Code', 'RelationID', 'ID', 'TmpCode', 'FeatRule', 'FeatName'], inplace=True)
     df_pno_options_merged.drop_duplicates()
-    # append zeros to the reference column
+    # Append zeros to the reference column
     df_pno_options_merged['Reference'] = df_pno_options_merged['Reference'].apply(lambda x: x.zfill(6) if x.isnumeric() else x)
 
     def get_prices(row):
