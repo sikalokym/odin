@@ -269,12 +269,10 @@ export default {
       }
     },
     variantBinderPnosExport() {
-      let pnos = this.variantBinderPnos
+      return this.variantBinderPnos
         .filter(pno => pno.InExport)
         .map(pno => pno.ID)
         .join(',');
-      let sv_order = this.sortedSalesVersions.map(pno => pno.SalesVersion).join(',');
-      return pnos + '&sv_order=' + sv_order;
     },
     canExport() {
       return !this.exportInProgress && this.model_year !== '0' && this.model !== '' && this.validity_year !== '' && this.validity_week !== '';
