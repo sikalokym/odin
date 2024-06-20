@@ -5,7 +5,7 @@ import configparser
 
 from src.database.db_operations import DBOperations
 from src.ingest.visa_files.services import get_available_visa_files
-from src.utils.db_utils import get_column_map
+from src.utils.db_utils import format_float_string, get_column_map
 
 config = configparser.ConfigParser()
 config.read('config/sap_price_list.cfg')
@@ -71,9 +71,15 @@ def extract_sap_price_list(country, code, date):
             df_discount_options = df_local_options[(df_local_options['ChannelID'].isin(df_discounts_group['ID'].tolist())) & ((df_local_options['AffectedVisaFile'] == 'All') | (df_local_options['AffectedVisaFile'] == df_discounts_group['AffectedVisaFile'].iloc[0]))]
             dfs = get_sap_price_list(visa_file, df_discounts_group, df_discount_options, country)
             folder_name = visa_file
+            used_names = []
             for df in dfs:
                 code, channel_name = df.name.split('+#+')
                 excel_filename = f'SAP - PL{code} - {channel_name}.xlsx'
+                suffix = 1
+                while excel_filename in used_names:
+                    excel_filename = f'SAP - PL{code} - {channel_name} ({suffix}).xlsx'
+                    suffix += 1
+                    
                 excel_buffer = io.BytesIO()
                 with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
                     df.to_excel(writer, index=False)
@@ -121,7 +127,7 @@ def get_sap_price_list(visa_file, df_sales_channels, df_discount_options, countr
             res_df = prepare_pno_specific_discount(df_sap_price.copy())
         res_df['Price List'] = row['Code']
         
-        if row['Order'] != 1:
+        if row['Order'] == 1:
             res_df['Date From'] = pd.to_datetime(row['DateFrom'])
             res_df['Date From'] = res_df['Date From'].dt.strftime('%Y.%m.%d')
         
@@ -130,6 +136,9 @@ def get_sap_price_list(visa_file, df_sales_channels, df_discount_options, countr
 
         df_local_options = df_discount_options[df_discount_options['ChannelID'] == row['ID']]
         res_df = add_local_codes(res_df, df_local_options)
+        res_df['Wholesale Price'] = res_df['Wholesale Price'].apply(format_float_string)
+        res_df['Retail Price'] = res_df['Retail Price'].apply(format_float_string)
+        res_df['Transfer Price'] = res_df['Transfer Price'].apply(format_float_string)
         
         # Fill na values with empty strings
         res_df = res_df.fillna('')
@@ -166,8 +175,8 @@ def add_local_codes(df, df_codes):
     for _, row in df_codes.iterrows():
         new_row = last_row.copy()
         new_row['Option'] = row['FeatureCode']
-        new_row['Wholesale Price'] = row['FeatureWholesalePrice']
-        new_row['Retail Price'] = row['FeatureRetailPrice']
+        new_row['Wholesale Price'] = format_float_string(row['FeatureWholesalePrice'])
+        new_row['Retail Price'] = format_float_string(row['FeatureRetailPrice'])
         new_row['Date From'] = row['DateFrom']
         new_row['Date To'] = row['DateTo']
         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
@@ -186,4 +195,3 @@ def prepare_pno_specific_discount(df):
     
     # Concatenate the two dataframes and return the result
     return pd.concat([df_pno_prices, df_pno_non_prices], ignore_index=True)
-
