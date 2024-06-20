@@ -52,20 +52,3 @@ def is_valid_engine_category(engine_category, year, country_code, model):
 
     # Check if engine_category is in all_cats
     return engine_category.lower() in all_cats
-
-def excel_files_to_df(files):
-    """Convert excel files to dataframes.
-
-    Args:
-        files (list): List of excel files
-
-    Returns:
-        list: List of dataframes
-    """    # Read the Excel files into a pandas DataFrame
-    df = pd.concat([pd.read_excel(file, dtype=str) for file in files])
-
-    # Select the desired columns
-    df = df[['Car Type', 'Engine', 'Sales Version', 'Body', 'Gearbox', 'Steering', 'Market Code', 'Color', 'Option', 'Upholstery', 'Package', 'MSRP', 'Price Before Tax', 'Date From', 'Date To']]
-
-    # Return the modified DataFrame
-    return df

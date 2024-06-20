@@ -43,9 +43,12 @@ def variant_binder(country):
     pnos = request.args.get('pnos', None)
     if pnos:
         pnos = pnos.split(',')
+    sv_order = request.args.get('sv_order', None)
+    if sv_order:
+        sv_order = sv_order.split(',')
     
     try:
-        xlsx_file, title = extract_variant_binder(country, model, engines_types, int(time), pnos)
+        xlsx_file, title = extract_variant_binder(country, model, engines_types, int(time), pnos, sv_order)
     except Exception as e:
         return str(e), 500
     return send_file(xlsx_file, download_name=title, as_attachment=True), 200
@@ -53,7 +56,7 @@ def variant_binder(country):
 @bp_exporter.route('/sap-price-list', methods=['GET'])
 def sap_price_list(country):
     code = request.args.get('code', 'All')
-    date = request.args.get('date', None)
+    date = request.args.get('date', '')
     
     zip_buffer = extract_sap_price_list(country, code, date)
     if not zip_buffer:

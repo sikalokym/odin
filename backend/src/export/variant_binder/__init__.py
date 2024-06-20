@@ -1,6 +1,7 @@
 from io import BytesIO
 import numpy as np
 from openpyxl import Workbook
+import pandas as pd
 from src.database.db_operations import DBOperations
 from src.export.variant_binder import prices_sheet, options_sheet, upholstery_colors_sheet, packages_sheet, sales_versions_sheet, tiers_sheet, change_log
 from src.utils.db_utils import filter_df_by_timestamp, filter_model_year_by_translation, get_model_year_from_date
@@ -10,6 +11,9 @@ def extract_variant_binder_pnos(country, model, engines_types, time):
     try:
         valid_engines = get_valid_engines(country, engines_types, time)
         valid_pnos = get_valid_pnos(country, model, time, valid_engines)
+        sales_versions = get_sales_versions(country, valid_pnos, time)
+        sales_versions = sales_versions[['SalesVersion', 'SalesVersionName']].drop_duplicates()
+        sv_order = sales_versions['SalesVersion'].tolist()
         
         codes = valid_pnos['Model'].unique().tolist()
         conditions = [f"CountryCode = '{country}'", f'StartDate <= {time}', f'EndDate >= {time}']
@@ -27,12 +31,19 @@ def extract_variant_binder_pnos(country, model, engines_types, time):
         df_pnos.drop(columns=['PNOCode'], inplace=True)
         df_pnos.drop_duplicates(inplace=True)
         
+        # Merge the sales versions with the pnos
+        df_pnos = df_pnos.merge(sales_versions, how='left', on='SalesVersion')
+        
+        # Sort the pnos by the sales version code order
+        df_pnos['SalesVersion'] = pd.Categorical(df_pnos['SalesVersion'], categories=sv_order, ordered=True)
+        df_pnos = df_pnos.sort_values('SalesVersion')
+        
         return df_pnos
     except Exception as e:
         DBOperations.instance.logger.error(f"Error getting VB Data: {e}", extra={'country': country})
         raise Exception(f"Error getting VB Data: {e}")
     
-def extract_variant_binder(country, model, engines_types, time, pno_ids=None):
+def extract_variant_binder(country, model, engines_types, time, pno_ids=None, sv_order=None):
     wb = Workbook()
 
     # Remove the default sheet created
@@ -42,10 +53,13 @@ def extract_variant_binder(country, model, engines_types, time, pno_ids=None):
     try:
         valid_engines = get_valid_engines(country, engines_types, time)
         valid_pnos = get_valid_pnos(country, model, time, valid_engines)
-        # filter the valid pnos by the given pno_ids
         if pno_ids:
             valid_pnos = valid_pnos[valid_pnos['ID'].isin(pno_ids)]
+        
         sales_versions = get_sales_versions(country, valid_pnos, time)
+        if sv_order:
+            sales_versions['SalesVersion'] = pd.Categorical(sales_versions['SalesVersion'], categories=sv_order, ordered=True)
+            sales_versions = sales_versions.sort_values('SalesVersion')
         title, model_id = get_model_name(country, model, time)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error getting VB Data: {e}", extra={'country': country})
