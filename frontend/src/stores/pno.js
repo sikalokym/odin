@@ -164,10 +164,11 @@ export const usePNOStore = defineStore({
       if (model !== '') {
         updates.Model = model;
       }
-      if (ID !== null) {
+      let subpath = 'features';
+      if (ID !== null && ID !== '') {
         updates.ID = ID;
+        subpath = 'update/customfeatures';
       }
-      let subpath = (ID !== null) ? 'update/customfeatures' : 'features';
       let path = `/db/${this.country.Code}/${this.model_year}/write/${subpath}`
       return index.post(path, updates);
     },
