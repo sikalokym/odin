@@ -138,7 +138,7 @@ def get_sales_versions(country, pnos, time):
 
     df_allowed_sv = pnos.merge(df_sv[['SVID', 'TmpCode', 'MarketText', 'CustomName']], left_on='SalesVersion', right_on='TmpCode', how='left')
     df_allowed_sv['SalesVersionName'] = df_allowed_sv['CustomName'].combine_first(df_allowed_sv['MarketText'])
-    df_allowed_sv.drop_duplicates(subset='SalesVersion', keep='first', inplace=True)
+    # df_allowed_sv.drop_duplicates(subset='SalesVersion', keep='first', inplace=True)
 
     df_allowed_sv['SalesVersionPrice'] = df_allowed_sv['ID'].map(df_pno_price.set_index('RelationID')['Price'])
     df_allowed_sv = df_allowed_sv[['ID', 'SalesVersion', 'SalesVersionName', 'SalesVersionPrice', 'SVID']]

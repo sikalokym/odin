@@ -1,4 +1,4 @@
-reset<template>
+<template>
   <aside class="sidebar">
     <span class="title" style="font-size: 32px;">Specifications</span>
     <div style="margin-top: 10px;">
@@ -79,16 +79,6 @@ reset<template>
       <label class="validity_date" style="width: 180px;">Validity Date</label>
       <div class="validity"
         style="display: flex; gap: 10px; position:absolute; left: 50%; transform: translateX(-50%);">
-        <!-- <select name="validity_year" id="validity_year" v-model="validity_year" style="width:85px; height:30px;">
-          <option disabled value="">Year</option>
-          <option v-for="validity_year in validity_years" :key="validity_year" :value="validity_year">{{ validity_year
-            }}</option>
-        </select>
-        <select name="validity_week" id="validity_week" v-model="validity_week" style="width:85px; height:30px;">
-          <option disabled value="">Week</option>
-          <option v-for="n in validity_weeks" :key="n" :value="String(n).padStart(2, '0')">{{ String(n).padStart(2, '0')
-            }}</option>
-        </select> -->
         <VueDatePicker v-model="pricelistDate" :format="format" :enable-time-picker="false" placeholder="All dates"
                  @input="pno.edited = true"
                  @focus="exportVisible = false"
@@ -122,37 +112,21 @@ reset<template>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
               Model
-              <div style="margin-left: 1ch;">
-                <span @click="sortTable('Model', 1)" style="cursor: pointer;">↑</span>
-                <span @click="sortTable('Model', -1)" style="cursor: pointer;">↓</span>
-              </div>
             </div>
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
               Engine
-              <div style="margin-left: 1ch;">
-                <span @click="sortTable('Engine', 1)" style="cursor: pointer;">↑</span>
-                <span @click="sortTable('Engine', -1)" style="cursor: pointer;">↓</span>
-              </div>
             </div>
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
               Sales Version
-              <div style="margin-left: 1ch;">
-                <span @click="sortTable('SalesVersion', 1)" style="cursor: pointer;">↑</span>
-                <span @click="sortTable('SalesVersion', -1)" style="cursor: pointer;">↓</span>
-              </div>
             </div>
           </th>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
               Gearbox
-              <div style="margin-left: 1ch;">
-                <span @click="sortTable('Gearbox', 1)" style="cursor: pointer;">↑</span>
-                <span @click="sortTable('Gearbox', -1)" style="cursor: pointer;">↓</span>
-              </div>
             </div>
           </th>
           <th style="width: 10px">In Export</th>
@@ -174,7 +148,43 @@ reset<template>
             {{ pno.Gearbox }}
           </td>
           <td style="background-color: #f4f4f4;">
-            <input type="checkbox" v-model="pno.InExport" />
+            <input type="checkbox" v-model="pno.InExport" @change="updateOrderedSVs">
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="display: flex; margin-bottom: 1em;">
+      <br>
+      <label class="sortingtable"  v-if="variantBinderPnos.length > 0" style="width: 180px; margin-top: 50px;">Sales Version Sorting</label>
+    </div>
+    <table v-if="variantBinderPnos.length > 0">
+      <thead>
+        <tr>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Sales Version
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Custom Name
+            </div>
+          </th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(pno, index) in sortedSalesVersions" :key="pno.id"
+          draggable="true"
+          @dragstart="dragStart(index)"
+          @dragover.prevent
+          @drop="drop(index)"
+          :class="{ 'editing': pno.edited }">
+          <td style="background-color: #f4f4f4;">
+            {{ pno.SalesVersion }}
+          </td>
+          <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">
+            {{ pno.SalesVersionName }}
           </td>
         </tr>
       </tbody>
@@ -211,6 +221,8 @@ export default {
       countries: [],
       selectedCountry: '',
       pricelistDate: [],
+      draggedIndex: null,
+      sortedSalesVersions: [],
     }
   },
   async created() {
@@ -218,6 +230,7 @@ export default {
     this.entitiesStore.setModelYear('0');
     this.selectedCountry = this.pnoStore.country;
     this.variantBinderPnos = [];
+    this.sortedSalesVersions = [];
   },
   computed: {
     filteredPnos() {
@@ -256,16 +269,23 @@ export default {
       }
     },
     variantBinderPnosExport() {
-      return this.variantBinderPnos
+      let pnos = this.variantBinderPnos
         .filter(pno => pno.InExport)
         .map(pno => pno.ID)
         .join(',');
+      let sv_order = this.sortedSalesVersions.map(pno => pno.SalesVersion).join(',');
+      return pnos + '&sv_order=' + sv_order;
     },
     canExport() {
       return !this.exportInProgress && this.model_year !== '0' && this.model !== '' && this.validity_year !== '' && this.validity_week !== '';
     },
     sales_channels() {
-      return this.entitiesStore.saleschannels
+      const uniqueChannels = this.entitiesStore.saleschannels.filter((channel, index, self) => {
+        return index === self.findIndex((t) => (
+          t.Code === channel.Code
+        ));
+      });
+      return uniqueChannels;
     },
     bottomDivStyle() {
       if (this.showFilters === '') {
@@ -290,6 +310,7 @@ export default {
       this.validity_week = '';
       this.engine = '';
       this.variantBinderPnos = [];
+      this.sortedSalesVersions = [];
       this.sales_channel = '';
       this.pricelistDate = [];
     },
@@ -301,6 +322,7 @@ export default {
       this.validity_week = '';
       this.engine = '';
       this.variantBinderPnos = [];
+      this.sortedSalesVersions = [];
       this.sales_channel = '';
       this.pricelistDate = [];
     },
@@ -323,8 +345,9 @@ export default {
       this.validity_year = '';
       this.validity_week = '';
     },
-    refreshEnginecats() {
-      this.pnoStore.fetchEngineCats(this.model)
+    async refreshEnginecats() {
+      this.engine = '';
+      await this.pnoStore.fetchEngineCats(this.model)
       console.log('Engine cats refreshed')
     },
     async getPnosVariantBinder() {
@@ -337,14 +360,42 @@ export default {
           ...pno,
           InExport: true
         }));
+        this.updateOrderedSVs();
       }).catch((error) => {
         console.log(error)
       })
     },
+    updateOrderedSVs(){
+        let localSortedSalesVersions = [...this.variantBinderPnos.filter(pno => pno.InExport)];
+        localSortedSalesVersions = localSortedSalesVersions.filter((pno, index, self) =>
+          index === self.findIndex((t) => (
+            t.SalesVersion === pno.SalesVersion
+          ))
+        );
+        this.sortedSalesVersions = localSortedSalesVersions;
+    },
+    // variantBinderPnosFiltered() {
+    //   let filtered = this.variantBinderPnos.filter(pno => pno.InExport);
+
+    //   filtered = [...filtered]
+    //   // Drop duplicate SalesVersion
+    //   filtered = filtered.filter((pno, index, self) =>
+    //     index === self.findIndex((t) => (
+    //       t.SalesVersion === pno.SalesVersion
+    //     ))
+    //   );
+    //   // Reset index
+    //   filtered = filtered.map((pno, index) => {
+    //     pno.index = index;
+    //     return pno;
+    //   });
+    //   console.log(filtered);
+    //   return filtered;
+    // },
     async exportVariantBinder() {
       this.exportInProgress = true;
       const link = document.createElement('a');
-      let link_href = `${axios.endpoint}/${this.selectedCountry.Code}/export/variant_binder?date=${this.validity_year}${this.validity_week}&model=${this.model}&engines_category=${this.engine}&pnos=${this.variantBinderPnosExport}`;
+      let link_href = `${axios.endpoint}/${this.selectedCountry.Code}/export/variant_binder?date=${this.validity_year}${this.validity_week}&model=${this.model}&engines_category=${this.engine}&pnos=${this.variantBinderPnosExport}&sv_order=${this.sortedSalesVersions.map(pno => pno.SalesVersion).join(',')}`;
       link_href = encodeURI(link_href);
       link.href = link_href;
 
@@ -367,7 +418,7 @@ export default {
       };
       
       let formattedDate = formatDate(this.pricelistDate);
-      if (formattedDate === 'NaN-aN-aN') {
+      if (formattedDate === 'NaN-aN-aN' || formattedDate === '1970-01-01' ) {
           formattedDate = '';
       };
 
@@ -381,6 +432,19 @@ export default {
       setTimeout(() => {
         this.exportInProgress = false;
       }, 10000);
+    },
+    dragStart(index) {
+      this.draggedIndex = index;
+    },
+    drop(index) {
+      // Assuming `variantBinderPnos` is the source array
+      const itemToMove = this.sortedSalesVersions.splice(this.draggedIndex, 1)[0];
+      this.sortedSalesVersions.splice(index, 0, itemToMove);
+      // Vue will automatically update `variantBinderPnosFiltered` if it's a computed property depending on `variantBinderPnos`
+    },
+    async changeCountry(newCountry) {
+      await this.pnoStore.setCountry(newCountry);
+      await this.entitiesStore.setCountry(newCountry);
     },
   }
 };
