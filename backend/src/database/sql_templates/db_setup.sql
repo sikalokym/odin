@@ -450,5 +450,6 @@ CREATE TABLE DataQualityLog (
     CountryCode VARCHAR(12),
     LogDate DATETIME,
     LogType VARCHAR(100),
-    LogMessage NVARCHAR(MAX)
+    LogMessage NVARCHAR(MAX),
+    LoadingDate DATETIME DEFAULT GETDATE()
 );
