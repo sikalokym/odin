@@ -691,8 +691,8 @@
       </tbody>
     </table>
     <!-- VISA File Table -->
-    <table v-if="displaytable === 'VISA Files' && model_year !== '0' && visaTable" style="position: sticky; top: 0; background-color: white; z-index: 100;">
-      <thead v-if="model_year !== '0'" style="position: sticky; top: 0; background-color: white; z-index: 100;">
+    <table v-if="displaytable === 'VISA Files' && model_year !== '0' && visaTable" style="background-color: white; z-index: 100;">
+      <thead v-if="model_year !== '0'" style="background-color: white; z-index: 100;">
         <tr>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
