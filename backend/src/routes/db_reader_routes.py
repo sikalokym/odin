@@ -455,7 +455,7 @@ def get_packages(country, model_year):
 
 @bp_db_reader.route('/changelog', methods=['GET'])
 def get_changelog(country, model_year):
-    model = request.args.get('model')
+    model = request.args.get('model', None)
 
     conditions = [f"CountryCode = '{country}'"]
     if model:
@@ -474,6 +474,26 @@ def get_changelog(country, model_year):
 
     df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('DQ', 'CL'), columns=['ChangeTable', 'ChangeDate', 'ChangeType', 'ChangeField', 'ChangeFrom', 'ChangeTo'], conditions=conditions)
     df_pno_features = df_pno_features.sort_values(by='ChangeDate', ascending=True)
+
+    return df_pno_features.to_json(orient='records')
+
+@bp_db_reader.route('/dq-log', methods=['GET'])
+def get_dq_log(country, model_year):
+    conditions = [f"CountryCode = '{country}' OR CountryCode = 'All'"]
+
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
+    df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    if df_pnos.empty:
+        return jsonify([])
+    ids = df_pnos['ID'].tolist()
+    conditions = []
+    if len(ids) == 1:
+        conditions.append(f"PNOID = '{ids[0]}'")
+    else:
+        conditions.append(f"PNOID in {tuple(ids)}")
+
+    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('DQ', 'DQ'), columns=['LogDate', 'LogType', 'LogMessage'], conditions=conditions)
+    df_pno_features = df_pno_features.sort_values(by='DQDate', ascending=True)
 
     return df_pno_features.to_json(orient='records')
 
