@@ -8,17 +8,21 @@ export const login = async () => {
         console.error('Login interaction already in progress');
         return;
     }
-    try {
-        isInteractionInProgress = true;
-        const loginResponse = await msalInstance.loginPopup({
-            scopes: ['User.Read', 'Group.Read.All'],
-        });
-        msalInstance.setActiveAccount(loginResponse.account);
-    } catch (error) {
-        console.error('Login failed:', error);
-    } finally {
+    isInteractionInProgress = true;
+    // const popupLoginResponse = await msalInstance.loginPopup({
+    //     scopes: ['User.Read', 'Group.Read.All'],
+    // });
+    // console.log('Popup login successful:', popupLoginResponse);
+    // msalInstance.setActiveAccount(loginResponse.account);
+    msalInstance.loginRedirect({
+        scopes: ['User.Read', 'Group.Read.All'],
+    }).then(response => {
+        console.log('Redirect login successful:', response);
         isInteractionInProgress = false;
-    }
+    }).catch(error => {
+        console.error('Login failed:', error);
+        isInteractionInProgress = false;
+    });
 };
 
 export const fetchCountriesRoles = async () => {
@@ -81,6 +85,7 @@ export const fetchCountriesRoles = async () => {
                 }
             } catch (popupError) {
                 console.error('Token acquisition via popup failed:', popupError);
+                isInteractionInProgress = false;
                 return [];
             } finally {
                 isInteractionInProgress = false;
@@ -102,5 +107,8 @@ export const ensureAuthenticated = async () => {
     if (!msalInstance.getActiveAccount()) {
         await login();
     }
-    await fetchCountriesRoles();
+    else {
+        await fetchCountriesRoles();
+    }
+    
 };

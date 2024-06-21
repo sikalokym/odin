@@ -24,13 +24,19 @@ export default {
     const entitiesStore = useEntitiesStore()
     const authStore = useAuthStore()
 
-    let user_allowed_countries = authStore.getCountriesRoles()
-    user_allowed_countries = user_allowed_countries.map((country) => country.country)
-    let countries = await entitiesStore.fetchSupportedCountries(user_allowed_countries)
-    if (countries === undefined) {
-      console.error('Error fetching supported countries')
-      return
+    let countries = []
+    while (true) {
+      let user_allowed_countries = authStore.getCountriesRoles()
+      user_allowed_countries = user_allowed_countries.map((country) => country.country)
+      countries = await entitiesStore.fetchSupportedCountries(user_allowed_countries)
+      if (countries.length === 0) {
+        console.log('No countries fetched, retrying in 500ms')
+        await new Promise((resolve) => setTimeout(resolve, 500))
+      } else {
+        break
+      }
     }
+    console.log('Countries fetched', countries)
     await pnoStore.setCountries(countries)
     await pnoStore.fetchAvailableModelYears().then(() => {
       console.log('Available model years fetched')
