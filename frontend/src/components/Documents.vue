@@ -372,24 +372,6 @@ export default {
         );
         this.sortedSalesVersions = localSortedSalesVersions;
     },
-    // variantBinderPnosFiltered() {
-    //   let filtered = this.variantBinderPnos.filter(pno => pno.InExport);
-
-    //   filtered = [...filtered]
-    //   // Drop duplicate SalesVersion
-    //   filtered = filtered.filter((pno, index, self) =>
-    //     index === self.findIndex((t) => (
-    //       t.SalesVersion === pno.SalesVersion
-    //     ))
-    //   );
-    //   // Reset index
-    //   filtered = filtered.map((pno, index) => {
-    //     pno.index = index;
-    //     return pno;
-    //   });
-    //   console.log(filtered);
-    //   return filtered;
-    // },
     async exportVariantBinder() {
       this.exportInProgress = true;
       const link = document.createElement('a');
@@ -419,7 +401,6 @@ export default {
       if (formattedDate === 'NaN-aN-aN' || formattedDate === '1970-01-01' ) {
           formattedDate = '';
       };
-
       const link = document.createElement('a');
       link.href = `${axios.endpoint}/${this.selectedCountry.Code}/export/sap-price-list?date=${formattedDate}&code=${this.sales_channel}`;
       console.log(link.href);
@@ -435,10 +416,8 @@ export default {
       this.draggedIndex = index;
     },
     drop(index) {
-      // Assuming `variantBinderPnos` is the source array
       const itemToMove = this.sortedSalesVersions.splice(this.draggedIndex, 1)[0];
       this.sortedSalesVersions.splice(index, 0, itemToMove);
-      // Vue will automatically update `variantBinderPnosFiltered` if it's a computed property depending on `variantBinderPnos`
     },
     async changeCountry(newCountry) {
       await this.pnoStore.setCountry(newCountry);

@@ -58,6 +58,7 @@ router.beforeEach(async (to, from, next) => {
 		let entStore = useEntitiesStore();
 		let curr_country = entStore.country;
 		if (!curr_country) {
+			await new Promise(resolve => setTimeout(resolve, 1000));
 			next('/');
 			return;
 		}
@@ -70,10 +71,13 @@ router.beforeEach(async (to, from, next) => {
 			
 			if (requiredRole.some(role => roles.includes(role))) {
 				next();
+				console.log('User has the required role:', requiredRole);
 			} else {
+				console.log('User does not have the required role:', requiredRole);
 				next('/');
 			}
 		} else {
+			console.log('No required role for this route');
 			next('/');
 		}
 	} catch (error) {
