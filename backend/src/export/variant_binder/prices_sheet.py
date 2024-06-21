@@ -47,6 +47,9 @@ def get_sheet(ws, df_valid_pnos, df_sales_versions, title, time, df_engines_type
         df_group_en['MarketText'] = df_group_en['Code'].apply(lambda x: df_en[df_en['Code'] == x].iloc[0]['CustomName'])
         df_group_en['Performance'] = df_group_en['Code'].apply(lambda x: df_en[df_en['Code'] == x].iloc[0]['Performance'])
         curr_row = insert_engines_type_title(ws, type, curr_row)
+        en_group_prices = group.groupby('Engine').agg({'Price': 'mean'}).sort_values(by='Price', ascending=True).index.tolist()
+        df_group_en['Code'] = pd.Categorical(df_group_en['Code'], en_group_prices)
+        df_group_en.sort_values(by='Code', inplace=True)
         curr_row = insert_table(ws, group, df_sales_versions, df_group_gb, df_group_en, curr_row)
         curr_row += 1
     

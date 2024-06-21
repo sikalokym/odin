@@ -61,7 +61,7 @@ def extract_variant_binder(country, model, engines_types, time, pno_ids=None, sv
             sales_versions['SalesVersion'] = pd.Categorical(sales_versions['SalesVersion'], categories=sv_order, ordered=True)
             sales_versions = sales_versions.sort_values('SalesVersion')
             sales_versions['SalesVersion'] = sales_versions['SalesVersion'].astype(str)
-            sales_versions = sales_versions[['ID', 'SalesVersion', 'SalesVersionName']].drop_duplicates(subset='SalesVersion')
+        sales_versions = sales_versions[['ID', 'SalesVersion', 'SalesVersionName']].drop_duplicates(subset='SalesVersion')
         title, model_id = get_model_name(country, model, time)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error getting VB Data: {e}", extra={'country': country})
