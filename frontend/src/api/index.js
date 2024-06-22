@@ -10,7 +10,6 @@ const MAX_RETRIES = 2;
 
 async function makeRequestWithRetry(call, path, data, config, retries = MAX_RETRIES) {
 	try {
-		console.log(`Retrying request to ${ENDPOINT + path}`);
 		return await call(ENDPOINT + path, data, config);
 	} catch (error) {
 		if (retries <= 0) {

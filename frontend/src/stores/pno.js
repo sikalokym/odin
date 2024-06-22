@@ -80,9 +80,8 @@ export const usePNOStore = defineStore({
       let path = `/setup/${this.country.Code}/available_model_years`
       return await index.get(path).then((response) => {
         this.available_model_years = response.data
-        console.log("Available model years fetched")
       }).catch((error) => {
-        console.log(error)
+        console.error('Error fetching available model years:', error)
       })
     },
     async fetchEngineCats(model) {
@@ -90,7 +89,7 @@ export const usePNOStore = defineStore({
       return await index.get(path).then((response) => {
         this.engine_cats = response.data
       }).catch((error) => {
-        console.log(error)
+        console.error('Error fetching engine categories:', error)
       })
     },
     async fetchPnos() {
@@ -98,7 +97,7 @@ export const usePNOStore = defineStore({
       return await index.get(path).then((response) => {
         this.pnos = response.data
       }).catch((error) => {
-        console.log(error)
+        console.error('Error fetching PNOs:', error)
       })
     },
     // PNO specific
@@ -107,7 +106,7 @@ export const usePNOStore = defineStore({
       return await index.get(path).then((response) => {
         this.pnosFeatures = response.data
       }).catch((error) => {
-        console.log(error)
+        console.error('Error fetching PNO features:', error)
       })
     },
     async fetchPnosOptions(model, engine, salesversion, gearbox) {
@@ -115,7 +114,7 @@ export const usePNOStore = defineStore({
       return await index.get(path).then((response) => {
         this.pnosOptions = response.data
       }).catch((error) => {
-        console.log(error)
+        console.error('Error fetching PNO options:', error)
       })
     },
     async fetchPnosColors(model, engine, salesversion, gearbox) {
@@ -123,7 +122,7 @@ export const usePNOStore = defineStore({
       return await index.get(path).then((response) => {
         this.pnosColors = response.data
       }).catch((error) => {
-        console.log(error)
+        console.error('Error fetching PNO colors:', error)
       })
     },
     async fetchPnosUpholstery(model, engine, salesversion, gearbox) {
@@ -131,7 +130,7 @@ export const usePNOStore = defineStore({
       return await index.get(path).then((response) => {
         this.pnosUpholstery = response.data
       }).catch((error) => {
-        console.log(error)
+        console.error('Error fetching PNO upholstery:', error)
       })
     },
     async fetchPnosPackages(model, engine, salesversion, gearbox) {
@@ -139,7 +138,7 @@ export const usePNOStore = defineStore({
       return await index.get(path).then((response) => {
         this.pnosPackages = response.data
       }).catch((error) => {
-        console.log(error)
+        console.error('Error fetching PNO packages:', error)
       })
     },
     async fetchPnosChangelog(model, engine, salesversion, gearbox) {
@@ -151,10 +150,9 @@ export const usePNOStore = defineStore({
         });
         this.pnosChangelog = response.data;
       }).catch((error) => {
-        console.log(error)
+        console.error('Error fetching PNO changelog:', error)
       })
     },
-    // PNO-speficic updates
     async pushUpdateFeature(model, feature, translation, category, ID) {
       let updates = {
         Code: feature,

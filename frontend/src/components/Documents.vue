@@ -327,14 +327,11 @@ export default {
     async refreshModelyear() {
       this.pnoStore.setModelYear(this.model_year)
       this.entitiesStore.setModelYear(this.model_year);
-      console.log('Model year refreshed')
 
       if (this.showFilters === 'VariantBinder') {
         await this.pnoStore.fetchPnos()
       } else if (this.showFilters === 'Pricelist') {
-        await this.entitiesStore.fetchSalesChannels().then(() => {
-          console.log('Sales channels fetched')
-        }).catch((error) => {
+        await this.entitiesStore.fetchSalesChannels().catch((error) => {
           console.error('Error fetching sales channels', error)
         })
       }
@@ -346,7 +343,6 @@ export default {
     async refreshEnginecats() {
       this.engine = '';
       await this.pnoStore.fetchEngineCats(this.model)
-      console.log('Engine cats refreshed')
     },
     async getPnosVariantBinder() {
       if (this.model_year == '0' || this.model == '' || this.validity_year == '' || this.validity_week == '') {
@@ -360,7 +356,7 @@ export default {
         }));
         this.updateOrderedSVs();
       }).catch((error) => {
-        console.log(error)
+        console.error('Error fetching variant binder PNOS', error)
       })
     },
     updateOrderedSVs(){
@@ -403,7 +399,6 @@ export default {
       };
       const link = document.createElement('a');
       link.href = `${axios.endpoint}/${this.selectedCountry.Code}/export/sap-price-list?date=${formattedDate}&code=${this.sales_channel}`;
-      console.log(link.href);
       link.setAttribute('download', 'SAP_Price_Lists.zip');
       document.body.appendChild(link);
       link.click();

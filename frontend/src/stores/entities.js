@@ -33,7 +33,7 @@ export const useEntitiesStore = defineStore({
                 this.country = this.supported_countries[0] || ''
                 return this.supported_countries
             }).catch((error) => {
-                console.log(error)
+                console.error('Failed to fetch supported countries', error)
             })
         },
         async fetchModels() {
@@ -41,7 +41,7 @@ export const useEntitiesStore = defineStore({
             return await index.get(path).then((response) => {
                 this.models = response.data
             }).catch((error) => {
-                console.log(error)
+                console.error('Failed to fetch models', error)
             })
         },
         async fetchEngines() {
@@ -49,7 +49,7 @@ export const useEntitiesStore = defineStore({
             return await index.get(path).then((response) => {
                 this.engines = response.data
             }).catch((error) => {
-                console.log(error)
+                console.error('Failed to fetch engines', error)
             })
         },
         async fetchSalesversions() {
@@ -57,7 +57,7 @@ export const useEntitiesStore = defineStore({
             return await index.get(path).then((response) => {
                 this.salesversions = response.data
             }).catch((error) => {
-                console.log(error)
+                console.error('Failed to fetch sales versions', error)
             })
         },
         async fetchGearboxes() {
@@ -65,7 +65,7 @@ export const useEntitiesStore = defineStore({
             return await index.get(path).then((response) => {
                 this.gearboxes = response.data
             }).catch((error) => {
-                console.log(error)
+                console.error('Failed to fetch gearboxes', error)
             })
         },
         async fetchVISAFiles() {
@@ -73,7 +73,7 @@ export const useEntitiesStore = defineStore({
             return await index.get(path).then((response) => {
                 this.visafiles = response.data
             }).catch((error) => {
-                console.log(error)
+                console.error('Failed to fetch visa files', error)
             })
         },
         async fetchVISAFile(visafile) {
@@ -83,7 +83,7 @@ export const useEntitiesStore = defineStore({
             return await index.get(path).then((response) => {
                 this.visafile = response.data
             }).catch((error) => {
-                console.log(error)
+                console.error('Failed to fetch visa file', error)
             })
         },
         async fetchSalesChannels() {
@@ -91,7 +91,7 @@ export const useEntitiesStore = defineStore({
             return await index.get(path).then((response) => {
                 this.saleschannels = response.data
             }).catch((error) => {
-                console.log(error)
+                console.error('Failed to fetch sales channels', error)
             })
         },
         async fetchDiscounts(id) {
@@ -99,7 +99,7 @@ export const useEntitiesStore = defineStore({
             return await index.get(path).then((response) => {
                 this.discounts = response.data
             }).catch((error) => {
-                console.log(error)
+                console.error('Failed to fetch discounts', error)
             })
         },
         async fetchCustomLocalOptions(id) {
@@ -107,7 +107,7 @@ export const useEntitiesStore = defineStore({
             return await index.get(path).then((response) => {
                 this.customlocaloptions = response.data
             }).catch((error) => {
-                console.log(error)
+                console.error('Failed to fetch custom local options', error)
             })
         },
         async fetchCountries() {
@@ -115,7 +115,7 @@ export const useEntitiesStore = defineStore({
             return await index.get(path).then((response) => {
                 this.supported_countries = response.data
             }).catch((error) => {
-                console.log(error)
+                console.error('Failed to fetch supported countries', error)
             })
         },
         // Database Updates
@@ -159,8 +159,6 @@ export const useEntitiesStore = defineStore({
                 OldName: OldName,
                 NewName: NewName,
             }
-            console.log(OldName)
-            console.log(NewName)
             let path = `/db/${this.country.Code}/${this.model_year}/write/visa/rename`
             return index.post(path, updates);
         },

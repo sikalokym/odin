@@ -12,12 +12,10 @@ export const login = async () => {
     // const popupLoginResponse = await msalInstance.loginPopup({
     //     scopes: ['User.Read', 'Group.Read.All'],
     // });
-    // console.log('Popup login successful:', popupLoginResponse);
     // msalInstance.setActiveAccount(loginResponse.account);
     msalInstance.loginRedirect({
         scopes: ['User.Read', 'Group.Read.All'],
     }).then(response => {
-        console.log('Redirect login successful:', response);
         isInteractionInProgress = false;
     }).catch(error => {
         console.error('Login failed:', error);
@@ -37,7 +35,6 @@ export const fetchCountriesRoles = async () => {
             account,
         });
 
-        console.log('Token acquired silently');
         const userRoles = tokenResponse.idTokenClaims.roles || [];
         if (tokenResponse.accessToken) {
             const headers = new Headers();

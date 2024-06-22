@@ -25,45 +25,29 @@ export default {
     const authStore = useAuthStore()
 
     let countries = []
-    while (true) {
+    for (let i = 0; i < 5; i++) {
       let user_allowed_countries = authStore.getCountriesRoles()
+      
+      if (user_allowed_countries === null  || user_allowed_countries === undefined || user_allowed_countries.length === 0) {
+        await new Promise(resolve => setTimeout(resolve, 200))
+        continue
+      }
       user_allowed_countries = user_allowed_countries.map((country) => country.country)
       countries = await entitiesStore.fetchSupportedCountries(user_allowed_countries)
-      if (countries.length === 0) {
-        console.log('No countries fetched, retrying in 500ms')
-        await new Promise((resolve) => setTimeout(resolve, 500))
-      } else {
-        break
+      if (countries === null || countries === undefined || countries.length === 0) {
+        continue
       }
+      break
     }
-    console.log('Countries fetched', countries)
+    if (countries === null || countries === undefined || countries.length === 0) {
+      return
+    }
     await pnoStore.setCountries(countries)
-    await pnoStore.fetchAvailableModelYears().then(() => {
-      console.log('Available model years fetched')
-    }).catch((error) => {
-      console.error('Error fetching available model years', error)
-    })
-
-    await entitiesStore.fetchModels().then(() => {
-      console.log('Model text fetched')
-    }).catch((error) => {
-      console.error('Error fetching model text', error)
-    }),
-    await entitiesStore.fetchEngines().then(() => {
-      console.log('Engine text fetched')
-    }).catch((error) => {
-      console.error('Error fetching engine text', error)
-    }),
-    await entitiesStore.fetchSalesversions().then(() => {
-      console.log('Salesversion text fetched')
-    }).catch((error) => {
-      console.error('Error fetching salesversion text', error)
-    }),
-    await entitiesStore.fetchGearboxes().then(() => {
-      console.log('Gearboxes text fetched')
-    }).catch((error) => {
-      console.error('Error fetching gearboxes text', error)
-    })
+    await pnoStore.fetchAvailableModelYears()
+    await entitiesStore.fetchModels()
+    await entitiesStore.fetchEngines()
+    await entitiesStore.fetchSalesversions()
+    await entitiesStore.fetchGearboxes()
   },
 };
 </script>

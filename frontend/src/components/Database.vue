@@ -1693,8 +1693,6 @@ export default {
         if (a[this.sortColumn] < b[this.sortColumn]) return -1 * this.sortOrder;
         if (a[this.sortColumn] > b[this.sortColumn]) return 1 * this.sortOrder;
       });
-      console.log("Test")
-      console.log(filtered)
       return filtered;
     },
     custom_local_options() {
@@ -1885,52 +1883,36 @@ export default {
       this.fetchPnoSpecifics();
     },
     async refreshModelyear() {
-      await this.pnoStore.setModelYear(this.model_year)
-      await this.entitiesStore.setModelYear(this.model_year)
       this.model = '';
       this.engine = '';
       this.salesversion = '';
       this.gearbox = '';
       this.visaTable = false;
-
-      await this.fetchEntities().then(() => {
-        console.log('VISA files fetched')
-      }).catch((error) => {
-        console.error('Error fetching VISA files', error)
-      })
-
-      await this.pnoStore.fetchPnos().then(() => {
-        console.log('PNOs fetched')
-      }).catch((error) => {
-        console.error('Error fetching PNOs', error)
-      })
+      this.pnoStore.setModelYear(this.model_year)
+      this.entitiesStore.setModelYear(this.model_year)
+      await this.fetchEntities()
+      await this.pnoStore.fetchPnos()
     },
 
     async fetchEntities() {
       try {
         if (this.displaytable === 'Model' || this.displaytable === 'Features' || this.displaytable === 'Colors' || this.displaytable === 'Options' || this.displaytable === 'Upholstery') {
           await this.entitiesStore.fetchModels();
-          console.log('Model text fetched');
         }
         if (this.displaytable === 'Engine') {
           await this.entitiesStore.fetchEngines();
-          console.log('Engine text fetched');
         }
         if (this.displaytable === 'SalesVersion') {
           await this.entitiesStore.fetchSalesversions();
-          console.log('Salesversion text fetched');
         }
         if (this.displaytable === 'Gearbox') {
           await this.entitiesStore.fetchGearboxes();
-          console.log('Gearboxes text fetched');
         }
         if (this.displaytable === 'VISA Files' || this.displaytable === 'Sales Channels') {
           await this.entitiesStore.fetchVISAFiles();
-          console.log('Visa Files fetched');
         }
         if (this.displaytable === 'Sales Channels') {
           await this.entitiesStore.fetchSalesChannels();
-          console.log('Sales channels fetched');
         }
       } catch (error) {
         console.error('Error fetching data', error);
@@ -1941,23 +1923,18 @@ export default {
       try {
         if (this.displaytable === 'Features') {
           await this.pnoStore.fetchPnosFeatures(this.model, this.engine, this.salesversion, this.gearbox);
-          console.log('PNO Features fetched');
         }
         if (this.displaytable === 'Colors') {
           await this.pnoStore.fetchPnosColors(this.model, this.engine, this.salesversion, this.gearbox);
-          console.log('PNO Colors fetched');
         }
         if (this.displaytable === 'Options') {
           await this.pnoStore.fetchPnosOptions(this.model, this.engine, this.salesversion, this.gearbox);
-          console.log('PNO Options fetched');
         }
         if (this.displaytable === 'Upholstery') {
           await this.pnoStore.fetchPnosUpholstery(this.model, this.engine, this.salesversion, this.gearbox);
-          console.log('PNO Upholstery fetched');
         }
         if (this.displaytable === 'Packages') {
           await this.pnoStore.fetchPnosPackages(this.model, this.engine, this.salesversion, this.gearbox);
-          console.log('PNO Packages fetched');
         }
       } catch (error) {
         console.error('Error fetching data', error);
@@ -1973,7 +1950,6 @@ export default {
       };
       try {
         await this.entitiesStore.fetchDiscounts(pno.ID);
-        console.log('Discounts fetched');
       } catch (error) {
         console.error('Error fetching data', error);
       }
@@ -1989,7 +1965,6 @@ export default {
       };
       try {
         await this.entitiesStore.fetchCustomLocalOptions(pno.ID);
-        console.log('X codes fetched');
       } catch (error) {
         console.error('Error fetching data', error);
       }
@@ -2001,16 +1976,12 @@ export default {
         CarType: pno.CarType,
         VisaFile: pno.VisaFile,
       };
-      try {
-        await this.entitiesStore.fetchVISAFile(pno.VisaFile);
-        console.log('Visa file information fetched');
-      } catch (error) {
+      await this.entitiesStore.fetchVISAFile(pno.VisaFile).catch(error => {
         console.error('Error fetching data', error);
-      }
+      });
     },
 
     async downloadVISAFile(pno) {
-      console.log(pno);
       const visaFile = encodeURIComponent(pno.VisaFile);
       const link = document.createElement('a');
       let link_href = `${axios.endpoint}/${this.selectedCountry.Code}/export/visa?VisaFile=${visaFile}`;
@@ -2148,9 +2119,7 @@ export default {
       await this.entitiesStore.pushUpdateVISAFile(this.originalVISAFileName, pno.VisaFile);
       this.originalVISAFileName = '';
       pno.edited = false;
-      await this.entitiesStore.fetchVISAFiles().then(() => {
-        console.log('VISA files fetched')
-      }).catch((error) => {
+      await this.entitiesStore.fetchVISAFiles().catch((error) => {
         console.error('Error fetching VISA files', error)
       })
     },
@@ -2159,27 +2128,21 @@ export default {
       await this.entitiesStore.pushUpdateVISAFileInformation(pno.ID, pno.Active, pno.SalesOrg, pno.DistrCh, pno.PriceList, pno.DealerGroup, pno.Country, pno.CarType, pno.Engine, pno.SalesVersion, pno.Body, pno.Gearbox, pno.Steering, pno.MarketCode, pno.ModelYear, pno.StructureWeek, pno.DateFrom, pno.DateTo, pno.Currency, pno.Color, pno.Options, pno.Upholstery, pno.Package, pno.SNote, pno.MSRP, pno.TAX2, pno.VAT, pno.TAX1, pno.PriceBeforeTax, pno.WholesalePrice, pno.TransferPrice, this.activeVisaFile.VisaFile);
       pno.edited = false;
       this.newvisafileinformation = [];
-      await this.entitiesStore.fetchVISAFile(this.activeVisaFile.VisaFile).then(() => {
-        console.log('VISA file information fetched')
-      }).catch((error) => {
+      await this.entitiesStore.fetchVISAFile(this.activeVisaFile.VisaFile).catch((error) => {
         console.error('Error fetching discounts', error)
       })
     },
     async pushUpdateVISAFileInformation(pno) {
       await this.entitiesStore.pushUpdateVISAFileInformation(pno.ID, pno.Active, pno.SalesOrg, pno.DistrCh, pno.PriceList, pno.DealerGroup, pno.Country, pno.CarType, pno.Engine, pno.SalesVersion, pno.Body, pno.Gearbox, pno.Steering, pno.MarketCode, pno.ModelYear, pno.StructureWeek, pno.DateFrom, pno.DateTo, pno.Currency, pno.Color, pno.Options, pno.Upholstery, pno.Package, pno.SNote, pno.MSRP, pno.TAX2, pno.VAT, pno.TAX1, pno.PriceBeforeTax, pno.WholesalePrice, pno.TransferPrice, pno.VisaFile);
       pno.edited = false;
-      await this.entitiesStore.fetchVISAFile(pno.VisaFile).then(() => {
-        console.log('VISA file information fetched')
-      }).catch((error) => {
+      await this.entitiesStore.fetchVISAFile(pno.VisaFile).catch((error) => {
         console.error('Error fetching discounts', error)
       })
     },
     async deleteVISAFileInformation(pno) {
       await this.entitiesStore.deleteVISAFileInformation(pno.ID)
       pno.edited = false
-      await this.entitiesStore.fetchVISAFile(pno.VisaFile).then(() => {
-        console.log('VISA file information fetched')
-      }).catch((error) => {
+      await this.entitiesStore.fetchVISAFile(pno.VisaFile).catch((error) => {
         console.error('Error fetching discounts', error)
       })
     },
@@ -2212,29 +2175,22 @@ export default {
       await this.entitiesStore.pushUpdateSalesChannel(pno.ID, pno.Code, pno.ChannelName, pno.Comment, ExportDateFrom, ExportDateTo)
       pno.edited = false
       this.newsaleschannel = [];
-      await this.entitiesStore.fetchSalesChannels().then(() => {
-        console.log('Sales channels fetched')
-      }).catch((error) => {
+      await this.entitiesStore.fetchSalesChannels().catch((error) => {
         console.error('Error fetching sales channels', error)
       })
     },
     async deleteSalesChannel(pno) {
       await this.entitiesStore.deleteSalesChannel(pno.ID)
       pno.edited = false
-      await this.entitiesStore.fetchSalesChannels().then(() => {
-        console.log('Sales channels fetched')
-      }).catch((error) => {
+      await this.entitiesStore.fetchSalesChannels().catch((error) => {
         console.error('Error fetching sales channels', error)
       })
     },
     // Discounts
     async pushUpdateDiscount(pno) {
-      console.log(pno)
       await this.entitiesStore.pushUpdateDiscount(pno.ID, pno.ChannelID, pno.DiscountPercentage, pno.RetailPrice, pno.WholesalePrice, pno.PNOSpecific, pno.AffectedVisaFile)
       pno.edited = false
-      await this.entitiesStore.fetchDiscounts(this.activeSalesChannel.ChannelID).then(() => {
-        console.log('Discounts fetched')
-      }).catch((error) => {
+      await this.entitiesStore.fetchDiscounts(this.activeSalesChannel.ChannelID).catch((error) => {
         console.error('Error fetching discounts', error)
       })
     },
@@ -2243,18 +2199,14 @@ export default {
       await this.entitiesStore.pushUpdateDiscount(pno.ID, this.activeSalesChannel.ChannelID, pno.DiscountPercentage, pno.RetailPrice, pno.WholesalePrice, pno.PNOSpecific, pno.AffectedVisaFile)
       pno.edited = false
       this.newdiscount = [];
-      await this.entitiesStore.fetchDiscounts(this.activeSalesChannel.ChannelID).then(() => {
-        console.log('Discounts fetched')
-      }).catch((error) => {
+      await this.entitiesStore.fetchDiscounts(this.activeSalesChannel.ChannelID).catch((error) => {
         console.error('Error fetching discounts', error)
       })
     },
     async deleteDiscount(pno) {
       await this.entitiesStore.deleteDiscount(pno.ID)
       pno.edited = false
-      await this.entitiesStore.fetchDiscounts(this.activeSalesChannel.ChannelID).then(() => {
-        console.log('Discounts fetched')
-      }).catch((error) => {
+      await this.entitiesStore.fetchDiscounts(this.activeSalesChannel.ChannelID).catch((error) => {
         console.error('Error fetching discounts', error)
       })
     },
@@ -2271,9 +2223,7 @@ export default {
       let ExportDateTo = formatDate(pno.DateTo);
       await this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeSalesChannel.ChannelID, pno.FeatureCode, pno.FeatureRetailPrice, pno.FeatureWholesalePrice, pno.AffectedVisaFile, ExportDateFrom, ExportDateTo)
       pno.edited = false
-      await this.entitiesStore.fetchCustomLocalOptions(this.activeSalesChannel.ChannelID).then(() => {
-        console.log('X codes fetched')
-      }).catch((error) => {
+      await this.entitiesStore.fetchCustomLocalOptions(this.activeSalesChannel.ChannelID).catch((error) => {
         console.error('Error fetching X codes', error)
       })
     },
@@ -2291,26 +2241,20 @@ export default {
       await this.entitiesStore.pushUpdateCustomLocalOptions(pno.ID, this.activeSalesChannel.ChannelID, pno.FeatureCode, pno.FeatureRetailPrice, pno.FeatureWholesalePrice, pno.AffectedVisaFile, ExportDateFrom, ExportDateTo)
       pno.edited = false
       this.newcustomlocaloption = [];
-      await this.entitiesStore.fetchCustomLocalOptions(this.activeSalesChannel.ChannelID).then(() => {
-        console.log('X codes fetched')
-      }).catch((error) => {
+      await this.entitiesStore.fetchCustomLocalOptions(this.activeSalesChannel.ChannelID).catch((error) => {
         console.error('Error fetching X codes', error)
       })
     },
     async deleteXCode(pno) {
       await this.entitiesStore.deleteCustomLocalOptions(pno.ID)
       pno.edited = false
-      await this.entitiesStore.fetchCustomLocalOptions(this.activeSalesChannel.ChannelID).then(() => {
-        console.log('X codes fetched')
-      }).catch((error) => {
+      await this.entitiesStore.fetchCustomLocalOptions(this.activeSalesChannel.ChannelID).catch((error) => {
         console.error('Error fetching X codes', error)
       })
     },
     async deleteVISAFile(pno) {
       await this.entitiesStore.deleteVISAFile(pno.VisaFile)
-      await this.entitiesStore.fetchVISAFiles().then(() => {
-        console.log('VISA files fetched')
-      }).catch((error) => {
+      await this.entitiesStore.fetchVISAFiles().catch((error) => {
         console.error('Error fetching VISA files', error)
       })
     },
@@ -2356,9 +2300,7 @@ export default {
         // You might want to push an object with default values or show an error message
       }
       this.scrollToBottom();
-      this.entitiesStore.fetchVISAFile(this.activeVisaFile.VisaFile).then(() => {
-        console.log('VISA file information fetched')
-      }).catch((error) => {
+      this.entitiesStore.fetchVISAFile(this.activeVisaFile.VisaFile).catch((error) => {
         console.error('Error fetching discounts', error)
       })
     },
@@ -2367,9 +2309,7 @@ export default {
     },
     addDiscount() {
       this.newdiscount.push({ DiscountPercentage: '', RetailPrice: '', WholesalePrice: '', AffectedVisaFile: '', PNOSpecific: '', edited: true });
-      this.entitiesStore.fetchDiscounts(this.activeSalesChannel.ChannelID).then(() => {
-        console.log('Discounts fetched')
-      }).catch((error) => {
+      this.entitiesStore.fetchDiscounts(this.activeSalesChannel.ChannelID).catch((error) => {
         console.error('Error fetching discounts', error)
       })
     },
@@ -2404,9 +2344,7 @@ export default {
       const formData = new FormData();
       formData.append('visa', file);
       await index.post(`/${this.pnoStore.country.Code}/ingest/visa/upload`, formData);
-      this.entitiesStore.fetchVISAFiles().then(() => {
-        console.log('VISA files fetched')
-      }).catch((error) => {
+      this.entitiesStore.fetchVISAFiles().catch((error) => {
         console.error('Error fetching VISA files', error)
       })
     },

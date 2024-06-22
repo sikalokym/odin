@@ -111,32 +111,24 @@ export default {
 
       await this.fetchEntities();
 
-      await this.pnoStore.fetchPnos().then(() => {
-        console.log('PNOs fetched')
-      }).catch((error) => {
+      await this.pnoStore.fetchPnos().catch((error) => {
         console.error('Error fetching PNOs', error)
       })
     },
 
     async fetchEntities() {
-      try {
-        if (this.displaytable === 'Changelog') {
-          await this.entitiesStore.fetchModels();
-          console.log('Model text fetched');
-        }
-      } catch (error) {
-        console.error('Error fetching data', error);
+      if (this.displaytable === 'Changelog') {
+        await this.entitiesStore.fetchModels().catch((error) => {
+          console.error('Error fetching models', error)
+        })
       }
     },
 
     async fetchPnoSpecifics() {
-      try {
-        if (this.displaytable === 'Changelog') {
-          await this.pnoStore.fetchPnosChangelog(this.model, this.engine, this.salesversion, this.gearbox);
-          console.log('PNO Changelog fetched');
-        }
-      } catch (error) {
-        console.error('Error fetching data', error);
+      if (this.displaytable === 'Changelog') {
+        await this.pnoStore.fetchPnosChangelog(this.model, this.engine, this.salesversion, this.gearbox).catch((error) => {
+          console.error('Error fetching PNOs', error)
+        })
       }
     },
 
