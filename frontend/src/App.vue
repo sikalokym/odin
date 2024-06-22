@@ -25,7 +25,7 @@ export default {
     const authStore = useAuthStore()
 
     let countries = []
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 100; i++) {
       let user_allowed_countries = authStore.getCountriesRoles()
       
       if (user_allowed_countries === null  || user_allowed_countries === undefined || user_allowed_countries.length === 0) {
@@ -36,6 +36,9 @@ export default {
       countries = await entitiesStore.fetchSupportedCountries(user_allowed_countries)
       if (countries === null || countries === undefined || countries.length === 0) {
         continue
+      }
+      if (i === 99) {
+        new Promise(resolve => setTimeout(resolve, 5000))
       }
       break
     }
