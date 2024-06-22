@@ -14,6 +14,8 @@ bp_db_reader = Blueprint('db_reader', __name__, url_prefix='/api/db/<country>/<m
 @bp_db_reader.before_request
 def check_country():
     country = request.view_args.get('country')
+    if not country or country == 'undefined':
+        return jsonify({"error": "Country code is missing or invalid"}), 400
     supported_countries = get_supported_countries(country)
     if supported_countries.empty:
         return jsonify({"error": "Country code is missing or invalid"}), 400
