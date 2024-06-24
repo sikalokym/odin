@@ -80,8 +80,9 @@
     </div>
   </aside>
   <main class="main-content" ref="mainContent">
+    <button @click="scrollToTop" v-show="isArrowVisible" class="scroll-to-top">↑</button>
     <!-- Table Filter -->
-    <div style="display: flex; margin-bottom: 1em;">
+    <div class="filterbar">
       <input v-if="displaytable !== '' && model_year !== '0' && !customFeatureTable && !discountTable && !xCodesTable"
         v-model="searchTerm" type="text" placeholder="Filter" style="margin-right: 1ch;">
       <!-- Add Custom Feature -->
@@ -691,8 +692,8 @@
       </tbody>
     </table>
     <!-- VISA File Table -->
-    <table v-if="displaytable === 'VISA Files' && model_year !== '0' && visaTable" style="background-color: white; z-index: 100;">
-      <thead v-if="model_year !== '0'" style="background-color: white; z-index: 100;">
+    <table v-if="displaytable === 'VISA Files' && model_year !== '0' && visaTable" style="background-color: white; z-index: 100; width: 100%; overflow-y: auto;">
+      <thead v-if="model_year !== '0'">
         <tr>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
@@ -1589,6 +1590,7 @@ export default {
       visaTable: false,
       originalVISAFileName: '',
       selectedRow: null,
+      isArrowVisible: false,
       activeVisaFile: [],
       activeSalesChannel: [],
       newvisafileinformation: [],
@@ -1603,6 +1605,12 @@ export default {
         EndDate: '',
       },
     }
+  },
+  mounted() {
+    this.$refs.mainContent.addEventListener('scroll', this.handleScroll);
+  },
+  beforeDestroy() {
+    this.$refs.mainContent.removeEventListener('scroll', this.handleScroll);
   },
   async created() {
     this.pnoStore.setModelYear('0');
@@ -2355,6 +2363,13 @@ export default {
       await this.pnoStore.setCountry(newCountry);
       await this.entitiesStore.setCountry(newCountry);
     },
+
+    scrollToTop() {
+      this.$refs.mainContent.scrollTop = 0;
+    },
+    handleScroll() {
+      this.isArrowVisible = this.$refs.mainContent.scrollTop > 100;
+    },
   }
 };
 
@@ -2365,7 +2380,8 @@ export default {
   z-index: 1;
   position: relative;
   margin-left: 312px;
-  padding: 2rem;
+  margin-top: 20px;
+  /* padding: 2rem; */
   flex-grow: 1;
   overflow: auto;
   height: calc(100vh - 4rem - 100px);
@@ -2387,9 +2403,22 @@ td {
   min-width: 180px;
 
 }
+.filterbar {
+  display: flex;
+  padding-bottom: 20px;
+  position: sticky;
+  top: 0px;
+  background-color: white;
+  z-index: 101;
+  height: 45px;
+}
 
-th {
+thead {
   min-width: 180px;
+  position: sticky;
+  top: 65px;
+  background-color: white; /* Ensure this matches the table's background */
+  z-index: 101; /* Higher than tbody content */
 }
 
 .editing {
@@ -2434,5 +2463,14 @@ hr.divider {
 
 .selected {
   background-color: lightblue;
+}
+
+.scroll-to-top {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  cursor: pointer;
+  font-size: 24px; /* Increase font size */
+  font-weight: bold; /* Make the arrow thicker */
 }
 </style>
