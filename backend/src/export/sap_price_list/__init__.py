@@ -48,17 +48,20 @@ def extract_sap_price_list(country, code, date):
     def process_row(visa):
         if visa == 'All':
             return available_visa_files
-        try:
-            car_type = visa.split('[')[1].split(']')[0]
-        except Exception:
-            DBOperations.instance.logger(f'Invalid visa file name: {visa}', extra={'country_code': country})
-        # get visa files that have the same car type from df_visa
-        return df_visa[df_visa['CarType'] == car_type]['VisaFile'].tolist()
+        car_types = [name.split('[')[1].split(']')[0] for name in visa.split(',') if '[' in name and ']' in name]
         
+        # Get visa files that have the same car type from df_visa
+        return df_visa[df_visa['CarType'].isin(car_types)]['VisaFile'].tolist()
+    
+    df_local_options['VisaFile'] = df_local_options['AffectedVisaFile'].apply(process_row)
+    df_local_options = df_local_options.explode('VisaFile')
+    df_local_options = df_local_options[df_local_options['VisaFile'].isin(available_visa_files)]
+    
     df_discounts['VisaFile'] = df_discounts['AffectedVisaFile'].apply(process_row)
     df_discounts = df_discounts.explode('VisaFile')
     df_discounts = df_discounts[df_discounts['VisaFile'].isin(available_visa_files)]
-    # assign the visa file datefrom to the discount StartDate
+    
+    # Assign the visa file datefrom to the discount StartDate
     df_discounts = df_discounts.merge(df_visa[['VisaFile', 'StartDate', 'Order']], left_on='VisaFile', right_on='VisaFile', suffixes=('_discount', '_visa'))
 
     df_discounts = df_discounts.merge(df_channels, left_on='ChannelID', right_on='ID', suffixes=('_discount', '_channel'))
@@ -68,7 +71,7 @@ def extract_sap_price_list(country, code, date):
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
         for visa_file, df_discounts_group in df_discounts.groupby('VisaFile'):
-            df_discount_options = df_local_options[(df_local_options['ChannelID'].isin(df_discounts_group['ID'].tolist())) & ((df_local_options['AffectedVisaFile'] == 'All') | (df_local_options['AffectedVisaFile'] == df_discounts_group['AffectedVisaFile'].iloc[0]))]
+            df_discount_options = df_local_options[(df_local_options['ChannelID'].isin(df_discounts_group['ID'].tolist())) & (df_local_options['VisaFile'] == visa_file)]
             dfs = get_sap_price_list(visa_file, df_discounts_group, df_discount_options, country)
             folder_name = visa_file
             used_names = []
@@ -89,7 +92,56 @@ def extract_sap_price_list(country, code, date):
                 concat_excel_buffer = io.BytesIO()
                 with pd.ExcelWriter(concat_excel_buffer, engine='openpyxl') as writer:
                     concatenated_df.to_excel(writer, index=False)
-                zip_file.writestr(f'{folder_name}/MAWISTA ALL.xlsx', concat_excel_buffer.getvalue())
+                zip_file.writestr(f'{folder_name}/MASTA ALL.xlsx', concat_excel_buffer.getvalue())
+
+    # with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
+    #     folder_dfs = {}  # Track DataFrames for each folder to concatenate later
+        
+    #     for visa_file, df_discounts_group in df_discounts.groupby('VisaFile'):
+    #         df_discount_options = df_local_options[
+    #             (df_local_options['ChannelID'].isin(df_discounts_group['ID'].tolist())) & 
+    #             ((df_local_options['AffectedVisaFile'] == 'All') | 
+    #             (df_local_options['AffectedVisaFile'] == df_discounts_group['AffectedVisaFile'].iloc[0]))
+    #         ]
+    #         dfs = get_sap_price_list(visa_file, df_discounts_group, df_discount_options, country)
+    #         used_names = set()  # Track used folder names to avoid duplicates
+            
+    #         for df in dfs:
+    #             code, channel_name = df.name.split('+#+')
+    #             folder_name = f'SAP - PL{code} - {channel_name}'
+    #             while folder_name in used_names:
+    #                 folder_name = f'SAP - PL{code} - {channel_name} ({len(used_names)})'
+    #             used_names.add(folder_name)
+                
+    #             # Create a unique filename for the visa_file inside the folder
+    #             excel_filename = f'{visa_file}.xlsx'
+                
+    #             # Write the DataFrame to an in-memory Excel file
+    #             excel_buffer = io.BytesIO()
+    #             with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+    #                 df.to_excel(writer, index=False)
+                    
+    #             # Add the in-memory Excel file to the ZIP file in the corresponding folder
+    #             zip_file.writestr(f'{folder_name}/{excel_filename}', excel_buffer.getvalue())
+                
+    #             # Track DataFrames for each folder
+    #             if folder_name not in folder_dfs:
+    #                 folder_dfs[folder_name] = []
+    #             folder_dfs[folder_name].append(df)
+        
+    #     # Create "Masta ALL.xlsx" for each folder
+    #     for folder_name, dfs in folder_dfs.items():
+    #         concatenated_df = pd.concat(dfs)
+    #         concat_excel_buffer = io.BytesIO()
+            
+    #         # Sort the concatenated DataFrame by 'Date From'
+    #         concatenated_df['Date From'] = pd.to_datetime(concatenated_df['Date From'], format='%Y.%m.%d')
+    #         concatenated_df = concatenated_df.sort_values(by='Date From')
+
+    #         with pd.ExcelWriter(concat_excel_buffer, engine='openpyxl') as writer:
+    #             concatenated_df.to_excel(writer, index=False)
+                
+    #         zip_file.writestr(f'{folder_name}/MASTA ALL.xlsx', concat_excel_buffer.getvalue())
 
     zip_buffer.seek(0)
     return zip_buffer
@@ -108,23 +160,23 @@ def get_sap_price_list(visa_file, df_sales_channels, df_discount_options, countr
     date_format = config['DEFAULT']['DATE_FORMAT']
     df_sap_price['Date From'] = df_sap_price['Date From'].dt.strftime(date_format)
     df_sap_price['Date To'] = df_sap_price['Date To'].dt.strftime(date_format)
-
+    
     df_sap_price['Sales Org.'] = config['DEFAULT']['SALES_ORG']
     df_sap_price['Structure week'] = config['DEFAULT']['STRUCTURE_WEEK']
     transfer_price_factor = float(config['DEFAULT']['TRANSFER_PRICE_FACTOR'])
-    df_sap_price['Transfer Price'].apply(lambda x: float(x)*transfer_price_factor)
+    df_sap_price['Transfer Price'] = df_sap_price['Retail Price'].apply(lambda x: float(x) * transfer_price_factor)
     df_sap_price['Active'] = config['DEFAULT']['ACTIVE']
     dfs = []
     
     for _, row in df_sales_channels.iterrows():
         res_df = df_sap_price.copy()
         if row['DiscountPercentage']:
-            res_df['Wholesale Price'] = res_df['Wholesale Price'].apply(lambda x: float(x)* (1-float(row['DiscountPercentage'])*0.01))
+            res_df['Wholesale Price'] = res_df['Retail Price'].apply(lambda x: float(x)* (1-float(row['DiscountPercentage'])*0.01))
         else:
             res_df['Wholesale Price'] = row['WholesalePrice']
             res_df['Retail Price'] = row['RetailPrice']
         if row['PNOSpecific']:
-            res_df = prepare_pno_specific_discount(df_sap_price.copy())
+            res_df = prepare_pno_specific_discount(res_df)
         res_df['Price List'] = row['Code']
         
         if row['Order'] == 1:
@@ -173,22 +225,29 @@ def add_local_codes(df, df_codes):
     last_row['Upholstery'] = None
     last_row['Package'] = None
     for _, row in df_codes.iterrows():
-        new_row = last_row.copy()
-        new_row['Option'] = row['FeatureCode']
-        new_row['Wholesale Price'] = format_float_string(row['FeatureWholesalePrice'])
-        new_row['Retail Price'] = format_float_string(row['FeatureRetailPrice'])
-        new_row['Date From'] = row['DateFrom']
-        new_row['Date To'] = row['DateTo']
+        try:
+            new_row = last_row.copy()
+            new_row['Option'] = row['FeatureCode']
+            new_row['Wholesale Price'] = row['FeatureWholesalePrice']
+            new_row['Retail Price'] = row['FeatureRetailPrice']
+            row['Date From'] = pd.to_datetime(row['DateFrom'])
+            new_row['Date From'] = row['Date From'].strftime('%Y.%m.%d')
+            row['Date To'] = pd.to_datetime(row['DateTo'])
+            new_row['Date To'] = row['Date To'].strftime('%Y.%m.%d')
+        except Exception as e:
+            DBOperations.instance.logger.error(f'Error processing local codes: {e}', extra={'country_code': 'All'})
+            continue
         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     return df
 
 def prepare_pno_specific_discount(df):
-    # Identify rows with all specified columns as null
-    mask_all_null = df[['Color', 'Option', 'Upholstery', 'Package']].isnull().all(axis=1)
+    df = df.fillna('')
+    mask_all_empty = df[['Color', 'Option', 'Upholstery', 'Package']] == ''
+    mask_all_empty = mask_all_empty.all(axis=1)
     
     # Separate the dataframe into two parts
-    df_pno_prices = df[mask_all_null]
-    df_pno_non_prices = df[~mask_all_null]
+    df_pno_prices = df[mask_all_empty]
+    df_pno_non_prices = df[~mask_all_empty]
     
     # Set prices to 0 for the non-price-specific rows
     df_pno_non_prices[['Retail Price', 'Wholesale Price', 'Transfer Price']] = 0
