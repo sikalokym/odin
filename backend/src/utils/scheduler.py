@@ -12,6 +12,7 @@ import os
 def scheduled_task():
     try:
         DBOperations.create_instance(logger=logger)
+        logger.info('Starting scheduled task to ingest CPAM data', extra={'country_code': 'All'})
         countries = get_supported_countries()
         for country in countries:
             ingest_all_cpam_data(country)
