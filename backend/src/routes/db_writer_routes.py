@@ -458,6 +458,9 @@ def upsert_discount(country, model_year):
         data['RetailPrice'] = float(data['RetailPrice']) if data.get('RetailPrice') and data['RetailPrice'] != '' else None
         data['WholesalePrice'] = float(data['WholesalePrice']) if data.get('WholesalePrice') and data['WholesalePrice'] != '' else None
         
+        if data['DiscountPercentage'] is None and data['RetailPrice'] is None and data['WholesalePrice'] is None:
+            data['DiscountPercentage'] = 0
+        
         # Create a DataFrame with a single row
         df_new_entry = pd.DataFrame([data])
 
