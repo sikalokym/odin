@@ -79,6 +79,7 @@
       </select>
     </div>
   </aside>
+
   <main class="main-content" ref="mainContent">
     <button @click="scrollToTop" v-show="isArrowVisible" class="scroll-to-top">↑</button>
     <!-- Table Filter -->
@@ -2407,6 +2408,7 @@ td {
   padding-bottom: 41px;
   position: sticky;
   top: 0px;
+  left: 0px;
   background-color: white;
   z-index: 101;
   height: 24px;
