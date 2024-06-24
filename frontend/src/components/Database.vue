@@ -1413,7 +1413,13 @@
             <input type="checkbox" v-model="pno.PNOSpecific" @change="pno.edited = true" />
           </td>
           <td style="background-color: #f4f4f4;">
-            <span @click="createDiscount(pno)" style="cursor: pointer;">[Save]</span>
+            <span :style="{
+                            cursor: isClickable(pno) ? 'pointer' : 'not-allowed',
+                            color: isClickable(pno) ? '' : '#c0c0c0' /* Adjust the color as needed */
+                          }"
+                  @click="isClickable(pno) && createDiscount(pno)">
+              [Save]
+            </span>
           </td>
         </tr>
       </tbody>
@@ -2370,6 +2376,9 @@ export default {
     },
     handleScroll() {
       this.isArrowVisible = this.$refs.mainContent.scrollTop > 100;
+    },
+    isClickable(pno) {
+      return pno.DiscountPercentage || pno.RetailPrice || pno.WholesalePrice;
     },
   }
 };
