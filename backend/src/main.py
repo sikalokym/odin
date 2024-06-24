@@ -1,3 +1,4 @@
+from zipfile import ZipFile
 import pandas as pd
 from dotenv import load_dotenv
 
@@ -15,7 +16,7 @@ DBOperations.create_instance(test=0, logger=logger)
 def main():
     # Get the current timestamp
     current_time = pd.Timestamp.now()
-    ingest_cpam_data('2023', '256', '231', 'M', '')
+    ingest_cpam_data('2023', '246', '231', 'M', '')
     end_time = pd.Timestamp.now()
     duration = end_time - current_time
     logger.info(f'Execution time: {duration}')
@@ -26,5 +27,8 @@ if __name__ == "__main__":
     # ingest_all_cpam_data('231', year='2025', start_model_year='2021')
     # ingest_cpam_data('2024', '246', '231', 'M', '')
     # extract_variant_binder('231', '246', "Mild Hybrid", 202430)
-    # extract_sap_price_list('231', 'All', '2024-03-30')
     main()
+    # DBOperations.instance.consolidate_translations('231')
+    # zip_buffer = extract_sap_price_list('231', 'All', '2025-03-30')
+    # with ZipFile(zip_buffer) as zf:
+    #     zf.extractall('dist/sap_price_list_main_test')

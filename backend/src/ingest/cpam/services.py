@@ -84,7 +84,6 @@ def ingest_cpam_data(year, car_type, country_code, maf, sw):
     """
     logger.info(f'Processing car type: {car_type}')
 
-    return
     new_entities = DBOperations.instance.collect_entity(cpam.get_dictionary(year, car_type, country_code, maf, sw).get('DataRows', None), country_code)
     if not new_entities:
         return
@@ -92,6 +91,7 @@ def ingest_cpam_data(year, car_type, country_code, maf, sw):
     DBOperations.instance.collect_package(cpam.get_packages(year, car_type, country_code, maf, sw).get('PackageDataRows', None), country_code)
     DBOperations.instance.collect_dependency(cpam.get_dependency_rules(year, car_type, country_code, maf, sw).get('DataRows', None), country_code)
     DBOperations.instance.collect_feature(cpam.get_features(year, car_type, country_code, maf, sw).get('DataRows', None), country_code)
+    DBOperations.instance.consolidate_translations(country_code)
     
     logger.debug('Data insertion completed', extra={'country_code': country_code})
 

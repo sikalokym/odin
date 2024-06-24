@@ -186,7 +186,7 @@ class DBOperations:
 
     def collect_entity(self, datarows, country_code):
         if not datarows:
-            self.logger.warning('No data to insert')
+            self.logger.warning('No entity data to insert')
             return False
         df = pd.DataFrame(datarows)
         df['DataType'] = df.apply(lambda row: row['MainDataType'] if row['DataType'] == '' else row['DataType'], axis=1)
@@ -209,7 +209,7 @@ class DBOperations:
                             self.logger.warning(f"No custom name found for code {code} in {data_type}") 
                         else:
                             group.loc[group['Code'] == code, 'CustomName'] = custom_names[0]
-                            entity_columns.insert(-3, 'CustomName')
+                entity_columns.insert(-3, 'CustomName')
             elif data_type == 'En':
                 for code in group['Code'].unique():
                     old_df = DBOperations.instance.get_table_df(self.config.get('TABLES', data_type), conditions=[f"CountryCode='{country_code}'", f"Code='{code}'"])
@@ -227,6 +227,9 @@ class DBOperations:
                                 entity_columns.insert(-3, 'Performance')
                                 entity_columns.insert(-3, 'EngineCategory')
                                 entity_columns.insert(-3, 'EngineType')
+            # Fill the missing columns with empty strings
+            group = group.fillna('')
+            
             table_name = self.config.get('TABLES', data_type)
             conditional_columns = ['Code', 'Special', 'CountryCode', 'StartDate']
             group = group.drop('DataType', axis=1).reindex(columns=entity_columns)
@@ -235,6 +238,9 @@ class DBOperations:
         return True
 
     def collect_auth(self, datarows, country_code):
+        if not datarows:
+            self.logger.debug('No auth data to insert')
+            return
         df = utils.df_from_datarows(datarows, ['Code', 'DataType'])
 
         df_pno = df[df['DataType'] == 'PNO'].copy()
@@ -245,13 +251,20 @@ class DBOperations:
         pno_columns = ['Code', 'Model', 'Engine', 'SalesVersion', 'Steering', 'Gearbox', 'Body', 'MarketCode', 'CountryCode', 'StartDate', 'EndDate']
         conditional_columns = ['Code', 'CountryCode', 'StartDate']
         df_pno = df_pno.drop(['RuleName', 'DataType'], axis=1)
-        self.upsert_data_from_df(df_pno, self.config.get('AUTH', 'PNO'), pno_columns, conditional_columns)
+        if not df_pno.empty:
+            # df_old_pno = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f"CountryCode='{country_code}'", f"Model='{df_pno['Model'].values[0]}'"])
+            # # get the difference between the two dataframes
+            # df_old_pno = df_old_pno[~df_old_pno.isin(df_pno)].dropna()
+            # # delete pnos that are not in the new data:
+            # self.upsert_data_from_df(df_pno, self.config.get('AUTH', 'PNO'), pno_columns, conditional_columns)
+            self.upsert_data_from_df(df_pno, self.config.get('AUTH', 'PNO'), pno_columns, conditional_columns)
+        
         df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f"CountryCode='{country_code}'"])
         df_pnos = df_pnos.drop('CountryCode', axis=1)
         if df_pnos.empty:
             self.logger.warning("No existing PNOs found. It doesn't make sense to proceed without PNOs")
             return
-
+        
         df_assigned, df_unassigned = utils.get_pno_ids_from_variants(df_pnos, df)
         utils.log_df(df_unassigned, 'Packages from CPAM were not assigned to any existing authorized PNOs:', self.logger.warning)
         
@@ -285,7 +298,7 @@ class DBOperations:
 
     def collect_dependency(self, datarows, country_code):
         if not datarows:
-            self.logger.debug('No data to insert')
+            self.logger.debug('No dependencies data to insert')
             return
         df = utils.df_from_datarows(datarows, ['RuleCode', 'ItemCode', 'FeatureCode'])
         
@@ -309,7 +322,7 @@ class DBOperations:
 
     def collect_feature(self, datarows, country_code):
         if not datarows:
-            self.logger.info('No data to insert')
+            self.logger.info('No feature data to insert')
             return
         df = utils.df_from_datarows(datarows, ['Code', 'Special', 'Reference'])
         df['Code'] = df['Code'].str.strip()
@@ -334,7 +347,7 @@ class DBOperations:
 
     def collect_package(self, datarows, country_code):
         if not datarows:
-            self.logger.info('No data to insert')
+            self.logger.info('No package data to insert')
             return
         
         df = utils.df_from_package_datarows(datarows)
@@ -411,3 +424,109 @@ class DBOperations:
             self.upsert_data_from_df(df_package, self.config.get('RELATIONS', 'PKG_Custom'), relation_columns, conditional_columns)
             utils.log_df(df_pnos_unassigned, 'PNOs from Visa file unassigned to CPAM PNOs:', self.logger.warning, country_code=country_code)
             utils.log_df(df_package_unpriced, 'Packages from CPAM did not find a price in the Visa file: ', self.logger.warning, country_code=country_code)
+
+    def consolidate_translations(self, country_code):
+        df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f"CountryCode='{country_code}'"])
+        if df_pnos.empty:
+            self.logger.warning("No existing PNOs found. No translations to consolidate", extra={'country_code': country_code})
+            return
+        pno_ids = df_pnos['ID'].unique().tolist()
+        conds = []
+        if len(pno_ids) == 1:
+            conds.append(f"PNOID = '{pno_ids[0]}'")
+        else:
+            conds.append(f"PNOID in {tuple(pno_ids)}")
+        
+        ## Color, upholstery and package translations
+        for data_type in ['COL', 'UPH', 'PKG']:
+            
+            df_codes = self.get_table_df(self.config.get('AUTH', data_type), columns=['ID', 'Code'], conditions=conds)
+            ids = df_codes['ID'].unique().tolist()
+            
+            conditions=[]
+            if len(ids) == 1:
+                conditions.append(f"RelationID = '{ids[0]}'")
+            else:
+                conditions.append(f"RelationID in {tuple(ids)}")
+            
+            table_name = self.config.get('RELATIONS', f'{data_type}_Custom')
+            df_all_translation = self.get_table_df(table_name, columns=['RelationID', 'CustomName'], conditions=conditions)
+            
+            if df_all_translation[(df_all_translation['CustomName'].isnull()) | (df_all_translation['CustomName'] == '')].empty:
+                self.logger.warning(f"No empty translations in {table_name} were found", extra={'country_code': country_code})
+                continue
+            
+            df_merge = df_all_translation.merge(df_codes, left_on='RelationID', right_on='ID', how='left')
+            
+            # Drop where CustomName is empty or null
+            df_merge_translation_source = df_merge[(~df_merge['CustomName'].isnull()) & (df_merge['CustomName'] != '')]
+
+            df_merge = df_merge.drop(['ID', 'CustomName'], axis=1)
+            
+            # Group by code and get the custom name, if only one non empty custom name is found.
+            df_translation = df_merge_translation_source.groupby('Code')['CustomName'].unique().apply(lambda x: x[0] if len(x) == 1 else '').reset_index()
+            df_translation = df_translation[df_translation['CustomName'] != '']
+            
+            df_fin = df_merge.merge(df_translation, on='Code', how='left')
+            df_fin = df_fin.drop('Code', axis=1)
+            
+            self.upsert_data_from_df(df_fin, table_name, ['RelationID', 'CustomName'], ['RelationID'])
+        
+        ## Upholstery category translations
+        data_type = 'UPH'
+        df_codes = self.get_table_df(self.config.get('AUTH', data_type), columns=['ID', 'Code'], conditions=conds)
+        ids = df_codes['ID'].unique().tolist()
+        
+        conditions=[]
+        if len(ids) == 1:
+            conditions.append(f"RelationID = '{ids[0]}'")
+        else:
+            conditions.append(f"RelationID in {tuple(ids)}")
+        
+        table_name = self.config.get('RELATIONS', f'{data_type}_Custom')
+        df_all_translation = self.get_table_df(table_name, columns=['RelationID', 'CustomCategory'], conditions=conditions)
+        
+        df_needs_translation = df_all_translation[(df_all_translation['CustomCategory'].isnull()) | (df_all_translation['CustomCategory'] == '')]
+        if not df_needs_translation.empty:
+            df_needs_translation.drop('CustomCategory', axis=1, inplace=True)
+            
+            df_merge = df_all_translation.merge(df_codes, left_on='RelationID', right_on='ID', how='inner')
+            
+            # Drop where CustomCategory is empty or null
+            df_merge_translation_source = df_merge[(~df_merge['CustomCategory'].isnull()) & (df_merge['CustomCategory'] != '')]
+
+            df_merge = df_merge.drop(['ID', 'CustomCategory'], axis=1)
+            
+            # Group by code and get the custom name, if only one non empty custom name is found.
+            df_translation = df_merge_translation_source.groupby('Code')['CustomCategory'].unique().apply(lambda x: x[0] if len(x) == 1 else '').reset_index()
+            df_translation = df_translation[df_translation['CustomCategory'] != '']
+            
+            df_fin = df_merge.merge(df_translation, on='Code', how='inner')
+            df_fin = df_fin.drop('Code', axis=1)
+            
+            self.upsert_data_from_df(df_fin, table_name, ['RelationID', 'CustomCategory'], ['RelationID'])
+        else:
+            self.logger.warning(f"No empty translations in {table_name} were found", extra={'country_code': country_code})
+        
+        ## Feature translation
+        data_type = 'FEAT'
+        df_codes = self.get_table_df(self.config.get('AUTH', data_type), columns=['ID', 'Code', 'CustomName', 'CustomCategory'], conditions=conds)
+        
+        for att in ['CustomName', 'CustomCategory']:
+            df_att = df_codes[['ID', 'Code', att]]
+            df_att_translation = df_att[(~df_att[att].isnull()) & (df_att[att] != '')]
+            df_att_needs_translation = df_att[(df_att[att].isnull()) | (df_att[att] == '')]
+            if df_att_needs_translation.empty:
+                self.logger.warning(f"No empty translations in {att} were found", extra={'country_code': country_code})
+                continue
+            df_att_needs_translation = df_att_needs_translation.drop(att, axis=1)
+            
+            df_translation = df_att_translation.groupby('Code')[att].unique().apply(lambda x: x[0] if len(x) == 1 else '').reset_index()
+            
+            df_translation = df_translation[df_translation[att] != '']
+            
+            df_fin = df_att_needs_translation.merge(df_translation, on='Code', how='inner')
+            df_fin = df_fin.drop('Code', axis=1)
+            
+            self.upsert_data_from_df(df_fin, self.config.get('RELATIONS', f'{data_type}_{att}_Custom'), ['RelationID', att], ['RelationID'])
+            
