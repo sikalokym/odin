@@ -105,7 +105,7 @@ def get_dictionary(model_year, car_type, spec_market, market_auth_flag='', start
     
     if response.status_code > 500:
         logger.error('Error fetching dictionary from CPAM')
-        return []
+        return dict()
     
     logger.debug('Dictionary fetched from CPAM')
     return parse_xml(response.text, dictionary_resp_template)
@@ -130,7 +130,7 @@ def get_authorization(model_year, car_type, spec_market, market_auth_flag='', st
     
     if response.status_code > 500:
         logger.error('Error fetching authorization from CPAM')
-        return []
+        return dict()
     
     logger.debug('Authorization fetched from CPAM')
     return parse_xml(response.text, authorization_resp_template)
@@ -155,7 +155,7 @@ def get_packages(model_year, car_type, spec_market, market_auth_flag='', start_w
     
     if response.status_code > 500:
         logger.error('Error fetching packages from CPAM')
-        return []
+        return dict()
     
     logger.debug('Packages fetched from CPAM')
     return parse_xml(response.text, packages_resp_template)
@@ -180,7 +180,7 @@ def get_dependency_rules(model_year, car_type, spec_market, market_auth_flag='',
     
     if response.status_code > 500:
         logger.error('Error fetching dependency rules from CPAM')
-        return []
+        return dict()
     
     logger.debug('Dependency rules fetched from CPAM')
     return parse_xml(response.text, dependency_rules_resp_template)
@@ -205,7 +205,7 @@ def get_features(model_year, car_type, spec_market, market_auth_flag='', start_w
     
     if response.status_code > 500:
         logger.error('Error fetching features from CPAM')
-        return []
+        return dict()
     
     logger.debug('Features fetched from CPAM')
     return parse_xml(response.text, features_resp_template)
