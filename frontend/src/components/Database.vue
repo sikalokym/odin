@@ -2401,16 +2401,15 @@ export default {
 
 td {
   min-width: 180px;
-
 }
 .filterbar {
   display: flex;
-  padding-bottom: 20px;
+  padding-bottom: 41px;
   position: sticky;
   top: 0px;
   background-color: white;
   z-index: 101;
-  height: 45px;
+  height: 24px;
 }
 
 thead {
