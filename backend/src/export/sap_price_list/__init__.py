@@ -68,19 +68,23 @@ def extract_sap_price_list(country, code, date, model_year):
     df_discounts = df_discounts.drop(columns=['ID_channel', 'ID_discount'])
     df_discounts = df_discounts.rename(columns={'ChannelID': 'ID'})
 
+    today = pd.Timestamp.now().strftime('%Y.%m.%d')
+    today = today[2:].replace('.', '')
+    
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
         for visa_file, df_discounts_group in df_discounts.groupby('VisaFile'):
             df_discount_options = df_local_options[(df_local_options['ChannelID'].isin(df_discounts_group['ID'].tolist())) & (df_local_options['VisaFile'] == visa_file)]
             dfs = get_sap_price_list(visa_file, df_discounts_group, df_discount_options, model_year, country)
+            car_type = df_visa[df_visa['VisaFile'] == visa_file]['CarType'].iloc[0]
             folder_name = visa_file
             used_names = []
             for df in dfs:
                 code, channel_name = df.name.split('+#+')
-                excel_filename = f'SAP - PL{code} - {channel_name}.xlsx'
+                excel_filename = f'{today} SAP - PL{code} - {channel_name} - {car_type}.xlsx'
                 suffix = 1
                 while excel_filename in used_names:
-                    excel_filename = f'SAP - PL{code} - {channel_name} ({suffix}).xlsx'
+                    excel_filename = f'{today} SAP - PL{code} - {channel_name} - {car_type} ({suffix}).xlsx'
                     suffix += 1
                     
                 excel_buffer = io.BytesIO()

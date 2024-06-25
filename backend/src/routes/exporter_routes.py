@@ -63,10 +63,14 @@ def sap_price_list(country):
     if not model_year:
         return 'Model year is required', 400
     
+    today = pd.Timestamp.now().strftime('%Y.%m.%d')
+    today = today[2:].replace('.', '')
+    download_name = f'{today} SAP Price Lists.zip'
+    
     zip_buffer = extract_sap_price_list(country, code, date, model_year)
     if not zip_buffer:
         return 'No data found', 404
-    return send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='sap_price_list.zip')
+    return send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name=download_name)
 
 @bp_exporter.route('/visa', methods=['GET'])
 def export_visa_file(country):
