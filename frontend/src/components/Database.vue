@@ -2169,7 +2169,7 @@ export default {
     },
     // PNO-specific updates
     pushUpdateFeature(pno) {
-      if (this.model === '') {
+      if (this.model === '' && pno.CustomName.startsWith("Specific:")) {
         return;
       }
       this.pnoStore.pushUpdateFeature(this.model, pno.Code, pno.CustomName, pno.CustomCategory, pno.ID)
