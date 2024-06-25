@@ -501,7 +501,7 @@ def get_dq_log(country, model_year):
 
 @bp_db_reader.route('/sales-channels', methods=['GET'])
 def get_sales_channels(country, model_year):
-    conditions = [f"CountryCode = '{country}'"]
+    conditions = [f"CountryCode = '{country}'", f"ModelYear = '{model_year}'"]
     df_sales_channels = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SC'), columns=['ID', 'Code', 'ChannelName', 'Comment', 'DateFrom', 'DateTo'], conditions=conditions)
     
     df_sales_channels = df_sales_channels.sort_values(by='Code', ascending=True)

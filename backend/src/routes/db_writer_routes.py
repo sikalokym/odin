@@ -395,6 +395,7 @@ def upsert_sales_channel(country, model_year):
         data['ID'] = str(uuid.uuid4())
     data['DateFrom'] = validate_and_format_date(data.get('DateFrom', ''), '2020-01-01')
     data['DateTo'] = validate_and_format_date(data.get('DateTo', ''), '2099-12-31')
+    data['ModelYear'] = model_year
 
     try:
         data['CountryCode'] = country
@@ -411,6 +412,49 @@ def upsert_sales_channel(country, model_year):
         return str(e), 500
     
     return 'Sales channel created successfully', 200
+
+@bp_db_writer.route('/sales-channels/copy', methods=['POST'])
+def copy_sales_channel(country, model_year):
+    data = request.json
+    if not data:
+        return 'No data provided', 400
+    ids = data.get('ids', [])
+    if not ids:
+        return 'No IDs provided', 400
+    
+    table_name = DBOperations.instance.config.get('TABLES', 'SC')
+    conditions = []
+    rel_conditions = []
+    if len(ids) == 1:
+        conditions.append(f"ID = '{ids[0]}'")
+        rel_conditions.append(f"ChannelID = '{ids[0]}'")
+    else:
+        conditions.append(f"ID in {tuple(ids)}")
+        rel_conditions.append(f"ChannelID in {tuple(ids)}")
+    
+    df_sales_channels = DBOperations.instance.get_table_df(table_name, conditions=conditions)
+    df_sales_channels['OldID'] = df_sales_channels['ID']
+    df_sales_channels['ID'] = df_sales_channels['ID'].apply(lambda x: str(uuid.uuid4()))
+    df_sales_channels['DateFrom'] = "2020-01-01"
+    df_sales_channels['DateTo'] = "2099-12-31"
+    df_sales_channels['ModelYear'] = model_year
+    
+    discount_table = DBOperations.instance.config.get('TABLES', 'DIS')
+    discounts_df = DBOperations.instance.get_table_df(discount_table, conditions=rel_conditions)
+    if not discounts_df.empty:
+        discounts_df['ID'] = discounts_df['ID'].apply(lambda x: str(uuid.uuid4()))
+        discounts_df['ChannelID'] = discounts_df['ChannelID'].apply(lambda x: df_sales_channels[df_sales_channels['OldID'] == x]['ID'].values[0])
+        DBOperations.instance.upsert_data_from_df(discounts_df, discount_table, discounts_df.columns.tolist(), ['ID'])
+    
+    clo_table = DBOperations.instance.config.get('TABLES', 'CLO', conditions=rel_conditions)
+    clo_df = DBOperations.instance.get_table_df(clo_table, conditions=rel_conditions)
+    if not clo_df.empty:
+        clo_df['ID'] = clo_df['ID'].apply(lambda x: str(uuid.uuid4()))
+        clo_df['ChannelID'] = clo_df['ChannelID'].apply(lambda x: df_sales_channels[df_sales_channels['OldID'] == x]['ID'].values[0])
+        DBOperations.instance.upsert_data_from_df(clo_df, clo_table, clo_df.columns.tolist(), ['ID'])
+    
+    df_sales_channels.drop(columns=['OldID'], inplace=True)
+    DBOperations.instance.upsert_data_from_df(df_sales_channels, table_name, df_sales_channels.columns.tolist(), ['ID'])
 
 @bp_db_writer.route('/sales-channels', methods=['DELETE'])
 def delete_sales_channel(country, model_year):
