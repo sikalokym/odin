@@ -135,7 +135,7 @@ def get_authorization(model_year, car_type, spec_market, market_auth_flag='', st
     logger.debug('Authorization fetched from CPAM')
     return parse_xml(response.text, authorization_resp_template)
 
-def get_packages(model_year, car_type, spec_market, market_auth_flag='', start_week=''):
+def get_packages(model_year, car_type, spec_market, market_auth_flag='m', start_week=''):
     """ Fetch packages from CPAM.
     
     Args:
