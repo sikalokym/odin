@@ -84,11 +84,18 @@
     <button @click="scrollToTop" v-show="isArrowVisible" class="scroll-to-top">↑</button>
     <!-- Table Filter -->
     <div class="filterbar">
-      <input v-if="displaytable !== '' && model_year !== '0' && !customFeatureTable && !discountTable && !xCodesTable"
+      <input v-if="displaytable !== '' && model_year !== '0' && !customFeatureTable && !importTable && !discountTable && !xCodesTable"
         v-model="searchTerm" type="text" placeholder="Filter" style="margin-right: 1ch;">
       <!-- Add Custom Feature -->
       <button v-if="displaytable === 'Features' && model_year !== '0' && !customFeatureTable"
         @click="showCustomFeatureTable">Add custom feature</button>
+        <!-- Import Sales Channels -->
+      <button v-if="displaytable === 'Sales Channels' && model_year !== '0' && !importTable && !discountTable && !xCodesTable"
+        @click="showImportTable()">Import Sales Channels</button>
+      <div v-if="displaytable === 'Sales Channels' && model_year !== '0' && importTable"><strong>[{{
+        "Import Sales Channels for model year " + this.model_year }}]</strong></div>
+      <button v-if="displaytable === 'Sales Channels' && model_year !== '0' && importTable && !discountTable && !xCodesTable"
+        @click="showImportTable()" style="margin-left: 10px;">Return to Sales Channels</button>
       <!-- Upload Visa File -->
       <button v-if="displaytable === 'VISA Files' && model_year !== '0' && !visaTable"
         @click="$refs.file.click()">Upload VISA
@@ -1202,7 +1209,7 @@
       </tbody>
     </table>
     <!-- Sales Channels Table -->
-    <table v-if="displaytable === 'Sales Channels' && model_year !== '0' && !discountTable && !xCodesTable">
+    <table v-if="displaytable === 'Sales Channels' && model_year !== '0' && !importTable && !discountTable && !xCodesTable">
       <thead v-if="model_year !== '0' && (sales_channels.length > 0 || this.newsaleschannel.length >= 1)">
         <tr>
           <th>
@@ -1306,9 +1313,77 @@
         </tr>
       </tbody>
     </table>
-    <div v-if="displaytable === 'Sales Channels' && model_year !== '0' && !discountTable && !xCodesTable"
+    <!-- Sales Channel Import Table -->
+    <div style="float: left; width: 180px;">
+        <label v-if="displaytable === 'Sales Channels' && model_year !== '0' && importTable && !discountTable && !xCodesTable" class="modelyear">Import from Model Year</label><br>
+        <select v-if="displaytable === 'Sales Channels' && model_year !== '0' && importTable && !discountTable && !xCodesTable" name="model_year" id="model_year" v-model="model_year_import" @change="fetchSalesChannelsImport"
+          style="width:180px; height:30px;" :disabled="displaytable === ''">
+          <option disabled value="0">Please Select...</option>
+          <option v-for="model_year in filteredModelYears" :key="model_year" :value="model_year">{{ model_year }}</option>
+        </select>
+        <label v-if="displaytable === 'Sales Channels' && model_year !== '0' && importTable && !discountTable && !xCodesTable && (sales_channels_import.length === 0) && this.model_year_import !== '0'" class="modelyear">No sales channels available for import in the selected model year.</label>
+    </div>
+    <!-- Additional empty line for spacing -->
+    <div style="clear: both; height: 20px;"></div>
+    <div style="clear: both;">
+      <table v-if="displaytable === 'Sales Channels' && model_year !== '0' && importTable && !discountTable && !xCodesTable">
+        <thead v-if="model_year !== '0' && (sales_channels_import.length > 0)">
+          <tr>
+            <th>
+              <div style="display: flex; justify-content: center; align-items: center;">
+                Price List
+                <div style="margin-left: 1ch;">
+                  <span @click="sortTable('Code', 1)" style="cursor: pointer;">↑</span>
+                  <span @click="sortTable('Code', -1)" style="cursor: pointer;">↓</span>
+                </div>
+              </div>
+            </th>
+            <th>
+              <div style="display: flex; justify-content: center; align-items: center;">
+                Name
+                <div style="margin-left: 1ch;">
+                  <span @click="sortTable('ChannelName', 1)" style="cursor: pointer;">↑</span>
+                  <span @click="sortTable('ChannelName', -1)" style="cursor: pointer;">↓</span>
+                </div>
+              </div>
+            </th>
+            <th>
+              <div style="display: flex; justify-content: center; align-items: center;">
+                Comment
+                <div style="margin-left: 1ch;">
+                  <span @click="sortTable('Comment', 1)" style="cursor: pointer;">↑</span>
+                  <span @click="sortTable('Comment', -1)" style="cursor: pointer;">↓</span>
+                </div>
+              </div>
+            </th>
+            <th style="width: 10px">In Import</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="pno in sales_channels_import" :key="pno.id" :class="{ 'editing': pno.edited }">
+            <td class="Code" style="background-color: #f4f4f4; text-align: left;">
+              {{ pno.Code }}
+            </td>
+            <td class="ChannelName" style="background-color: #f4f4f4; text-align: left;">
+              {{ pno.ChannelName }}
+            </td>
+            <td class="Comment" style="background-color: #f4f4f4; text-align: left;">
+              {{ pno.Comment }}
+            </td>
+            <td style="background-color: #f4f4f4;">
+              <input type="checkbox" v-model="pno.InImport">
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div v-if="displaytable === 'Sales Channels' && model_year !== '0' && !importTable && !discountTable && !xCodesTable"
       style="text-align: left; margin-left: 5px;">
       <button @click="addSalesChannel">Add Sales Channel</button>
+    </div>
+    <div v-if="displaytable === 'Sales Channels' && model_year !== '0' && importTable && !discountTable && !xCodesTable && sales_channels_import.length > 0"
+      style="text-align: left; margin-left: 610px;">
+      <button @click="importSalesChannel(pno)">Confirm Import</button>
     </div>
     <!-- Discount Table -->
     <table v-if="displaytable === 'Sales Channels' && model_year !== '0' && discountTable">
@@ -1580,6 +1655,7 @@ export default {
     return {
       model: '',
       model_year: '0',
+      model_year_import: '0',
       engine: '',
       salesversion: '',
       gearbox: '',
@@ -1592,6 +1668,7 @@ export default {
       sortColumn: '',
       searchTerm: '',
       customFeatureTable: false,
+      importTable: false,
       discountTable: false,
       xCodesTable: false,
       visaTable: false,
@@ -1645,6 +1722,9 @@ export default {
     model_years() {
       return this.pnoStore.available_model_years
     },
+    filteredModelYears() {
+      return this.model_years.filter(year => year !== this.model_year);
+    },
     supported_countries() {
       return this.pnoStore.supported_countries
     },
@@ -1674,6 +1754,18 @@ export default {
     },
     sales_channels() {
       return this.entitiesStore.saleschannels.filter(code =>
+        Object.values(code).some(value =>
+          String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
+        )
+      ).sort((a, b) => {
+        if (a[this.sortColumn] === undefined || a[this.sortColumn] === null) return 1;
+        if (b[this.sortColumn] === undefined || b[this.sortColumn] === null) return -1;
+        if (a[this.sortColumn] < b[this.sortColumn]) return -1 * this.sortOrder;
+        if (a[this.sortColumn] > b[this.sortColumn]) return 1 * this.sortOrder;
+      });
+    },
+    sales_channels_import() {
+      return this.entitiesStore.saleschannelsimport.filter(code =>
         Object.values(code).some(value =>
           String(value).toLowerCase().includes(this.searchTerm.toLowerCase())
         )
@@ -1879,6 +1971,12 @@ export default {
       }
       return true;
     },
+    salesChannelsImportList() {
+      return this.sales_channels_import
+        .filter(pno => pno.InImport)
+        .map(pno => pno.ID)
+        .join(',');
+    },
   },
   methods: {
     scrollToBottom() {
@@ -1902,7 +2000,11 @@ export default {
       this.engine = '';
       this.salesversion = '';
       this.gearbox = '';
+      this.importTable = false;
       this.visaTable = false;
+      this.discountTable = false;
+      this.xCodesTable = false;
+
       this.pnoStore.setModelYear(this.model_year)
       this.entitiesStore.setModelYear(this.model_year)
       await this.fetchEntities()
@@ -2017,10 +2119,10 @@ export default {
       this.gearbox = '';
       this.displaytable = '';
       this.customFeatureTable = false;
+      this.importTable = false;
       this.visaTable = false;
       this.discountTable = false;
       this.xCodesTable = false;
-      this.visaTable = false;
       this.selectedRow = null;
       this.newvisafileinformation = [];
       this.newsaleschannel = [];
@@ -2036,10 +2138,10 @@ export default {
       this.salesversion = '';
       this.gearbox = '';
       this.customFeatureTable = false;
+      this.importTable = false;
       this.visaTable = false;
       this.discountTable = false;
       this.xCodesTable = false;
-      this.visaTable = false;
       this.selectedRow = null;
       this.newvisafileinformation = [];
       this.newsaleschannel = [];
@@ -2067,7 +2169,7 @@ export default {
     },
     // PNO-specific updates
     pushUpdateFeature(pno) {
-      if (this.model === '' && (pno.CustomName === '' || pno.CustomName === '*Model-specific text*')) {
+      if (this.model === '') {
         return;
       }
       this.pnoStore.pushUpdateFeature(this.model, pno.Code, pno.CustomName, pno.CustomCategory, pno.ID)
@@ -2079,35 +2181,28 @@ export default {
       await this.pnoStore.fetchPnosFeatures(this.model, this.engine, this.salesversion, this.gearbox)
     },
     pushUpdateOption(pno) {
-      if (this.model === '' && (pno.CustomName === '' || pno.CustomName === '*Model-specific text*')) {
+      if (this.model === '' && pno.CustomName.startsWith("Specific:")) {
         return;
       }
       this.pnoStore.pushUpdateOption(this.model, pno.Code, pno.CustomName)
       pno.edited = false
     },
     pushUpdateColor(pno) {
-      if (this.model === '' && (pno.CustomName === '' || pno.CustomName === '*Model-specific text*')) {
+      if (this.model === '' && pno.CustomName.startsWith("Specific:")) {
         return;
       }
       this.pnoStore.pushUpdateColor(this.model, pno.Code, pno.CustomName)
       pno.edited = false
     },
     pushUpdateUpholstery(pno) {
-      if (this.model === '' && (pno.CustomName === '' || pno.CustomName === '*Model-specific text*')) {
+      if (this.model === '' && pno.CustomName.startsWith("Specific:")) {
         return;
       }
       this.pnoStore.pushUpdateUpholstery(this.model, pno.Code, pno.CustomName, pno.CustomCategory)
       pno.edited = false
     },
-    pushUpdateOption(pno) {
-      if (this.model === '' && (pno.CustomName === '' || pno.CustomName === '*Model-specific text*')) {
-        return;
-      }
-      this.pnoStore.pushUpdateOption(this.model, pno.Code, pno.CustomName)
-      pno.edited = false
-    },
     pushUpdatePackage(pno) {
-      if (this.model === '' && (pno.CustomName === '' || pno.CustomName === '*Model-specific text*')) {
+      if (this.model === '' && pno.CustomName.startsWith("Specific:")) {
         return;
       }
       this.pnoStore.pushUpdatePackage(this.model, pno.Code, pno.CustomName)
@@ -2125,6 +2220,12 @@ export default {
         StartDate: null,
         EndDate: null,
       };
+    },
+    // Sales Channels
+    showImportTable() {
+      this.importTable = !this.importTable;
+      this.model_year_import = '0';
+      this.entitiesStore.saleschannelsimport = [];
     },
     // VISA 
     async saveOriginalVISAFileName(pno) {
@@ -2197,6 +2298,21 @@ export default {
     async deleteSalesChannel(pno) {
       await this.entitiesStore.deleteSalesChannel(pno.ID)
       pno.edited = false
+      await this.entitiesStore.fetchSalesChannels().catch((error) => {
+        console.error('Error fetching sales channels', error)
+      })
+    },
+    //Import Sales Channels
+    async fetchSalesChannelsImport() {
+      console.log(this.model_year_import)
+      await this.entitiesStore.setModelYearImport(this.model_year_import)
+      await this.entitiesStore.fetchSalesChannelsImport().catch((error) => {
+        console.error('Error fetching sales channels', error)
+      })
+    },
+    async importSalesChannel(pno) {
+      await this.entitiesStore.importSalesChannel(this.salesChannelsImportList)
+      this.importTable = false;
       await this.entitiesStore.fetchSalesChannels().catch((error) => {
         console.error('Error fetching sales channels', error)
       })

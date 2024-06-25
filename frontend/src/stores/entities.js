@@ -14,8 +14,10 @@ export const useEntitiesStore = defineStore({
         discounts: [],
         customlocaloptions: [],
         saleschannels: [],
+        saleschannelsimport: [],
         country: '',
         model_year: new Date().getFullYear() + 1,
+        model_year_import: new Date().getFullYear() + 1,
     }),
     actions: {
         async setCountry(newCountry) {
@@ -23,6 +25,9 @@ export const useEntitiesStore = defineStore({
         },
         setModelYear(newModelYear) {
             this.model_year = newModelYear;
+        },
+        setModelYearImport(newModelYear) {
+            this.model_year_import = newModelYear;
         },
         async fetchSupportedCountries(user_allowed_countries) {
             let path = `/setup/supported_countries`
@@ -90,6 +95,14 @@ export const useEntitiesStore = defineStore({
             let path = `/db/${this.country.Code}/${this.model_year}/sales-channels`
             return await index.get(path).then((response) => {
                 this.saleschannels = response.data
+            }).catch((error) => {
+                console.error('Failed to fetch sales channels', error)
+            })
+        },
+        async fetchSalesChannelsImport() {
+            let path = `/db/${this.country.Code}/${this.model_year_import}/sales-channels`
+            return await index.get(path).then((response) => {
+                this.saleschannelsimport = response.data
             }).catch((error) => {
                 console.error('Failed to fetch sales channels', error)
             })
@@ -225,6 +238,10 @@ export const useEntitiesStore = defineStore({
         async deleteSalesChannel(ID) {
             let path = `/db/${this.country.Code}/${this.model_year}/write/sales-channels?ID=${ID}`
             return index.delete(path);
+        },
+        async importSalesChannel(ids) {
+            let path = `/db/${this.country.Code}/${this.model_year}/write/sales-channels/copy?ids=${ids}`
+            return index.post(path);
         },
         async pushUpdateDiscount(ID, SalesChannelID, DiscountPercentage, RetailPrice, WholesalePrice, PNOSpecific, AffectedVisaFile) {
             let updates = {

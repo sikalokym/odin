@@ -36,7 +36,7 @@ def extract_sap_price_list(country, code, date, model_year):
     df_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['FeatureCode', 'FeatureRetailPrice', 'FeatureWholesalePrice', 'ChannelID', 'AffectedVisaFile', 'DateFrom', 'DateTo'], conditions=rel_conditions)
 
     visa_columns = ['VisaFile', 'CarType', 'ModelYear', 'DateFrom as StartDate']
-    df_visa = get_available_visa_files(country, None, visa_columns)
+    df_visa = get_available_visa_files(country, model_year, visa_columns)
     if df_visa.empty:
         return None
     df_visa = df_visa.drop_duplicates()

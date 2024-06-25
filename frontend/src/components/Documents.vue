@@ -398,7 +398,7 @@ export default {
           formattedDate = '';
       };
       const link = document.createElement('a');
-      link.href = `${axios.endpoint}/${this.selectedCountry.Code}/export/sap-price-list?date=${formattedDate}&code=${this.sales_channel}`;
+      link.href = `${axios.endpoint}/${this.selectedCountry.Code}/export/sap-price-list?date=${formattedDate}&code=${this.sales_channel}&model_year=${this.model_year}`;
       link.setAttribute('download', 'SAP_Price_Lists.zip');
       document.body.appendChild(link);
       link.click();
