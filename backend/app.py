@@ -65,7 +65,6 @@ def before_request():
 def teardown_request(exception):
     global last_request_time, open_reqs
     last_request_time = time.time()
-    # time.sleep(1)
     with reqs_lock:
         open_reqs -= 1
         if open_reqs == 0:

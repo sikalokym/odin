@@ -252,11 +252,6 @@ class DBOperations:
         conditional_columns = ['Code', 'CountryCode', 'StartDate']
         df_pno = df_pno.drop(['RuleName', 'DataType'], axis=1)
         if not df_pno.empty:
-            # df_old_pno = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f"CountryCode='{country_code}'", f"Model='{df_pno['Model'].values[0]}'"])
-            # # get the difference between the two dataframes
-            # df_old_pno = df_old_pno[~df_old_pno.isin(df_pno)].dropna()
-            # # delete pnos that are not in the new data:
-            # self.upsert_data_from_df(df_pno, self.config.get('AUTH', 'PNO'), pno_columns, conditional_columns)
             self.upsert_data_from_df(df_pno, self.config.get('AUTH', 'PNO'), pno_columns, conditional_columns)
         
         df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f"CountryCode='{country_code}'"])
