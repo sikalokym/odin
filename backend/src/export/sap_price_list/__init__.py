@@ -10,9 +10,9 @@ from src.utils.db_utils import format_float_string, get_column_map
 config = configparser.ConfigParser()
 config.read('config/sap_price_list.cfg')
 
-def extract_sap_price_list(country, code, date):
+def extract_sap_price_list(country, code, date, model_year):
     
-    conditions = [f"CountryCode = '{country}'"]
+    conditions = [f"CountryCode = '{country}'", f"ModelYear = '{model_year}'"]
     if date:
         conditions += [f"DateFrom <= '{date}'", f"DateTo >= '{date}'"]
     if code != 'All':
@@ -35,14 +35,14 @@ def extract_sap_price_list(country, code, date):
     
     df_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['FeatureCode', 'FeatureRetailPrice', 'FeatureWholesalePrice', 'ChannelID', 'AffectedVisaFile', 'DateFrom', 'DateTo'], conditions=rel_conditions)
 
-    visa_columns = ['VisaFile', 'CarType', 'DateFrom as StartDate']
+    visa_columns = ['VisaFile', 'CarType', 'ModelYear', 'DateFrom as StartDate']
     df_visa = get_available_visa_files(country, None, visa_columns)
     if df_visa.empty:
         return None
     df_visa = df_visa.drop_duplicates()
     
     # Group by 'VisaFile' and sort by 'DateFrom', then rank
-    df_visa['Order'] = df_visa.sort_values(by=['CarType', 'StartDate']).groupby('CarType').cumcount() + 1
+    df_visa['Order'] = df_visa.sort_values(by=['ModelYear', 'CarType', 'StartDate']).groupby(['ModelYear', 'CarType']).cumcount() + 1
     
     available_visa_files = df_visa['VisaFile'].unique().tolist()
     def process_row(visa):
@@ -69,85 +69,85 @@ def extract_sap_price_list(country, code, date):
     df_discounts = df_discounts.rename(columns={'ChannelID': 'ID'})
 
     zip_buffer = io.BytesIO()
-    # with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
-    #     for visa_file, df_discounts_group in df_discounts.groupby('VisaFile'):
-    #         df_discount_options = df_local_options[(df_local_options['ChannelID'].isin(df_discounts_group['ID'].tolist())) & (df_local_options['VisaFile'] == visa_file)]
-    #         dfs = get_sap_price_list(visa_file, df_discounts_group, df_discount_options, country)
-    #         folder_name = visa_file
-    #         used_names = []
-    #         for df in dfs:
-    #             code, channel_name = df.name.split('+#+')
-    #             excel_filename = f'SAP - PL{code} - {channel_name}.xlsx'
-    #             suffix = 1
-    #             while excel_filename in used_names:
-    #                 excel_filename = f'SAP - PL{code} - {channel_name} ({suffix}).xlsx'
-    #                 suffix += 1
-                    
-    #             excel_buffer = io.BytesIO()
-    #             with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-    #                 df.to_excel(writer, index=False)
-    #             zip_file.writestr(f'{folder_name}/{excel_filename}', excel_buffer.getvalue())
-    #         if len(dfs) > 1:
-    #             concatenated_df = pd.concat(dfs)
-    #             concat_excel_buffer = io.BytesIO()
-    #             with pd.ExcelWriter(concat_excel_buffer, engine='openpyxl') as writer:
-    #                 concatenated_df.to_excel(writer, index=False)
-    #             zip_file.writestr(f'{folder_name}/MASTA ALL.xlsx', concat_excel_buffer.getvalue())
-
     with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
-        folder_dfs = {}  # Track DataFrames for each folder to concatenate later
-        
         for visa_file, df_discounts_group in df_discounts.groupby('VisaFile'):
-            df_discount_options = df_local_options[
-                (df_local_options['ChannelID'].isin(df_discounts_group['ID'].tolist())) & 
-                ((df_local_options['AffectedVisaFile'] == 'All') | 
-                (df_local_options['AffectedVisaFile'] == df_discounts_group['AffectedVisaFile'].iloc[0]))
-            ]
-            dfs = get_sap_price_list(visa_file, df_discounts_group, df_discount_options, country)
-            used_names = set()  # Track used folder names to avoid duplicates
-            
+            df_discount_options = df_local_options[(df_local_options['ChannelID'].isin(df_discounts_group['ID'].tolist())) & (df_local_options['VisaFile'] == visa_file)]
+            dfs = get_sap_price_list(visa_file, df_discounts_group, df_discount_options, model_year, country)
+            folder_name = visa_file
+            used_names = []
             for df in dfs:
                 code, channel_name = df.name.split('+#+')
-                folder_name = f'SAP - PL{code} - {channel_name}'
-                while folder_name in used_names:
-                    folder_name = f'SAP - PL{code} - {channel_name} ({len(used_names)})'
-                used_names.add(folder_name)
-                
-                # Create a unique filename for the visa_file inside the folder
-                excel_filename = f'{visa_file}.xlsx'
-                
-                # Write the DataFrame to an in-memory Excel file
+                excel_filename = f'SAP - PL{code} - {channel_name}.xlsx'
+                suffix = 1
+                while excel_filename in used_names:
+                    excel_filename = f'SAP - PL{code} - {channel_name} ({suffix}).xlsx'
+                    suffix += 1
+                    
                 excel_buffer = io.BytesIO()
                 with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
                     df.to_excel(writer, index=False)
-                    
-                # Add the in-memory Excel file to the ZIP file in the corresponding folder
                 zip_file.writestr(f'{folder_name}/{excel_filename}', excel_buffer.getvalue())
-                
-                # Track DataFrames for each folder
-                if folder_name not in folder_dfs:
-                    folder_dfs[folder_name] = []
-                folder_dfs[folder_name].append(df)
-        
-        # Create "Masta ALL.xlsx" for each folder
-        for folder_name, dfs in folder_dfs.items():
-            concatenated_df = pd.concat(dfs)
-            concat_excel_buffer = io.BytesIO()
-            
-            # Sort the concatenated DataFrame by 'Date From'
-            concatenated_df['Date From'] = pd.to_datetime(concatenated_df['Date From'], format='%Y.%m.%d')
-            concatenated_df = concatenated_df.sort_values(by='Date From')
+            if len(dfs) > 1:
+                concatenated_df = pd.concat(dfs)
+                concat_excel_buffer = io.BytesIO()
+                with pd.ExcelWriter(concat_excel_buffer, engine='openpyxl') as writer:
+                    concatenated_df.to_excel(writer, index=False)
+                zip_file.writestr(f'{folder_name}/MASTA ALL.xlsx', concat_excel_buffer.getvalue())
 
-            with pd.ExcelWriter(concat_excel_buffer, engine='openpyxl') as writer:
-                concatenated_df.to_excel(writer, index=False)
+    # with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
+    #     folder_dfs = {}  # Track DataFrames for each folder to concatenate later
+        
+    #     for visa_file, df_discounts_group in df_discounts.groupby('VisaFile'):
+    #         df_discount_options = df_local_options[
+    #             (df_local_options['ChannelID'].isin(df_discounts_group['ID'].tolist())) & 
+    #             ((df_local_options['AffectedVisaFile'] == 'All') | 
+    #             (df_local_options['AffectedVisaFile'] == df_discounts_group['AffectedVisaFile'].iloc[0]))
+    #         ]
+    #         dfs = get_sap_price_list(visa_file, df_discounts_group, df_discount_options, country)
+    #         used_names = set()  # Track used folder names to avoid duplicates
+            
+    #         for df in dfs:
+    #             code, channel_name = df.name.split('+#+')
+    #             folder_name = f'SAP - PL{code} - {channel_name}'
+    #             while folder_name in used_names:
+    #                 folder_name = f'SAP - PL{code} - {channel_name} ({len(used_names)})'
+    #             used_names.add(folder_name)
                 
-            zip_file.writestr(f'{folder_name}/MASTA ALL.xlsx', concat_excel_buffer.getvalue())
+    #             # Create a unique filename for the visa_file inside the folder
+    #             excel_filename = f'{visa_file}.xlsx'
+                
+    #             # Write the DataFrame to an in-memory Excel file
+    #             excel_buffer = io.BytesIO()
+    #             with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+    #                 df.to_excel(writer, index=False)
+                    
+    #             # Add the in-memory Excel file to the ZIP file in the corresponding folder
+    #             zip_file.writestr(f'{folder_name}/{excel_filename}', excel_buffer.getvalue())
+                
+    #             # Track DataFrames for each folder
+    #             if folder_name not in folder_dfs:
+    #                 folder_dfs[folder_name] = []
+    #             folder_dfs[folder_name].append(df)
+        
+    #     # Create "Masta ALL.xlsx" for each folder
+    #     for folder_name, dfs in folder_dfs.items():
+    #         concatenated_df = pd.concat(dfs)
+    #         concat_excel_buffer = io.BytesIO()
+            
+    #         # Sort the concatenated DataFrame by 'Date From'
+    #         concatenated_df['Date From'] = pd.to_datetime(concatenated_df['Date From'], format='%Y.%m.%d')
+    #         concatenated_df = concatenated_df.sort_values(by='Date From')
+
+    #         with pd.ExcelWriter(concat_excel_buffer, engine='openpyxl') as writer:
+    #             concatenated_df.to_excel(writer, index=False)
+                
+    #         zip_file.writestr(f'{folder_name}/MASTA ALL.xlsx', concat_excel_buffer.getvalue())
 
     zip_buffer.seek(0)
     return zip_buffer
 
-def get_sap_price_list(visa_file, df_sales_channels, df_discount_options, country_code):
-    df_visa = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=[f"CountryCode = '{country_code}'", f"VisaFile = '{visa_file}'"])
+def get_sap_price_list(visa_file, df_sales_channels, df_discount_options, model_year, country_code):
+    df_visa = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=[f"CountryCode = '{country_code}'", f"VisaFile = '{visa_file}'", f"ModelYear = '{model_year}'"])
     df_visa = df_visa.drop(columns=['CountryCode', 'VisaFile', 'ID', 'LoadingDate'])
     c_map = get_column_map(reverse=True)
     df_visa.columns = [c_map.get(col, col) for col in df_visa.columns]

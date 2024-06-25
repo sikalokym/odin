@@ -59,8 +59,11 @@ def variant_binder(country):
 def sap_price_list(country):
     code = request.args.get('code', 'All')
     date = request.args.get('date', '')
+    model_year = request.args.get('model_year', '')
+    if not model_year:
+        return 'Model year is required', 400
     
-    zip_buffer = extract_sap_price_list(country, code, date)
+    zip_buffer = extract_sap_price_list(country, code, date, model_year)
     if not zip_buffer:
         return 'No data found', 404
     return send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='sap_price_list.zip')
