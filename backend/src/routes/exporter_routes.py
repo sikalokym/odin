@@ -1,4 +1,6 @@
 import io
+import os
+import zipfile
 import pandas as pd
 from flask import Blueprint, request, send_file
 from src.database.db_operations import DBOperations
@@ -100,3 +102,22 @@ def export_visa_file(country):
         return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', as_attachment=True, download_name=download_name)
     except Exception as e:
         return str(e), 500
+
+@bp_exporter.route('/technical_logs', methods=['GET'])
+def export_logs(country):
+    log_dir = 'logs'
+    if not os.path.exists(log_dir):
+        return "Log directory not found", 404
+    
+    # Create a BytesIO object to hold the zip file in memory
+    memory_file = io.BytesIO()
+    
+    with zipfile.ZipFile(memory_file, 'w') as zf:
+        for root, _, files in os.walk(log_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                zf.write(file_path, os.path.relpath(file_path, log_dir))
+    
+    memory_file.seek(0)
+    
+    return send_file(memory_file, mimetype='application/zip', as_attachment=True, download_name='logs.zip')
