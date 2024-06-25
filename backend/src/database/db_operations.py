@@ -469,6 +469,7 @@ class DBOperations:
             
             df_fin = df_merge.merge(df_translation, on='Code', how='left')
             df_fin = df_fin.drop('Code', axis=1)
+            df_fin.fillna(None, inplace=True)
             
             self.upsert_data_from_df(df_fin, table_name, ['RelationID', 'CustomName'], ['RelationID'])
         
@@ -503,6 +504,7 @@ class DBOperations:
             
             df_fin = df_merge.merge(df_translation, on='Code', how='inner')
             df_fin = df_fin.drop('Code', axis=1)
+            df_fin.fillna(None, inplace=True)
             
             self.upsert_data_from_df(df_fin, table_name, ['RelationID', 'CustomCategory'], ['RelationID'])
         else:
@@ -527,6 +529,6 @@ class DBOperations:
             
             df_fin = df_att_needs_translation.merge(df_translation, on='Code', how='inner')
             df_fin = df_fin.drop('Code', axis=1)
+            df_fin.fillna(None, inplace=True)
             
-            self.upsert_data_from_df(df_fin, self.config.get('RELATIONS', f'{data_type}_{att}_Custom'), ['RelationID', att], ['RelationID'])
-            
+            self.upsert_data_from_df(df_fin, self.config.get('AUTH', data_type), ['ID', att], ['ID'])
