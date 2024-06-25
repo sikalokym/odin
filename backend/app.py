@@ -26,9 +26,9 @@ app.register_blueprint(bp_exporter)
 WELCOME_PAGE_TEMPLATE = """
 <!doctype html>
 <html>
-<head><title>Welcome to PMT</title></head>
+<head><title>PMT API Endpoints</title></head>
 <body>
-    <h1>Welcome to My Flask App</h1>
+    <h1>The Endpoints for ODIN</h1>
     <p>Here are all the possible paths:</p>
     <ul>
         {% for rule in rules %}
