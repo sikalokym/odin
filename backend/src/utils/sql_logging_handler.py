@@ -18,7 +18,7 @@ class SQLLoggingHandler(logging.Handler):
 
         # Get the log level number
         levelno = record.levelno
-        if levelno < 20:
+        if levelno < 10:
             return
 
         # Get the message from the log record
