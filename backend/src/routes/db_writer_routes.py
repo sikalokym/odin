@@ -194,18 +194,26 @@ def write_customfeatures(country, model_year):
 
 @bp_db_writer.route('/delete/customfeatures', methods=['POST'])
 def delete_customfeatures(country, model_year):
-    ids = request.args.get('ID')
+    data = request.get_json()
+    ids = data.get('ID', None)
     if not ids:
         return {"error": "ID is required"}, 400
     
+    # Ensure ids is a list, even if it contains a single element
+    if isinstance(ids, str):
+        ids = [ids]
+    else:
+        ids = ids.split(',')
+
     table_name = DBOperations.instance.config.get('AUTH', 'CFEAT')
 
-    # Construct the DELETE query
-    delete_query = f"DELETE FROM {table_name} WHERE ID IN ?"
-
+    # Construct the DELETE query with placeholders
+    placeholders = ', '.join(['?'] * len(ids))
+    delete_query = f"DELETE FROM {table_name} WHERE ID IN ({placeholders})"
+    
     try:
         with DBOperations.instance.get_cursor() as cursor:
-            cursor.execute(delete_query, (tuple(ids.split(',')),))
+            cursor.execute(delete_query, tuple(ids))
         return {"message": "Records deleted successfully"}, 200
     except Exception as e:
         DBOperations.instance.logger.error(f"Error deleting records: {e}")
