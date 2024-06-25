@@ -399,6 +399,7 @@ CREATE TABLE SalesChannel (
     CountryCode VARCHAR(12),
     DateFrom DATE,
     DateTo DATE,
+    ModelYear NVARCHAR(255),
     FOREIGN KEY (CountryCode) REFERENCES SupportedCountry(Code)
 );
 
