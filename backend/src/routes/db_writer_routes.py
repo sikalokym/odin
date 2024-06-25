@@ -423,12 +423,10 @@ def upsert_sales_channel(country, model_year):
 
 @bp_db_writer.route('/sales-channels/copy', methods=['POST'])
 def copy_sales_channel(country, model_year):
-    data = request.json
-    if not data:
-        return 'No data provided', 400
-    ids = data.get('ids', [])
+    ids = request.args.get('ids', None)
     if not ids:
         return 'No IDs provided', 400
+    ids = ids.split(',')
     
     table_name = DBOperations.instance.config.get('TABLES', 'SC')
     conditions = []
@@ -452,17 +450,17 @@ def copy_sales_channel(country, model_year):
     if not discounts_df.empty:
         discounts_df['ID'] = discounts_df['ID'].apply(lambda x: str(uuid.uuid4()))
         discounts_df['ChannelID'] = discounts_df['ChannelID'].apply(lambda x: df_sales_channels[df_sales_channels['OldID'] == x]['ID'].values[0])
-        DBOperations.instance.upsert_data_from_df(discounts_df, discount_table, discounts_df.columns.tolist(), ['ID'])
     
-    clo_table = DBOperations.instance.config.get('TABLES', 'CLO', conditions=rel_conditions)
+    clo_table = DBOperations.instance.config.get('TABLES', 'CLO')
     clo_df = DBOperations.instance.get_table_df(clo_table, conditions=rel_conditions)
     if not clo_df.empty:
         clo_df['ID'] = clo_df['ID'].apply(lambda x: str(uuid.uuid4()))
         clo_df['ChannelID'] = clo_df['ChannelID'].apply(lambda x: df_sales_channels[df_sales_channels['OldID'] == x]['ID'].values[0])
-        DBOperations.instance.upsert_data_from_df(clo_df, clo_table, clo_df.columns.tolist(), ['ID'])
     
     df_sales_channels.drop(columns=['OldID'], inplace=True)
     DBOperations.instance.upsert_data_from_df(df_sales_channels, table_name, df_sales_channels.columns.tolist(), ['ID'])
+    DBOperations.instance.upsert_data_from_df(discounts_df, discount_table, discounts_df.columns.tolist(), ['ID'])
+    DBOperations.instance.upsert_data_from_df(clo_df, clo_table, clo_df.columns.tolist(), ['ID'])
 
 @bp_db_writer.route('/sales-channels', methods=['DELETE'])
 def delete_sales_channel(country, model_year):
