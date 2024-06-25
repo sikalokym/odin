@@ -458,9 +458,15 @@ def copy_sales_channel(country, model_year):
         clo_df['ChannelID'] = clo_df['ChannelID'].apply(lambda x: df_sales_channels[df_sales_channels['OldID'] == x]['ID'].values[0])
     
     df_sales_channels.drop(columns=['OldID'], inplace=True)
-    DBOperations.instance.upsert_data_from_df(df_sales_channels, table_name, df_sales_channels.columns.tolist(), ['ID'])
-    DBOperations.instance.upsert_data_from_df(discounts_df, discount_table, discounts_df.columns.tolist(), ['ID'])
-    DBOperations.instance.upsert_data_from_df(clo_df, clo_table, clo_df.columns.tolist(), ['ID'])
+    try:
+        DBOperations.instance.upsert_data_from_df(df_sales_channels, table_name, df_sales_channels.columns.tolist(), ['ID'])
+        DBOperations.instance.upsert_data_from_df(discounts_df, discount_table, discounts_df.columns.tolist(), ['ID'])
+        DBOperations.instance.upsert_data_from_df(clo_df, clo_table, clo_df.columns.tolist(), ['ID'])
+    except Exception as e:
+        DBOperations.instance.logger.error(f"Error copying sales channel: {e}")
+        return str(e), 500
+    
+    return 'Sales channel copied successfully', 200
 
 @bp_db_writer.route('/sales-channels', methods=['DELETE'])
 def delete_sales_channel(country, model_year):
