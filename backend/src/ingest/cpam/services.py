@@ -53,7 +53,7 @@ def ingest_all_cpam_data(country_code, year=None, start_model_year=''):
         all_years = cpam.get_model_years(country_code, start_model_year=start_model_year)
         if not all_years or all_years == []:
             logger.error('No model years found', extra={'country_code': country_code})
-            return load_successful, 
+            return load_successful, load_unsuccessful
         else:
             all_years = all_years['Years']
     maf = config.get('SETTINGS', 'MARKET_AUTH_FLAG')
@@ -90,12 +90,12 @@ def ingest_cpam_data(year, car_type, country_code, maf, sw):
     if not new_entities:
         return
     DBOperations.instance.collect_auth(cpam.get_authorization(year, car_type, country_code, maf, sw).get('DataRows', None), country_code)
-    DBOperations.instance.collect_package(cpam.get_packages(year, car_type, country_code, maf, sw).get('PackageDataRows', None), country_code)
+    DBOperations.instance.collect_package(cpam.get_packages(year, car_type, country_code, 'm', sw).get('PackageDataRows', None), country_code)
     DBOperations.instance.collect_dependency(cpam.get_dependency_rules(year, car_type, country_code, maf, sw).get('DataRows', None), country_code)
     DBOperations.instance.collect_feature(cpam.get_features(year, car_type, country_code, maf, sw).get('DataRows', None), country_code)
     DBOperations.instance.consolidate_translations(country_code)
     
-    logger.debug('Data insertion completed', extra={'country_code': country_code})
+    logger.info('Data insertion completed', extra={'country_code': country_code})
 
     ingest_visa_data(country_code, None)
 
