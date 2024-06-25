@@ -9,7 +9,9 @@ bp_ingest = Blueprint('ingest', __name__, url_prefix='/api/<country>/ingest')
 
 @bp_ingest.route('/cpam', methods=['GET'])
 def refresh_all_cpam_data(country):
-    load_successfull, load_unsuccessfull = ingest_all_cpam_data(country)
+    year= request.args.get('year', '')
+    start_model_year = request.args.get('start_model_year', '')
+    load_successfull, load_unsuccessfull = ingest_all_cpam_data(country, year, start_model_year)
     return jsonify({'success': load_successfull, 'failed': load_unsuccessfull})
 
 @bp_ingest.route('/cpam/<year>/<car_type>', methods=['GET'])

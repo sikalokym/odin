@@ -40,25 +40,27 @@ def ingest_all_cpam_data_from(year, country_code):
             load_unsuccessful.append((year, car['Type']))
         end_time = time.perf_counter()
         duration = end_time - start_time_in
-        logger.debug(f'Car {car["Type"]} execution time: {duration:.2f} seconds')
+        logger.info(f'Car {car["Type"]} execution time: {duration:.2f} seconds')
     return load_successful, load_unsuccessful
 
 def ingest_all_cpam_data(country_code, year=None, start_model_year=''):
     load_successful = []
     load_unsuccessful = []
+    logger.info('Starting CPAM data update', extra={'country_code': country_code})
     if year:
         all_years = [year]
     else:
         all_years = cpam.get_model_years(country_code, start_model_year=start_model_year)
         if not all_years or all_years == []:
             logger.error('No model years found', extra={'country_code': country_code})
-            return load_successful, load_unsuccessful
+            return load_successful, 
+        else:
+            all_years = all_years['Years']
     maf = config.get('SETTINGS', 'MARKET_AUTH_FLAG')
     sw = config.get('SETTINGS', 'START_WEEK')
     for year in all_years:
         for car in cpam.get_car_types(year, country_code)['DataRows']:
-            if car['Type'] != '246':
-                continue
+            print(f'Processing car type: {car["Type"]}')
             try:
                 ingest_cpam_data(year, car['Type'], country_code, maf, sw)
                 load_successful.append((year, car['Type']))
@@ -95,7 +97,7 @@ def ingest_cpam_data(year, car_type, country_code, maf, sw):
     
     logger.debug('Data insertion completed', extra={'country_code': country_code})
 
-    ingest_visa_data(country_code)
+    ingest_visa_data(country_code, None)
 
 cache = TTLCache(maxsize=100, ttl=60)
 
