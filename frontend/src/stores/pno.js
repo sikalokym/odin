@@ -10,7 +10,6 @@ export const usePNOStore = defineStore({
     pnosOptions: [],
     pnosUpholstery: [],
     pnosPackages: [],
-    pnosChangelog: [],
     supported_countries: [],
     available_model_years: [],
     engine_cats: [],
@@ -139,18 +138,6 @@ export const usePNOStore = defineStore({
         this.pnosPackages = response.data
       }).catch((error) => {
         console.error('Error fetching PNO packages:', error)
-      })
-    },
-    async fetchPnosChangelog(model, engine, salesversion, gearbox) {
-      let path = `/db/${this.country.Code}/${this.model_year}/changelog?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
-      return await index.get(path).then((response) => {
-        response.data.forEach(item => {
-          let date = new Date(item.ChangeDate);
-          item.ChangeDate = date.toISOString().replace('T', ' ').substring(0, 19);
-        });
-        this.pnosChangelog = response.data;
-      }).catch((error) => {
-        console.error('Error fetching PNO changelog:', error)
       })
     },
     async pushUpdateFeature(model, feature, translation, category, ID) {

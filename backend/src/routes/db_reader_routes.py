@@ -6,6 +6,7 @@ from src.database.services import get_engine_cats
 from src.ingest.cpam.services import get_supported_countries
 from src.ingest.visa_files.services import get_available_visa_files
 from src.utils.db_utils import filter_df_by_model_year, filter_model_year_by_translation
+from datetime import datetime, timedelta
 
 
 bp_db_reader = Blueprint('db_reader', __name__, url_prefix='/api/db/<country>/<model_year>')
@@ -619,16 +620,13 @@ def get_packages(country, model_year):
     
     return df_pno_packages.to_json(orient='records')
 
+import pandas as pd
+
 @bp_db_reader.route('/changelog', methods=['GET'])
 def get_changelog(country, model_year):
-    model = request.args.get('model', None)
-
     conditions = [f"CountryCode = '{country}'"]
-    if model:
-        conditions.append(f"Model = '{model}'")
 
-    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
-    df_pnos = filter_df_by_model_year(df_pnos, model_year)
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'Model', 'Engine', 'SalesVersion', 'Gearbox', 'StartDate', 'EndDate'], conditions=conditions)
     if df_pnos.empty:
         return jsonify([])
     ids = df_pnos['ID'].tolist()
@@ -638,30 +636,43 @@ def get_changelog(country, model_year):
     else:
         conditions.append(f"CHANGECODE in {tuple(ids)}")
 
-    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('DQ', 'CL'), columns=['ChangeTable', 'ChangeDate', 'ChangeType', 'ChangeField', 'ChangeFrom', 'ChangeTo'], conditions=conditions)
-    df_pno_features = df_pno_features.sort_values(by='ChangeDate', ascending=True)
+    seven_days_ago = datetime.now() - timedelta(days=7)
+    seven_days_ago_str = seven_days_ago.strftime('%Y-%m-%d %H:%M:%S.000')
+    conditions.append(f"ChangeDate >= '{seven_days_ago_str}'")
 
-    return df_pno_features.to_json(orient='records')
+    df_pno_changelog = DBOperations.instance.get_table_df(DBOperations.instance.config.get('DQ', 'CL'), columns=['ChangeTable', 'ChangeDate', 'ChangeType', 'ChangeField', 'ChangeFrom', 'ChangeTo', 'CHANGECODE'], conditions=conditions)
+    df_pno_changelog = df_pno_changelog.sort_values(by='ChangeDate', ascending=False)
+    df_pno_changelog = df_pno_changelog[df_pno_changelog['ChangeType'] != 'Insert']
+
+    # Merge df_pno_changelog with df_pnos to add the Model, Engine, SalesVersion, and Gearbox columns
+    df_pno_changelog = pd.merge(df_pno_changelog, df_pnos, left_on='CHANGECODE', right_on='ID', how='left')
+
+    # Select the columns to keep in the final DataFrame
+    final_columns = ['ChangeTable', 'ChangeDate', 'ChangeType', 'ChangeField', 'ChangeFrom', 'ChangeTo', 'Model', 'Engine', 'SalesVersion', 'Gearbox']
+    df_pno_changelog = df_pno_changelog[final_columns]
+
+    return df_pno_changelog.to_json(orient='records')
 
 @bp_db_reader.route('/dq-log', methods=['GET'])
 def get_dq_log(country, model_year):
+    LogType = request.args.get('LogType', None)
     conditions = [f"CountryCode = '{country}' OR CountryCode = 'All'"]
 
-    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=conditions)
-    df_pnos = filter_df_by_model_year(df_pnos, model_year)
-    if df_pnos.empty:
-        return jsonify([])
-    ids = df_pnos['ID'].tolist()
-    conditions = []
-    if len(ids) == 1:
-        conditions.append(f"PNOID = '{ids[0]}'")
-    else:
-        conditions.append(f"PNOID in {tuple(ids)}")
+    # Calculate the date 7 days ago
+    seven_days_ago = datetime.now() - timedelta(days=7)
+    # Format it to match the LogDate column format
+    seven_days_ago_str = seven_days_ago.strftime('%Y-%m-%d %H:%M:%S.000')
+    # Add condition to filter out LogDate values older than 7 days
+    conditions.append(f"LogDate >= '{seven_days_ago_str}'")
 
-    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('DQ', 'DQ'), columns=['LogDate', 'LogType', 'LogMessage'], conditions=conditions)
-    df_pno_features = df_pno_features.sort_values(by='DQDate', ascending=True)
+    df_pno_dqlog = DBOperations.instance.get_table_df(DBOperations.instance.config.get('DQ', 'DQ'), columns=['LogDate', 'LogMessage', 'LogType'], conditions=conditions)
+    df_pno_dqlog = df_pno_dqlog.sort_values(by='LogDate', ascending=False)
 
-    return df_pno_features.to_json(orient='records')
+    # Drop rows where LogType is not equal to the provided LogType argument
+    if LogType:
+        df_pno_dqlog = df_pno_dqlog[df_pno_dqlog['LogType'] == LogType]
+
+    return df_pno_dqlog.to_json(orient='records')
 
 @bp_db_reader.route('/sales-channels', methods=['GET'])
 def get_sales_channels(country, model_year):
