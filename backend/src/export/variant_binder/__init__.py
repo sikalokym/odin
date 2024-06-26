@@ -116,7 +116,64 @@ def extract_variant_binder(country, model, engines_types, time, pno_ids=None, sv
     output.seek(0)
     
     return output, vb_title
+
+def _extract_variant_binder(country, model, engines_types, time, pno_ids=None, sv_order=None):
+    wb = Workbook()
+
+    # Remove the default sheet created
+    default_sheet = wb.active
+    wb.remove(default_sheet)
+
+    valid_engines = get_valid_engines(country, engines_types, time)
+    valid_pnos = get_valid_pnos(country, model, time, valid_engines)
+    if pno_ids:
+        valid_pnos = valid_pnos[valid_pnos['ID'].isin(pno_ids)]
     
+    sales_versions = get_sales_versions(country, valid_pnos, time)
+    valid_engines = get_valid_engines(country, engines_types, time)
+    valid_pnos = get_valid_pnos(country, model, time, valid_engines)
+    if pno_ids:
+        valid_pnos = valid_pnos[valid_pnos['ID'].isin(pno_ids)]
+    
+    sales_versions = get_sales_versions(country, valid_pnos, time)
+    if sv_order:
+        sales_versions['SalesVersion'] = pd.Categorical(sales_versions['SalesVersion'], categories=sv_order, ordered=True)
+        sales_versions = sales_versions.sort_values('SalesVersion')
+        sales_versions['SalesVersion'] = sales_versions['SalesVersion'].astype(str)
+    sales_versions = sales_versions[['ID', 'SalesVersion', 'SalesVersionName']].drop_duplicates(subset='SalesVersion')
+    title, model_id = get_model_name(country, model, time)
+    if valid_pnos.empty or sales_versions.empty or valid_engines.empty:
+        DBOperations.instance.logger.warning(f"No data found for model {model} and engine category {engines_types} at time {time}", extra={'country': country})
+        return None
+    ws_1 = wb.create_sheet("Preise")
+    gb_ids = prices_sheet.get_sheet(ws_1, valid_pnos, sales_versions.copy(), title, time, valid_engines, country)
+    ws_2 = wb.create_sheet("Serienausstattung")
+    sales_versions_sheet.get_sheet(ws_2, sales_versions.copy(), title)
+    ws_3 = wb.create_sheet("Pakete")
+    packages_sheet.get_sheet(ws_3, sales_versions.copy(), title, time)
+    ws_4 = wb.create_sheet("Polster & Farben")
+    upholstery_colors_sheet.get_sheet(ws_4, sales_versions.copy(), title, time)
+    ws_5 = wb.create_sheet("Optionen")
+    df_rad = options_sheet.get_sheet(ws_5, sales_versions.copy(), title, time)
+    if not df_rad.empty:
+        ws_6 = wb.create_sheet("Räder")
+        tiers_sheet.get_sheet(ws_6, sales_versions.copy(), title, df_rad)
+    ws_7 = wb.create_sheet("Änderungen", 0)
+    entities_ids_dict = {'Typ': [model_id], 'SV': sales_versions.ID.unique().tolist(), 'En': valid_engines.ID.explode().unique().tolist(), 'G': gb_ids}
+    err = change_log.get_sheet(ws_7, entities_ids_dict, valid_pnos.ID.unique().tolist(), title, time, country)
+    if err:
+        raise Exception('No data found for change log')
+
+    model_year = get_model_year_from_date(time)
+    time = str(time)
+    vb_title = f"{title.replace(' ', '')}_VB_{engines_types}_{model_year}_{time[:4]}w{time[4:]}.xlsx"
+    wb.save(f"dist/vbs/{vb_title}")
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    return output, vb_title
+
 def get_model_name(country, model, time):
     models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), ['ID', 'MarketText', 'CustomName', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'", f"Code = '{model}'"])
 
@@ -131,22 +188,47 @@ def get_model_name(country, model, time):
         raise Exception(f"No model found for model {model}")
 
 def get_sales_versions(country, pnos, time):
-    df_sv = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), conditions=[f"CountryCode = '{country}'"])
-    df_pno_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'PNO_Custom'))
+    sv_codes = pnos['SalesVersion'].unique().tolist()
+    conditions = [f"CountryCode = '{country}'", f"StartDate <= {time}", f"EndDate >= {time}"]
+    if len(sv_codes) == 1:
+        conditions.append(f"Code = '{sv_codes[0]}'")
+    else:
+        conditions.append(f"Code in {tuple(sv_codes)}")
+    df_sv = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), conditions=conditions)
+    df_sv.rename(columns={'Code': 'TmpCode', 'ID': 'SVID'}, inplace=True)
+    pno_condition = [f"StartDate <= {time}", f"EndDate >= {time}"]
+    df_pno_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'PNO_Custom'), conditions=pno_condition)
     if df_pno_price.empty:
         raise Exception("No price data found")
-    df_sv = filter_df_by_timestamp(df_sv, time)
-    df_sv.rename(columns={'Code': 'TmpCode', 'ID': 'SVID'}, inplace=True)
 
     df_allowed_sv = pnos.merge(df_sv[['SVID', 'TmpCode', 'MarketText', 'CustomName']], left_on='SalesVersion', right_on='TmpCode', how='left')
     df_allowed_sv['SalesVersionName'] = df_allowed_sv['CustomName'].combine_first(df_allowed_sv['MarketText'])
-    # df_allowed_sv.drop_duplicates(subset='SalesVersion', keep='first', inplace=True)
+    
+    # Aggregate prices into a unique, sorted list and append 'Check Visa File'
+    def custom_price_aggregation(prices):
+        if len(prices) == 1:
+            return prices.iloc[0]
+        unique_sorted_prices = ', '.join(map(str, set(prices)))
+        return f"{unique_sorted_prices} Check Visa File"
 
-    df_allowed_sv['SalesVersionPrice'] = df_allowed_sv['ID'].map(df_pno_price.set_index('RelationID')['Price'])
+    # Group by 'RelationID' and aggregate using the custom function
+    aggregated_prices = df_pno_price.groupby('RelationID')['Price'].agg(custom_price_aggregation)
+
+    # Map the aggregated prices back to another DataFrame based on 'RelationID'
+    df_allowed_sv = df_allowed_sv.set_index('ID')
+    df_allowed_sv['SalesVersionPrice'] = df_allowed_sv.index.map(aggregated_prices)
+
+    # Reset index if needed
+    df_allowed_sv.reset_index(inplace=True)
+    
     df_allowed_sv = df_allowed_sv[['ID', 'SalesVersion', 'SalesVersionName', 'SalesVersionPrice', 'SVID']]
 
     # sort the sales versions by price
     df_allowed_sv = df_allowed_sv.sort_values('SalesVersionPrice', ascending=True)
+    # replace empty names with None
+    df_allowed_sv['SalesVersionName'] = df_allowed_sv['SalesVersionName'].replace('', np.nan)
+    # fill empty salesversion names with salesversion
+    df_allowed_sv['SalesVersionName'] = df_allowed_sv['SalesVersionName'].combine_first(df_allowed_sv['SalesVersion'])
 
     # group by SalesVersionName name's first word and represent each group with its maximum price and sort on price ascending and return the names and prices
     df_allowed_sv['SalesVersionNameGroup'] = df_allowed_sv['SalesVersionName'].str.split().str[0]
@@ -154,10 +236,11 @@ def get_sales_versions(country, pnos, time):
     # explode the list of names to get the names sorted by price
     sorted_sv_names = df.explode('SalesVersionName')['SalesVersionName'].unique().tolist()
 
-    # now we have the names of the sales versions sorted by price
-    # sort the original df by the order of the names in the sorted df
     df_final = df_allowed_sv.set_index('SalesVersionName').loc[sorted_sv_names].reset_index()
     df_final.drop(columns=['SalesVersionNameGroup'], inplace=True)
+    
+    ## salesversion name reset to empty string if it is equal to salesversion
+    df_final['SalesVersionName'] = df_final.apply(lambda x: '' if x['SalesVersionName'] == x['SalesVersion'] else x['SalesVersionName'], axis=1)
 
     return df_final
 
