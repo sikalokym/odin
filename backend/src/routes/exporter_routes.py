@@ -110,7 +110,7 @@ def export_visa_file(country):
     except Exception as e:
         return str(e), 500
 
-@bp_exporter.route('/technical_logs', methods=['GET'])
+@bp_exporter.route('/technical-logs', methods=['GET'])
 def export_logs(country):
     log_dir = 'logs'
     if not os.path.exists(log_dir):
