@@ -9,10 +9,6 @@ export const login = async () => {
         return;
     }
     isInteractionInProgress = true;
-    // const popupLoginResponse = await msalInstance.loginPopup({
-    //     scopes: ['User.Read', 'Group.Read.All'],
-    // });
-    // msalInstance.setActiveAccount(loginResponse.account);
     msalInstance.loginRedirect({
         scopes: ['User.Read', 'Group.Read.All'],
     }).then(response => {
@@ -28,30 +24,23 @@ export const fetchCountriesRoles = async () => {
     if (!account) {
         throw new Error('No active account found');
     }
-
+    console.log('Fetching countries roles, account:', account);
     try {
         const tokenResponse = await msalInstance.acquireTokenSilent({
             scopes: ['User.Read', 'Group.Read.All'],
             account,
         });
-
+        console.log('Token acquired:', tokenResponse);
         const userRoles = tokenResponse.idTokenClaims.roles || [];
         if (tokenResponse.accessToken) {
-            const headers = new Headers();
-            headers.append('Authorization', `Bearer ${tokenResponse.accessToken}`);
-            headers.append('Content-Type', 'application/json');
-
-            const response = await fetch('https://graph.microsoft.com/v1.0/me/memberOf', { headers });
-            const data = await response.json();
-            
-            if (response.ok) {
-                let groups = parseGroupNames(data.value.filter(g => g.displayName.startsWith('odin-')).map(group => group.displayName));
-                groups = groups.filter(group => userRoles.includes(group.role));
-                
-                useAuthStore().assignCountriesRoles(groups);
-            } else {
-                throw new Error('Failed to fetch group data');
-            }
+            let groups = await fetchAllGroups(tokenResponse);
+            console.log('Fetched groups:', groups);
+            console.log('Mapped groups:', groups.filter(group => group.displayName.startsWith('odin-')).map(group => group.displayName));
+            let parsedGroups = parseGroupNames(groups.filter(group => group.displayName.startsWith('odin-')).map(group => group.displayName));
+            console.log('Parsed groups:', parsedGroups);
+            groups = parsedGroups.filter(group => userRoles.includes(group.role));
+            console.log('Filtered groups:', groups);
+            useAuthStore().assignCountriesRoles(groups);
         }
     } catch (error) {
         console.error('Token acquisition error:', error);
@@ -92,6 +81,27 @@ export const fetchCountriesRoles = async () => {
         }
     }
 };
+export async function fetchAllGroups(tokenResponse) {
+    let allGroups = [];
+    let nextLink = 'https://graph.microsoft.com/v1.0/me/memberOf';
+  
+    while (nextLink) {
+      const headers = new Headers();
+      headers.append('Authorization', `Bearer ${tokenResponse.accessToken}`);
+      headers.append('Content-Type', 'application/json');
+  
+      const response = await fetch(nextLink, { headers });
+      const data = await response.json();
+  
+      if (data.value) {
+        allGroups = allGroups.concat(data.value);
+      }
+  
+      nextLink = data['@odata.nextLink'];
+    }
+  
+    return allGroups;
+  }
 
 export const parseGroupNames = (groups) => {
     return groups.map(group => {
