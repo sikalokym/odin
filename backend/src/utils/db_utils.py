@@ -370,6 +370,8 @@ def format_float_string(float_string):
         >>> format_float_string('1234567.890')
         '1.234.567,89'
     """
+    if float_string is None or float_string == '' or float_string == 'nan':
+        return 'Not Assigned. Check Visa File'
     try:
         # Convert string to float to ensure correct handling
         float_value = float(float_string)
