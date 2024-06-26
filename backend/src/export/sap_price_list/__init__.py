@@ -79,6 +79,8 @@ def extract_sap_price_list(country, code, date, model_year):
             car_type = df_visa[df_visa['VisaFile'] == visa_file]['CarType'].iloc[0]
             folder_name = visa_file
             used_names = []
+            # sort dfs after code
+            dfs = sorted(dfs, key=lambda x: x.name.split('+#+')[0])
             for df in dfs:
                 code, channel_name = df.name.split('+#+')
                 excel_filename = f'{today} SAP - PL{code} - {channel_name} - {car_type}.xlsx'
@@ -86,7 +88,7 @@ def extract_sap_price_list(country, code, date, model_year):
                 while excel_filename in used_names:
                     excel_filename = f'{today} SAP - PL{code} - {channel_name} - {car_type} ({suffix}).xlsx'
                     suffix += 1
-                    
+                used_names.append(excel_filename)
                 excel_buffer = io.BytesIO()
                 with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
                     df.to_excel(writer, index=False)
@@ -97,55 +99,6 @@ def extract_sap_price_list(country, code, date, model_year):
                 with pd.ExcelWriter(concat_excel_buffer, engine='openpyxl') as writer:
                     concatenated_df.to_excel(writer, index=False)
                 zip_file.writestr(f'{folder_name}/MASTA ALL.xlsx', concat_excel_buffer.getvalue())
-
-    # with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
-    #     folder_dfs = {}  # Track DataFrames for each folder to concatenate later
-        
-    #     for visa_file, df_discounts_group in df_discounts.groupby('VisaFile'):
-    #         df_discount_options = df_local_options[
-    #             (df_local_options['ChannelID'].isin(df_discounts_group['ID'].tolist())) & 
-    #             ((df_local_options['AffectedVisaFile'] == 'All') | 
-    #             (df_local_options['AffectedVisaFile'] == df_discounts_group['AffectedVisaFile'].iloc[0]))
-    #         ]
-    #         dfs = get_sap_price_list(visa_file, df_discounts_group, df_discount_options, country)
-    #         used_names = set()  # Track used folder names to avoid duplicates
-            
-    #         for df in dfs:
-    #             code, channel_name = df.name.split('+#+')
-    #             folder_name = f'SAP - PL{code} - {channel_name}'
-    #             while folder_name in used_names:
-    #                 folder_name = f'SAP - PL{code} - {channel_name} ({len(used_names)})'
-    #             used_names.add(folder_name)
-                
-    #             # Create a unique filename for the visa_file inside the folder
-    #             excel_filename = f'{visa_file}.xlsx'
-                
-    #             # Write the DataFrame to an in-memory Excel file
-    #             excel_buffer = io.BytesIO()
-    #             with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-    #                 df.to_excel(writer, index=False)
-                    
-    #             # Add the in-memory Excel file to the ZIP file in the corresponding folder
-    #             zip_file.writestr(f'{folder_name}/{excel_filename}', excel_buffer.getvalue())
-                
-    #             # Track DataFrames for each folder
-    #             if folder_name not in folder_dfs:
-    #                 folder_dfs[folder_name] = []
-    #             folder_dfs[folder_name].append(df)
-        
-    #     # Create "Masta ALL.xlsx" for each folder
-    #     for folder_name, dfs in folder_dfs.items():
-    #         concatenated_df = pd.concat(dfs)
-    #         concat_excel_buffer = io.BytesIO()
-            
-    #         # Sort the concatenated DataFrame by 'Date From'
-    #         concatenated_df['Date From'] = pd.to_datetime(concatenated_df['Date From'], format='%Y.%m.%d')
-    #         concatenated_df = concatenated_df.sort_values(by='Date From')
-
-    #         with pd.ExcelWriter(concat_excel_buffer, engine='openpyxl') as writer:
-    #             concatenated_df.to_excel(writer, index=False)
-                
-    #         zip_file.writestr(f'{folder_name}/MASTA ALL.xlsx', concat_excel_buffer.getvalue())
 
     zip_buffer.seek(0)
     return zip_buffer
