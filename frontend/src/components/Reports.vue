@@ -4,54 +4,60 @@
     <!-- Table Selection -->
     <label class="displaytable" style="width: 180px;">Report Type</label><br>
     <select name="displaytable" v-model="displaytable" id="displaytable"
-      @change="fetchPnoSpecifics(); displaytablereset()" style="width:180px; height:30px; position: absolute;">
+      @change="fetchLog()" style="width:180px; height:30px; position: absolute;">
       <option disabled value="">Please Select...</option>
-      <option value="Changelog">Changelog</option>
+      <option value="Changelog">Data Changelog</option>
+      <option value="WARNING">Price Warnings</option>
+      <option value="ERROR">Technical Errors</option>
     </select>
-    <!-- Filter for model years -->
-    <label class="modelyear" style="width: 180px;">Model Year</label><br>
-    <select name="model_year" id="model_year" v-model="model_year" @change="refreshModelyear(); fetchPnoSpecifics()"
-      style="width:180px; height:30px; position: absolute;" :disabled="displaytable === ''">
-      <option disabled value="0">Please Select...</option>
-      <option value="0000" :disabled="!['Model', 'Engine', 'SalesVersion', 'Gearbox'].includes(displaytable)">All
-      </option>
-      <option v-for="model_year in model_years" :key="model_year" :value="model_year">{{ model_year }}</option>
-    </select>
-    <!-- Filter for models -->
-    <label class="model" style="width: 180px;">Model</label><br>
-    <select name="model" id="model" v-model="model" @change="fetchPnoSpecifics"
-      style="width:180px; height:30px; position: absolute;"
-      :disabled="!['Changelog'].includes(displaytable) || model_year === '0'">
-      <option value="" :disabled="!['Changelog'].includes(displaytable)">All</option>
-      <option v-for="model in models.sort()" :key="model" :value="model">{{ model }}</option>
-    </select>
-
-    <!-- Filter Reset Button -->
-    <button style="display:block;width:180px; height:50px; display: inline-block; margin-top: 64px;"
-      @click="reset">Reset Filters</button>
+    <!-- Export Technical Log Button -->
+    <button style="display:block;width:180px; height:50px; display: inline-block; margin-top: 50px;"
+      @click="exportTechnicalLog">Export Technical Log</button>
   </aside>
   <main class="main-content">
     <!-- Changelog Table -->
-    <table v-if="displaytable === 'Changelog' && model_year !== '0'">
-      <thead v-if="model_year !== '0'">
+    <table v-if="displaytable === 'Changelog'">
+      <thead v-if="log.length >= 1">
         <tr>
+          <th>Date</th>
+          <th>Model</th>
+          <th>Engine</th>
+          <th>Sales Version</th>
+          <th>Gearbox</th>
           <th>Table</th>
-          <th>Type</th>
           <th>Field</th>
           <th>From</th>
           <th>To</th>
-          <th>Date</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="pno in tableChangelog" :key="pno.id" :class="{ 'editing': pno.edited }">
+        <tr v-for="pno in log" :key="pno.id" :class="{ 'editing': pno.edited }">
+          <td class="ChangeDate" style="background-color: #f4f4f4; text-align: left;">{{ pno.ChangeDate }}</td>
+          <td class="Model" style="background-color: #f4f4f4; text-align: left;">{{ pno.Model }}</td>
+          <td class="Engine" style="background-color: #f4f4f4; text-align: left;">{{ pno.Engine }}</td>
+          <td class="SalesVersion" style="background-color: #f4f4f4; text-align: left;">{{ pno.SalesVersion }}</td>
+          <td class="Gearbox" style="background-color: #f4f4f4; text-align: left;">{{ pno.Gearbox }}</td>
           <td class="ChangeTable" style="background-color: #f4f4f4; text-align: left;">{{ pno.ChangeTable }}</td>
-          <td class="ChangeType" style="background-color: #f4f4f4; text-align: left;">{{ pno.ChangeType }}</td>
           <td class="ChangeField" style="background-color: #f4f4f4; text-align: left;">{{ pno.ChangeField }}</td>
           <td class="ChangeFrom" style="background-color: #f4f4f4; text-align: left;">{{ pno.ChangeFrom }}</td>
           <td class="ChangeTo" style="background-color: #f4f4f4; text-align: left;">{{ pno.ChangeTo }}</td>
-          <td class="ChangeDate" style="background-color: #f4f4f4; text-align: left;">{{ pno.ChangeDate }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <!-- Pricing and Technical Error Table -->
+    <table v-if="displaytable === 'ERROR' || displaytable === 'WARNING'">
+      <thead v-if="log.length >= 1">
+        <tr>
+          <th>Date</th>
+          <th>Message</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="pno in log" :key="pno.id" :class="{ 'editing': pno.edited }">
+          <td class="LogDate" style="background-color: #f4f4f4; text-align: left;">{{ pno.LogDate }}</td>
+          <td class="LogMessage" style="background-color: #f4f4f4; text-align: left;">{{ pno.LogMessage }}</td>
         </tr>
       </tbody>
     </table>
@@ -61,91 +67,58 @@
 
 
 <script>
-import { usePNOStore } from '../stores/pno.js'
 import { useEntitiesStore } from '../stores/entities.js'
+import axios from '../api/index.js'
 import index from '../api/index.js'
 
 export default {
   name: 'ReportsView',
   data() {
     return {
-      model: '',
-      model_year: '0',
-      engine: '',
-      salesversion: '',
-      gearbox: '',
       displaytable: '',
-      pnoStore: usePNOStore(),
+      log: [],
       entitiesStore: useEntitiesStore(),
-      countries: useEntitiesStore().countries,
       selectedCountry: '',
     }
   },
   async created() {
-    this.pnoStore.setModelYear('0');
-    this.entitiesStore.setModelYear('0');
-  },
-  computed: {
-    filteredPnos() {
-      return this.pnoStore.filteredPnos(this.model, this.engine, this.salesversion, this.gearbox)
-    },
-    models() {
-      return this.pnoStore.filteredModels(this.engine, this.salesversion, this.gearbox)
-    },
-    model_years() {
-      return this.pnoStore.available_model_years
-    },
-    tableChangelog() {
-      return this.pnoStore.pnosChangelog
-    },
+    this.selectedCountry = this.entitiesStore.country;
+    this.log = [];
   },
   methods: {
 
-    async refreshModelyear() {
-      await this.pnoStore.setModelYear(this.model_year)
-      await this.entitiesStore.setModelYear(this.model_year)
-      this.model = '';
-      this.engine = '';
-      this.salesversion = '';
-      this.gearbox = '';
-
-      await this.fetchEntities();
-
-      await this.pnoStore.fetchPnos().catch((error) => {
-        console.error('Error fetching PNOs', error)
+    async fetchLog() {
+      this.log = [];
+      let path = '';
+      if (this.displaytable === 'Changelog') {
+        path = `/db/${this.selectedCountry.Code}/0/changelog`
+      }
+      if (this.displaytable === 'WARNING' || this.displaytable === 'ERROR') {
+        path = `/db/${this.selectedCountry.Code}/0/dq-log?&LogType=${this.displaytable}`
+      }
+      return await index.get(path).then((response) => {
+        response.data.forEach(item => {
+          if (this.displaytable === 'Changelog') {
+            let date = new Date(item.ChangeDate);
+            item.ChangeDate = date.toISOString().replace('T', ' ').substring(0, 19);
+          }
+          if (this.displaytable === 'WARNING' || this.displaytable === 'ERROR') {
+            let date = new Date(item.LogDate);
+            item.LogDate = date.toISOString().replace('T', ' ').substring(0, 19);
+          }
+        });
+        this.log = response.data;
+      }).catch((error) => {
+        console.error('Error fetching changelog:', error)
       })
     },
-
-    async fetchEntities() {
-      if (this.displaytable === 'Changelog') {
-        await this.entitiesStore.fetchModels().catch((error) => {
-          console.error('Error fetching models', error)
-        })
-      }
-    },
-
-    async fetchPnoSpecifics() {
-      if (this.displaytable === 'Changelog') {
-        await this.pnoStore.fetchPnosChangelog(this.model, this.engine, this.salesversion, this.gearbox).catch((error) => {
-          console.error('Error fetching PNOs', error)
-        })
-      }
-    },
-
-    async reset() {
-      this.model_year = '0';
-      this.model = '';
-      this.engine = '';
-      this.salesversion = '';
-      this.gearbox = '';
-      this.displaytable = '';
-      this.customFeatureTable = false;
-      await this.pnoStore.setModelYear('0');
-    },
-    async displaytablereset() {
-      this.model_year = '0';
-      this.model = '';
-      await this.pnoStore.setModelYear('0');
+    async exportTechnicalLog() {
+      const link = document.createElement('a');
+      link.href = `${axios.endpoint}/${this.selectedCountry.Code}/export/technical-logs`;
+      link.setAttribute('download', 'Technical_Log.zip');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     },
   }
 };
