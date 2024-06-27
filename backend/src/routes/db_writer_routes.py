@@ -200,7 +200,9 @@ def delete_customfeatures(country, model_year):
         return {"error": "ID is required"}, 400
     
     # Ensure ids is a list, even if it contains a single element
-    if isinstance(ids, str):
+    if not isinstance(ids, str):
+        return {"error": "ID must be a string"}, 400
+    if ',' not in ids:
         ids = [ids]
     else:
         ids = ids.split(',')
@@ -214,12 +216,11 @@ def delete_customfeatures(country, model_year):
     table_name = DBOperations.instance.config.get('AUTH', 'CFEAT')
 
     # Construct the DELETE query with placeholders
-    placeholders = ', '.join(['?'] * len(ids))
-    delete_query = f"DELETE FROM {table_name} WHERE {condition}"
+    delete_query = f"DELETE FROM {table_name} WHERE {' AND '.join(condition)}"
     
     try:
         with DBOperations.instance.get_cursor() as cursor:
-            cursor.execute(delete_query, tuple(ids))
+            cursor.execute(delete_query)
         return {"message": "Records deleted successfully"}, 200
     except Exception as e:
         DBOperations.instance.logger.error(f"Error deleting records: {e}")
