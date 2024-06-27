@@ -25,7 +25,6 @@ def find_variant_matching_pno_ids(row, df_pno, attributes):
             matches = matches[(matches[attr] == row[attr])]
 
     if matches.empty:
-        # TODO: create report
         return None
 
     # Return all matching PNO IDs
@@ -168,7 +167,7 @@ def sort_df_empty_to_filled(df):
 
     return df_sorted
 
-def df_from_datarows(datarows, dr_columns):
+def df_from_datarows(datarows, dr_columns=None):
     """
     Convert a list of data rows into a pandas DataFrame.
 
@@ -188,6 +187,8 @@ def df_from_datarows(datarows, dr_columns):
         df = df_from_datarows(datarows, dr_columns)
         print(df)
     """
+    if dr_columns is None:
+        return pd.DataFrame(datarows)
 
     rows = [
         {**{drc: datarow[drc] for drc in dr_columns}, **variant}
@@ -305,6 +306,7 @@ def filter_df_by_model_year(df, model_year):
         pandas.DataFrame: The filtered DataFrame.
 
     """
+    df = df.copy()
     if isinstance(model_year, str):
         if not model_year.isdigit():
             raise ValueError("Model year must be a valid integer.")

@@ -52,6 +52,8 @@ class DBOperations:
         if conditions is None:
             conditions = '1=1'
         elif isinstance(conditions, list):
+            if conditions == []:
+                conditions = '1=1'
             conditions = ' AND '.join(conditions)
         else:
             raise ValueError('Conditions must be a list')
@@ -261,7 +263,7 @@ class DBOperations:
             return
         
         df_assigned, df_unassigned = utils.get_pno_ids_from_variants(df_pnos, df)
-        utils.log_df(df_unassigned, 'Packages from CPAM were not assigned to any existing authorized PNOs:', self.logger.warning)
+        # utils.log_df(df_unassigned, ' from CPAM were not assigned to any existing authorized PNOs:', self.logger.warning)
         
         auth_columns = ['PNOID', 'Code', 'RuleName', 'StartDate', 'EndDate']
         auth_conditional_columns = ['PNOID', 'Code', 'StartDate']
@@ -304,7 +306,7 @@ class DBOperations:
             return
 
         df_assigned, df_unassigned = utils.get_pno_ids_from_variants(df_pnos, df, is_relation=False)
-        utils.log_df(df_unassigned, 'Packages from CPAM were not assigned to any existing authorized PNOs:', self.logger.warning)
+        utils.log_df(df_unassigned, 'Dependencies from CPAM were not assigned to any existing authorized PNOs:', self.logger.warning)
 
         df_final = df_assigned.explode('FeatureCode')
         df_final.insert(2, 'RuleName', df_final['RuleCode'].map(lambda x: self.config.get('DEPENDENCIES_NAMES', x)))
@@ -367,58 +369,60 @@ class DBOperations:
             self.logger.info("No VISA data found")
             return
         df_all_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f"CountryCode='{country_code}'"])
-        df_pnos = df_all_pnos.drop('CountryCode', axis=1)
-        if df_pnos.empty:
-            self.logger.info("No existing PNOs found. It doesn't make sense to proceed without PNOs")
-            return
-        
-        # Split the DataFrame into multiple DataFrames
-        df_pno_prices, df_color_pno_prices, df_option_pno_prices, df_upholstery_pno_prices, df_package_pno_prices = utils.split_df(df_visa)
-        
-        relation_columns = ['RelationID', 'StartDate', 'EndDate', 'Price', 'PriceBeforeTax']
-        conditional_columns = ['RelationID', 'StartDate']
+        df_all_pnos = df_all_pnos.drop('CountryCode', axis=1)
+        for model_year in df_visa['ModelYear'].unique():
+            df_pnos = utils.filter_df_by_model_year(df_all_pnos, model_year)
+            if df_pnos.empty:
+                self.logger.info("No existing PNOs found. It doesn't make sense to proceed without PNOs")
+                return
+            
+            # Split the DataFrame into multiple DataFrames
+            df_pno_prices, df_color_pno_prices, df_option_pno_prices, df_upholstery_pno_prices, df_package_pno_prices = utils.split_df(df_visa)
+            
+            relation_columns = ['RelationID', 'StartDate', 'EndDate', 'Price', 'PriceBeforeTax']
+            conditional_columns = ['RelationID', 'StartDate']
 
-        if not df_pno_prices.empty:
-            df_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_pno_prices, is_relation=True)
-            df_pnos_assigned.drop_duplicates(subset=['RelationID', 'StartDate'], keep='last', inplace=True)
-            self.upsert_data_from_df(df_pnos_assigned, self.config.get('RELATIONS', 'PNO_Custom'), relation_columns, conditional_columns)
-            utils.log_df(df_pnos_unassigned, 'PNOs from Visa file unassigned to CPAM PNOs:', self.logger.warning, country_code=country_code)          
-        
-        if not df_color_pno_prices.empty:
-            df_color_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_color_pno_prices, is_relation=False)
-            df_color_pnos_assigned.drop_duplicates(subset=['PNOID', 'Code', 'StartDate'], keep='last', inplace=True)
-            df_colors = self.get_table_df(self.config.get('AUTH', 'COL'))
-            df_color, df_color_unpriced = utils.get_relation_ids(df_colors, df_color_pnos_assigned)
-            self.upsert_data_from_df(df_color, self.config.get('RELATIONS', 'COL_Custom'), relation_columns, conditional_columns)
-            utils.log_df(df_pnos_unassigned, 'PNOs from Visa file unassigned to CPAM PNOs:', self.logger.warning, country_code=country_code)
-            utils.log_df(df_color_unpriced, 'Colors from CPAM did not find a price in the Visa file: ', self.logger.warning, country_code=country_code)
+            if not df_pno_prices.empty:
+                df_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_pno_prices, is_relation=True)
+                df_pnos_assigned.drop_duplicates(subset=['RelationID', 'StartDate'], keep='last', inplace=True)
+                self.upsert_data_from_df(df_pnos_assigned, self.config.get('RELATIONS', 'PNO_Custom'), relation_columns, conditional_columns)
+                utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)        
+            
+            if not df_color_pno_prices.empty:
+                df_color_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_color_pno_prices, is_relation=False)
+                df_color_pnos_assigned.drop_duplicates(subset=['PNOID', 'Code', 'StartDate'], keep='last', inplace=True)
+                df_colors = self.get_table_df(self.config.get('AUTH', 'COL'))
+                df_color, df_color_unpriced = utils.get_relation_ids(df_colors, df_color_pnos_assigned)
+                self.upsert_data_from_df(df_color, self.config.get('RELATIONS', 'COL_Custom'), relation_columns, conditional_columns)
+                utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
+                utils.log_df(df_color_unpriced, 'Color from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
 
-        if not df_option_pno_prices.empty:
-            df_option_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_option_pno_prices, is_relation=False)
-            df_option_pnos_assigned.drop_duplicates(subset=['PNOID', 'Code', 'StartDate'], keep='last', inplace=True)
-            df_options = self.get_table_df(self.config.get('AUTH', 'OPT'))
-            df_option, df_option_unpriced = utils.get_relation_ids(df_options, df_option_pnos_assigned)
-            self.upsert_data_from_df(df_option, self.config.get('RELATIONS', 'OPT_Custom'), relation_columns, conditional_columns)
-            utils.log_df(df_pnos_unassigned, 'PNOs from Visa file unassigned to CPAM PNOs:', self.logger.warning, country_code=country_code)
-            utils.log_df(df_option_unpriced, 'Options from CPAM did not find a price in the Visa file: ', self.logger.warning, country_code=country_code)
+            if not df_option_pno_prices.empty:
+                df_option_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_option_pno_prices, is_relation=False)
+                df_option_pnos_assigned.drop_duplicates(subset=['PNOID', 'Code', 'StartDate'], keep='last', inplace=True)
+                df_options = self.get_table_df(self.config.get('AUTH', 'OPT'))
+                df_option, df_option_unpriced = utils.get_relation_ids(df_options, df_option_pnos_assigned)
+                self.upsert_data_from_df(df_option, self.config.get('RELATIONS', 'OPT_Custom'), relation_columns, conditional_columns)
+                utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
+                utils.log_df(df_option_unpriced, 'Option frpm VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
 
-        if not df_upholstery_pno_prices.empty:
-            df_upholstery_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_upholstery_pno_prices, is_relation=False)
-            df_upholstery_pnos_assigned.drop_duplicates(subset=['PNOID', 'Code', 'StartDate'], keep='last', inplace=True)
-            df_upholsteries = self.get_table_df(self.config.get('AUTH', 'UPH'))
-            df_upholstery, df_upholstery_unpriced = utils.get_relation_ids(df_upholsteries, df_upholstery_pnos_assigned)
-            self.upsert_data_from_df(df_upholstery, self.config.get('RELATIONS', 'UPH_Custom'), relation_columns, conditional_columns)
-            utils.log_df(df_pnos_unassigned, 'PNOs from Visa file unassigned to CPAM PNOs:', self.logger.warning, country_code=country_code)
-            utils.log_df(df_upholstery_unpriced, 'Upholsteries from CPAM did not find a price in the Visa file: ', self.logger.warning, country_code=country_code)
-        
-        if not df_package_pno_prices.empty:
-            df_package_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_package_pno_prices, is_relation=False)
-            df_package_pnos_assigned.drop_duplicates(subset=['PNOID', 'Code', 'StartDate'], keep='last', inplace=True)
-            df_packages = self.get_table_df(self.config.get('AUTH', 'PKG'))
-            df_package, df_package_unpriced = utils.get_relation_ids(df_packages, df_package_pnos_assigned)
-            self.upsert_data_from_df(df_package, self.config.get('RELATIONS', 'PKG_Custom'), relation_columns, conditional_columns)
-            utils.log_df(df_pnos_unassigned, 'PNOs from Visa file unassigned to CPAM PNOs:', self.logger.warning, country_code=country_code)
-            utils.log_df(df_package_unpriced, 'Packages from CPAM did not find a price in the Visa file: ', self.logger.warning, country_code=country_code)
+            if not df_upholstery_pno_prices.empty:
+                df_upholstery_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_upholstery_pno_prices, is_relation=False)
+                df_upholstery_pnos_assigned.drop_duplicates(subset=['PNOID', 'Code', 'StartDate'], keep='last', inplace=True)
+                df_upholsteries = self.get_table_df(self.config.get('AUTH', 'UPH'))
+                df_upholstery, df_upholstery_unpriced = utils.get_relation_ids(df_upholsteries, df_upholstery_pnos_assigned)
+                self.upsert_data_from_df(df_upholstery, self.config.get('RELATIONS', 'UPH_Custom'), relation_columns, conditional_columns)
+                utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
+                utils.log_df(df_upholstery_unpriced, 'Upholstery from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
+            
+            if not df_package_pno_prices.empty:
+                df_package_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_package_pno_prices, is_relation=False)
+                df_package_pnos_assigned.drop_duplicates(subset=['PNOID', 'Code', 'StartDate'], keep='last', inplace=True)
+                df_packages = self.get_table_df(self.config.get('AUTH', 'PKG'))
+                df_package, df_package_unpriced = utils.get_relation_ids(df_packages, df_package_pnos_assigned)
+                self.upsert_data_from_df(df_package, self.config.get('RELATIONS', 'PKG_Custom'), relation_columns, conditional_columns)
+                utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
+                utils.log_df(df_package_unpriced, 'Package from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
 
     def consolidate_translations(self, country_code):
         df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f"CountryCode='{country_code}'"])

@@ -607,7 +607,9 @@ def upsert_visa_file(country, model_year):
     data = request.json
     if not data:
         return 'No data provided', 400
+    new = False
     if 'ID' not in data:
+        new = True
         data['ID'] = str(uuid.uuid4())
     try:
         df_upsert_entry = pd.DataFrame([data])
@@ -617,12 +619,13 @@ def upsert_visa_file(country, model_year):
         all_columns = df_upsert_entry.columns.tolist()  
         conditional_columns = ['ID']
 
-        df_removed_entry = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=[f"ID = '{data['ID']}'"])
-        if not df_removed_entry.empty:
-            df_removed_entry = df_removed_entry.assign(MSRP=None, PriceBeforeTax=None)
-            
-            df_removed_entry = process_visa_df(df_removed_entry)
-            ingest_visa_data(country, df_removed_entry)
+        if not new:
+            df_removed_entry = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=[f"ID = '{data['ID']}'"])
+            if not df_removed_entry.empty:
+                df_removed_entry = df_removed_entry.assign(MSRP=None, PriceBeforeTax=None)
+                df_removed_entry = process_visa_df(df_removed_entry)
+                ingest_visa_data(country, df_removed_entry)
+                
         df_upsert_entry_processed = process_visa_df(df_upsert_entry)
         ingest_visa_data(country, df_upsert_entry_processed)
         
