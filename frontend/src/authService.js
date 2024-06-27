@@ -24,22 +24,16 @@ export const fetchCountriesRoles = async () => {
     if (!account) {
         throw new Error('No active account found');
     }
-    console.log('Fetching countries roles, account:', account);
     try {
         const tokenResponse = await msalInstance.acquireTokenSilent({
             scopes: ['User.Read', 'Group.Read.All'],
             account,
         });
-        console.log('Token acquired:', tokenResponse);
         const userRoles = tokenResponse.idTokenClaims.roles || [];
         if (tokenResponse.accessToken) {
             let groups = await fetchAllGroups(tokenResponse);
-            console.log('Fetched groups:', groups);
-            console.log('Mapped groups:', groups.filter(group => group.displayName.startsWith('odin-')).map(group => group.displayName));
             let parsedGroups = parseGroupNames(groups.filter(group => group.displayName.startsWith('odin-')).map(group => group.displayName));
-            console.log('Parsed groups:', parsedGroups);
             groups = parsedGroups.filter(group => userRoles.includes(group.role));
-            console.log('Filtered groups:', groups);
             useAuthStore().assignCountriesRoles(groups);
         }
     } catch (error) {
@@ -54,20 +48,10 @@ export const fetchCountriesRoles = async () => {
 
                 const userRoles = tokenResponse.idTokenClaims.roles || [];
                 if (tokenResponse.accessToken) {
-                    const headers = new Headers();
-                    headers.append('Authorization', `Bearer ${tokenResponse.accessToken}`);
-                    headers.append('Content-Type', 'application/json');
-
-                    const response = await fetch('https://graph.microsoft.com/v1.0/me/memberOf', { headers });
-                    const data = await response.json();
-
-                    if (response.ok) {
-                        let groups = parseGroupNames(data.value.filter(g => g.displayName.startsWith('odin-')).map(group => group.displayName));
-                        groups = groups.filter(group => userRoles.includes(group.role));
-                        useAuthStore().assignCountriesRoles(groups);
-                    } else {
-                        throw new Error('Failed to fetch group data');
-                    }
+                    let groups = await fetchAllGroups(tokenResponse);
+                    let parsedGroups = parseGroupNames(groups.filter(group => group.displayName.startsWith('odin-')).map(group => group.displayName));
+                    groups = parsedGroups.filter(group => userRoles.includes(group.role));
+                    useAuthStore().assignCountriesRoles(groups);
                 }
             } catch (popupError) {
                 console.error('Token acquisition via popup failed:', popupError);
