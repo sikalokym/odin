@@ -647,6 +647,20 @@ def get_changelog(country, model_year):
     # Merge df_pno_changelog with df_pnos to add the Model, Engine, SalesVersion, and Gearbox columns
     df_pno_changelog = pd.merge(df_pno_changelog, df_pnos, left_on='CHANGECODE', right_on='ID', how='left')
 
+    
+
+    # After merging df_pno_changelog with df_pnos
+    # Remove "PNO" except when part of "PNOCustom", remove "Custom" if not "PNOCustom", and replace "PNOOptionsCustom" with "Options"
+    df_pno_changelog['ChangeTable'] = df_pno_changelog['ChangeTable'].apply(
+        lambda x: x.replace('Custom', '') if 'PNOCustom' not in x else x
+    )
+    df_pno_changelog['ChangeTable'] = df_pno_changelog['ChangeTable'].apply(
+        lambda x: x.replace('PNO', '') if 'PNOCustom' not in x else x
+    )
+    df_pno_changelog['ChangeTable'] = df_pno_changelog['ChangeTable'].apply(
+        lambda x: x.replace('Custom', '') if 'PNOCustom' in x else x
+    )
+
     # Select the columns to keep in the final DataFrame
     final_columns = ['ChangeTable', 'ChangeDate', 'ChangeType', 'ChangeField', 'ChangeFrom', 'ChangeTo', 'Model', 'Engine', 'SalesVersion', 'Gearbox']
     df_pno_changelog = df_pno_changelog[final_columns]
