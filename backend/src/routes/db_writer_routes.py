@@ -205,11 +205,17 @@ def delete_customfeatures(country, model_year):
     else:
         ids = ids.split(',')
 
+    condition = []
+    if len(ids) == 1:
+        condition.append(f"ID = '{ids[0]}'")
+    else:
+        condition.append(f"ID in {tuple(ids)}")
+    
     table_name = DBOperations.instance.config.get('AUTH', 'CFEAT')
 
     # Construct the DELETE query with placeholders
     placeholders = ', '.join(['?'] * len(ids))
-    delete_query = f"DELETE FROM {table_name} WHERE ID IN ({placeholders})"
+    delete_query = f"DELETE FROM {table_name} WHERE {condition}"
     
     try:
         with DBOperations.instance.get_cursor() as cursor:
