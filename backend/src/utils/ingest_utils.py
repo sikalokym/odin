@@ -52,3 +52,17 @@ def is_valid_engine_category(engine_category, year, country_code, model):
 
     # Check if engine_category is in all_cats
     return engine_category.lower() in all_cats
+
+def get_authorization_status(global_auth, market_auth):
+    merged_df = market_auth.merge(global_auth, on=market_auth.columns.tolist(), how='left', indicator=True)
+
+    locally_authorized = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
+    
+    merged_df = global_auth.merge(market_auth, on=global_auth.columns.tolist(), how='left', indicator=True)
+
+    globally_authorized = merged_df[merged_df['_merge'] == 'both'].drop(columns=['_merge'])
+    unauthorized = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
+
+    authorized = pd.concat([globally_authorized, locally_authorized])
+    
+    return authorized, unauthorized

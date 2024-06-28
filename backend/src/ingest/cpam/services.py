@@ -5,8 +5,11 @@ import time
 
 from src.database.db_operations import DBOperations
 from src.ingest.visa_files.services import ingest_visa_data
+from src.utils.ingest_utils import get_authorization_status
 from src.utils.sql_logging_handler import logger
+from src.ingest.visa_files import preprocess
 import src.ingest.cpam.api as cpam
+import src.utils.db_utils as utils
 
 config = configparser.ConfigParser()
 config.read('config/cpam.cfg')
@@ -86,18 +89,50 @@ def ingest_cpam_data(year, car_type, country_code, maf, sw):
     """
     logger.info(f'Processing car type: {car_type}')
 
-    new_entities = DBOperations.instance.collect_entity(cpam.get_dictionary(year, car_type, country_code, maf, sw).get('DataRows', None), country_code)
-    if not new_entities:
-        return
-    DBOperations.instance.collect_auth(cpam.get_authorization(year, car_type, country_code, maf, sw).get('DataRows', None), country_code)
-    DBOperations.instance.collect_package(cpam.get_packages(year, car_type, country_code, 'm', sw).get('PackageDataRows', None), country_code)
-    DBOperations.instance.collect_dependency(cpam.get_dependency_rules(year, car_type, country_code, maf, sw).get('DataRows', None), country_code)
-    DBOperations.instance.collect_feature(cpam.get_features(year, car_type, country_code, maf, sw).get('DataRows', None), country_code)
+    # global_dict_auth = utils.df_from_datarows(cpam.get_dictionary(year, car_type, country_code, '', sw).get('DataRows', None))
+    # market_dict_auth = utils.df_from_datarows(cpam.get_dictionary(year, car_type, country_code, 'm', sw).get('DataRows', None))
+    
+    # if market_dict_auth.empty:
+    #     logger.error('No data found for the market', extra={'country_code': country_code})
+    #     return
+    
+    global_authorization_auth = utils.df_from_datarows(cpam.get_authorization(year, car_type, country_code, '', sw).get('DataRows', None), ['Code', 'DataType'])
+    market_authorization_auth = utils.df_from_datarows(cpam.get_authorization(year, car_type, country_code, 'm', sw).get('DataRows', None), ['Code', 'DataType'])
+    
+    authorized_packages = utils.df_from_package_datarows(cpam.get_packages(year, car_type, country_code, 'm', sw).get('PackageDataRows', None))
+    
+    global_dependency_auth = utils.df_from_datarows(cpam.get_dependency_rules(year, car_type, country_code, '', sw).get('DataRows', None), ['RuleCode', 'ItemCode', 'FeatureCode']).explode('FeatureCode')
+    market_dependency_auth = utils.df_from_datarows(cpam.get_dependency_rules(year, car_type, country_code, 'm', sw).get('DataRows', None), ['RuleCode', 'ItemCode', 'FeatureCode']).explode('FeatureCode')
+    
+    global_feat_auth = utils.df_from_datarows(cpam.get_features(year, car_type, country_code, '', sw).get('DataRows', None), ['Code', 'Special', 'Reference'])
+    market_feat_auth = utils.df_from_datarows(cpam.get_features(year, car_type, country_code, 'm', sw).get('DataRows', None), ['Code', 'Special', 'Reference'])
+    
+    # authorized_dictionaries, unauthorized_dictionaries = get_authorization_status(global_dict_auth, market_dict_auth)
+    authorized_authorizations, unauthorized_authorizations = get_authorization_status(global_authorization_auth, market_authorization_auth)
+    authorized_dependencies, unauthorized_dependencies = get_authorization_status(global_dependency_auth, market_dependency_auth)
+    authorized_features, unauthorized_features = get_authorization_status(global_feat_auth, market_feat_auth)
+    
+    # DBOperations.instance.collect_entity(authorized_dictionaries, country_code)
+    # DBOperations.instance.collect_auth(authorized_authorizations, country_code)
+    DBOperations.instance.collect_package(authorized_packages, country_code)
+    DBOperations.instance.collect_dependency(authorized_dependencies, country_code)
+    DBOperations.instance.collect_feature(authorized_features, country_code)
+    
+    DBOperations.instance.drop_feature(unauthorized_features, country_code)
+    DBOperations.instance.drop_dependency(unauthorized_dependencies, country_code)
+    DBOperations.instance.drop_auth(unauthorized_authorizations, country_code)
+    ### Don't drop entities because you might drop something used in a previous processed car type
+    # DBOperations.instance.drop_entity(unauthorized_dictionaries, country_code)
+    
     DBOperations.instance.consolidate_translations(country_code)
     
     logger.info('Data insertion completed', extra={'country_code': country_code})
 
-    ingest_visa_data(country_code, None)
+    conditions = [f"CountryCode = '{country_code}'", f"ModelYear = '{year}'", f"CarType = '{car_type}'"]
+    df_raw = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=conditions)
+    df_processed = preprocess.process_visa_df(df_raw)
+    df_processed.insert(7, 'CountryCode', country_code)
+    ingest_visa_data(country_code, df_processed)
 
 cache = TTLCache(maxsize=100, ttl=60)
 

@@ -392,6 +392,32 @@ def format_float_string(float_string):
     return formatted_string
 
 def log_df(df, msg_prefix, callable_logger, country_code=None):
+    """
+    Logs each row of the DataFrame using a specified logging function.
+
+    This function iterates through each row of a provided DataFrame `df` and constructs a log message
+    prefixed with `msg_prefix`. It appends each column's name and value to this message.
+    The message is then passed to the `callable_logger` function.
+
+    If `country_code` is not provided, the function attempts to retrieve it from the first row
+    of the 'CountryCode' column in the DataFrame. If the 'CountryCode' column is missing, the function
+    returns without logging.
+
+    Parameters:
+    - df (pd.DataFrame): The DataFrame to log. Each row is logged separately.
+    - msg_prefix (str): A string to prefix to each log message for context or categorization.
+    - callable_logger (callable): A logging function that takes two arguments: the message string
+      and an optional 'extra' dictionary containing additional data about the log (in this case, 'country_code').
+    - country_code (str, optional): An optional country code to include in the log. If not provided,
+      the function attempts to extract it from the DataFrame.
+
+    Returns:
+    - None: This function does not return any value.
+
+    Raises:
+    - KeyError: If the 'country_code' is not supplied and the 'CountryCode' column is missing in the DataFrame.
+    
+    """
     if df.empty:
         return
     if country_code is None:
@@ -403,7 +429,7 @@ def log_df(df, msg_prefix, callable_logger, country_code=None):
         msg = msg_prefix + ' '
         for column in df.columns:
             msg += f'{column}: {row[column]} '
-
+        
         callable_logger(msg, extra={'country_code': country_code})
 
 def get_column_map(reverse=False):
@@ -453,6 +479,20 @@ def get_column_map(reverse=False):
     return column_map
 
 def fill_custom_name(group):
+    """
+    Fills missing values in the 'CustomName' column of a DataFrame group based on its contents.
+
+    This function examines the 'CustomName' column in a provided DataFrame group. If there is exactly one unique,
+    non-null value in this column, it fills all missing (NaN) entries in the column with this unique value. If there
+    are zero or multiple unique non-null values, it fills the missing entries with an empty string.
+
+    Parameters:
+    - group (pd.DataFrame): The DataFrame group containing the 'CustomName' column to be processed.
+
+    Returns:
+    - pd.Series: The 'CustomName' column with missing values filled.
+
+    """
     unique_not_null = group['CustomName'].dropna().unique()
     if len(unique_not_null) == 1:
         return group['CustomName'].fillna(unique_not_null[0])
@@ -460,6 +500,41 @@ def fill_custom_name(group):
         return group['CustomName'].fillna('')
 
 def validate_and_format_date(date_str, default_date):
+    """
+    Validates and formats a date string by extracting the date part from a datetime string.
+
+    This function checks if the provided date string is None or empty. If it is, the function returns a default date.
+    Otherwise, it attempts to split the datetime string by 'T' to isolate and return just the date part.
+
+    Parameters:
+    - date_str (str): The date string in ISO 8601 format (e.g., '2020-01-01T12:00:00').
+    - default_date (str): The default date string to return if `date_str` is None or empty.
+
+    Returns:
+    - str: The formatted date string or the default date if the original string is invalid.
+
+    Example:
+    ```python
+    # Example usage
+    formatted_date = validate_and_format_date('2020-01-01T15:30:00', '1900-01-01')
+    print(formatted_date)  # Outputs: '2020-01-01'
+    
+    # Example with invalid input
+    formatted_date = validate_and_format_date('', '1900-01-01')
+    print(formatted_date)  # Outputs: '1900-01-01'
+    ```
+    """
     if (date_str is None) or (date_str == ''):
         return default_date
     return date_str.split('T')[0]
+
+def get_last_week_date():
+    """
+    Get last weeks date in the format YYYYWW.
+    """
+    week = pd.Timestamp.now().week - 1
+    year = pd.Timestamp.now().year
+    if week == 0:
+        year -= 1
+        week = 52
+    return year * 100 + week

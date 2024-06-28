@@ -186,11 +186,7 @@ class DBOperations:
         except Exception as e:
             self.logger.error(f"Error dropping temporary staging table: {e}")
 
-    def collect_entity(self, datarows, country_code):
-        if not datarows:
-            self.logger.warning('No entity data to insert')
-            return False
-        df = pd.DataFrame(datarows)
+    def collect_entity(self, df, country_code):
         df['DataType'] = df.apply(lambda row: row['MainDataType'] if row['DataType'] == '' else row['DataType'], axis=1)
         df = df.drop('MainDataType', axis=1)
         df.insert(5, 'CountryCode', country_code)
@@ -239,12 +235,44 @@ class DBOperations:
 
         return True
 
-    def collect_auth(self, datarows, country_code):
-        if not datarows:
-            self.logger.debug('No auth data to insert')
-            return
-        df = utils.df_from_datarows(datarows, ['Code', 'DataType'])
+    def drop_entity(self, df, country_code):
+        df['DataType'] = df.apply(lambda row: row['MainDataType'] if row['DataType'] == '' else row['DataType'], axis=1)
+        df = df.drop('MainDataType', axis=1)
 
+        for data_type, group in df.groupby('DataType'):
+            table_name = self.config.get('TABLES', data_type)
+            group = group[['Code','StartDate']]
+            self.delete_matching_entries(group, table_name)
+
+    def delete_matching_entries(self, df, table_name):
+        # Group by 'StartDate' and aggregate 'Code' into lists
+        aggregated = df.groupby('StartDate').agg({'Code': lambda x: list(x)}).reset_index()
+
+        # Iterate through each group to form conditions
+        conditions = []
+        for _, row in aggregated.iterrows():
+            codes = row['Code']
+            start_date = row['StartDate']
+            
+            # Check if codes list has only one element or more
+            if len(codes) == 1:
+                condition = f"(Code = {codes[0]} AND StartDate = {start_date})"
+            else:
+                codes_str = tuple(codes)
+                condition = f"(Code IN {codes_str} AND StartDate = {start_date})"
+            
+            conditions.append(condition)
+
+        # Form the full SQL DELETE statement
+        conditions_str = ' OR '.join(conditions)
+        delete_query = f"DELETE FROM {table_name} WHERE {conditions_str};"
+
+        # Execute the delete query using the context manager
+        with self.get_cursor() as cursor:
+            cursor.execute(delete_query)
+            self.logger.info(f"Deleted {cursor.rowcount} entries from {table_name}")
+
+    def collect_auth(self, df, country_code):
         df_pno = df[df['DataType'] == 'PNO'].copy()
         df_pno.insert(9, 'CountryCode', country_code)
         df = df[df['DataType'] != 'PNO'].copy()
@@ -253,10 +281,19 @@ class DBOperations:
         pno_columns = ['Code', 'Model', 'Engine', 'SalesVersion', 'Steering', 'Gearbox', 'Body', 'MarketCode', 'CountryCode', 'StartDate', 'EndDate']
         conditional_columns = ['Code', 'CountryCode', 'StartDate']
         df_pno = df_pno.drop(['RuleName', 'DataType'], axis=1)
+        
         if not df_pno.empty:
             self.upsert_data_from_df(df_pno, self.config.get('AUTH', 'PNO'), pno_columns, conditional_columns)
         
-        df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f"CountryCode='{country_code}'"])
+        model = df.iloc[0]['Model']
+        start_dates = df['StartDate'].unique().tolist()
+        conditions = [f"CountryCode='{country_code}'", f"Model='{model}'"]
+        if len(start_dates) == 1:
+            conditions.append(f"StartDate={start_dates[0]}")
+        else:
+            conditions.append(f"StartDate IN {tuple(start_dates)}")
+        
+        df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=conditions)
         df_pnos = df_pnos.drop('CountryCode', axis=1)
         if df_pnos.empty:
             self.logger.warning("No existing PNOs found. It doesn't make sense to proceed without PNOs")
@@ -293,13 +330,105 @@ class DBOperations:
             group['CustomName'] = group.groupby('Code').apply(utils.fill_custom_name).reset_index(drop=True)
             self.upsert_data_from_df(df_inserted, self.config.get('RELATIONS', f'{data_type}_Custom'), ['RelationID', 'CustomName', 'StartDate', 'EndDate'], ['RelationID'])
 
-    def collect_dependency(self, datarows, country_code):
-        if not datarows:
-            self.logger.debug('No dependencies data to insert')
+    def delete_ids_from_table(self, table_name, ids, id_column):
+        if not ids:
+            self.logger.info('No IDs to delete')
             return
-        df = utils.df_from_datarows(datarows, ['RuleCode', 'ItemCode', 'FeatureCode'])
+        condition = ''
+        if len(ids) == 1:
+            condition = f"{id_column} = {ids[0]}"
+        else:
+            condition = f"{id_column} IN {tuple(ids)}"
+            
+        with self.get_cursor() as cursor:
+            cursor.execute(f"DELETE FROM {table_name} WHERE {condition};")
+            self.logger.info(f"Deleted {cursor.rowcount} entries from {table_name}")
+
+    def set_enddate(self, table_name, ids, id_column):
+        if not ids:
+            self.logger.info('No IDs to delete')
+            return
+        condition = ''
+        if len(ids) == 1:
+            condition = f"{id_column} = {ids[0]}"
+        else:
+            condition = f"{id_column} IN {tuple(ids)}"
         
-        df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f"CountryCode='{country_code}'"])
+        df = self.get_table_df(table_name, columns=[id_column], conditions=[condition])
+        # end date should be last week's date in format 202514
+        end_date = utils.get_last_week_date()
+        df['EndDate'] = end_date
+        
+        self.upsert_data_from_df(df, table_name, [id_column, 'EndDate'], [id_column])
+
+    def drop_auth(self, df_unauth, country_code):
+        self.logger.debug('deleting PNOs')
+        model = df_unauth.iloc[0]['Model']
+        start_dates = df_unauth['StartDate'].unique().tolist()
+        conditions = [f"CountryCode='{country_code}'", f"Model='{model}'"]
+        if len(start_dates) == 1:
+            conditions.append(f"StartDate={start_dates[0]}")
+        else:
+            conditions.append(f"StartDate IN {tuple(start_dates)}")
+        
+        df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=conditions)
+        df_pnos = df_pnos.drop('CountryCode', axis=1)
+        if df_pnos.empty:
+            self.logger.warning("No existing PNOs found. It doesn't make sense to proceed without PNOs")
+            return
+        
+        df, _ = utils.get_pno_ids_from_variants(df_pnos, df_unauth)
+        df_non_pno = df[df['DataType'] != 'PNO']
+        if not df_non_pno.empty:
+            for data_type, group in df_non_pno.groupby('DataType'):
+                group = group.drop('DataType', axis=1)
+                filter_func = lambda row: f"PNOID = '{row['PNOID']}' AND Code = '{row['Code']}'" if group.shape[0] == 1 else f"(PNOID = '{row['PNOID']}' AND Code = '{row['Code']}')"
+                
+                group['Condition'] = group.apply(filter_func, axis=1)
+                conditions = [' OR '.join(group['Condition'].tolist())]
+                
+                df_inserted = self.get_table_df(self.config.get('AUTH', data_type), columns=['ID'], conditions=conditions)
+                ids = df_inserted['ID'].unique().tolist()
+                if ids:
+                    self.delete_ids_from_table(self.config.get('RELATIONS', f'{data_type}_Custom'), ids, 'RelationID')
+                    self.delete_ids_from_table(self.config.get('AUTH', data_type), ids, 'ID')
+        
+        df_pno = df[df['DataType'] == 'PNO']
+        pnoids = df_pno['PNOID'].unique().tolist()
+        if not pnoids:
+            return
+        conds = [f"PNOID = '{pnoids[0]}'"] if len(pnoids) == 1 else [f"PNOID IN {tuple(pnoids)}"]
+        
+        self.delete_ids_from_table(self.config.get('AUTH', 'FEAT'), pnoids, 'PNOID')
+        self.delete_ids_from_table(self.config.get('AUTH', 'CFEAT'), pnoids, 'PNOID')
+        related_tables = ['COL', 'OPT', 'UPH', 'PKG']
+        for table in related_tables:
+            tmp_df = self.get_table_df(self.config.get('AUTH', table), ['ID'], conditions=conds)
+            if tmp_df.empty:
+                continue
+            rel_ids = tmp_df['ID'].unique().tolist()
+            self.delete_ids_from_table(self.config.get('RELATIONS', f'{table}_Custom'), rel_ids, 'RelationID')
+            self.delete_ids_from_table(self.config.get('AUTH', table), rel_ids, 'ID')
+        tmp_df = self.get_table_df(self.config.get('AUTH', 'PNO'), ['ID'], conditions=pno_conds)
+        
+        self.delete_ids_from_table(self.config.get('DEPENDENCIES', 'OFO'), pnoids, 'PNOID')
+        
+        pno_conds = [f"ID = '{pnoids[0]}'"] if len(pnoids) == 1 else [f"ID IN {tuple(pnoids)}"]
+        if tmp_df.empty:
+            return
+        self.delete_ids_from_table(self.config.get('RELATIONS', 'PNO_Custom'), pnoids, 'RelationID')
+        self.delete_ids_from_table(self.config.get('AUTH', 'PNO'), pnoids, 'ID')
+
+    def collect_dependency(self, df, country_code):
+        model = df.iloc[0]['Model']
+        start_dates = df['StartDate'].unique().tolist()
+        conditions = [f"CountryCode='{country_code}'", f"Model='{model}'"]
+        if len(start_dates) == 1:
+            conditions.append(f"StartDate={start_dates[0]}")
+        else:
+            conditions.append(f"StartDate IN {tuple(start_dates)}")
+        
+        df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=conditions)
         df_pnos = df_pnos.drop('CountryCode', axis=1)
         if df_pnos.empty:
             self.logger.warning("No existing PNOs found. It doesn't make sense to proceed without PNOs")
@@ -317,14 +446,49 @@ class DBOperations:
         for data_type, group in df_final.groupby('RuleCode'):
             self.upsert_data_from_df(group, self.config.get('DEPENDENCIES', data_type), dependency_columns, dependency_conditional_columns)
 
-    def collect_feature(self, datarows, country_code):
-        if not datarows:
-            self.logger.info('No feature data to insert')
-            return
-        df = utils.df_from_datarows(datarows, ['Code', 'Special', 'Reference'])
-        df['Code'] = df['Code'].str.strip()
-        df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f"CountryCode='{country_code}'"])
+    def drop_dependency(self, df, country_code):
+        model = df.iloc[0]['Model']
+        start_dates = df['StartDate'].unique().tolist()
+        conditions = [f"CountryCode='{country_code}'", f"Model='{model}'"]
+        if len(start_dates) == 1:
+            conditions.append(f"StartDate={start_dates[0]}")
+        else:
+            conditions.append(f"StartDate IN {tuple(start_dates)}")
+        
+        df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=conditions)
         df_pnos = df_pnos.drop('CountryCode', axis=1)
+        if df_pnos.empty:
+            self.logger.warning("No existing PNOs found. It doesn't make sense to proceed without PNOs")
+            return
+        
+        df_assigned, _ = utils.get_pno_ids_from_variants(df_pnos, df, is_relation=False)
+        
+        df_final = df_assigned.explode('FeatureCode')
+        
+        for data_type, group in df_final.groupby('RuleCode'):
+            filter_func = lambda row: f"PNOID = '{row['PNOID']}' AND ItemCode = '{row['ItemCode']}' AND FeatureCode = '{row['FeatureCode']}'" if group.shape[0] == 1 else f"(PNOID = '{row['PNOID']}' AND ItemCode = '{row['ItemCode']}' AND FeatureCode = '{row['FeatureCode']}')"
+            
+            group['Condition'] = group.apply(filter_func, axis=1)
+            conditions = [' OR '.join(group['Condition'].tolist())]
+            
+            df_inserted = self.get_table_df(self.config.get('DEPENDENCIES', data_type), columns=['ID'], conditions=conditions)
+            ids = df_inserted['ID'].unique().tolist()
+            if ids:
+                self.delete_ids_from_table(self.config.get('DEPENDENCIES', data_type), ids, 'ID')
+            else:
+                self.logger.info('No dependencies to delete')
+    
+    def collect_feature(self, df, country_code):
+        df['Code'] = df['Code'].str.strip()
+        model = df.iloc[0]['Model']
+        start_dates = df['StartDate'].unique().tolist()
+        conditions = [f"CountryCode='{country_code}'", f"Model='{model}'"]
+        if len(start_dates) == 1:
+            conditions.append(f"StartDate={start_dates[0]}")
+        else:
+            conditions.append(f"StartDate IN {tuple(start_dates)}")
+        
+        df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=conditions)
         if df_pnos.empty:
             self.logger.info("No existing PNOs found. It doesn't make sense to proceed without PNOs")
             return
@@ -341,13 +505,38 @@ class DBOperations:
         feature_conditional_columns = ['PNOID', 'Code', 'StartDate']
         self.logger.info('Inserting features')
         self.upsert_data_from_df(df_assigned, self.config.get('AUTH', 'FEAT'), feature_columns, feature_conditional_columns)
-
-    def collect_package(self, datarows, country_code):
-        if not datarows:
-            self.logger.info('No package data to insert')
-            return
+    
+    def drop_feature(self, df, country_code):
+        df['Code'] = df['Code'].str.strip()
+        model = df.iloc[0]['Model']
+        start_dates = df['StartDate'].unique().tolist()
+        conditions = [f"CountryCode='{country_code}'", f"Model='{model}'"]
+        if len(start_dates) == 1:
+            conditions.append(f"StartDate={start_dates[0]}")
+        else:
+            conditions.append(f"StartDate IN {tuple(start_dates)}")
         
-        df = utils.df_from_package_datarows(datarows)
+        df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=conditions)
+        if df_pnos.empty:
+            self.logger.info("No existing PNOs found. It doesn't make sense to proceed without PNOs")
+            return
+
+        df_assigned, _ = utils.get_pno_ids_from_variants(df_pnos, df)
+        
+        self.logger.info('Deleting features')
+        filter_func = lambda row: f"PNOID = '{row['PNOID']}' AND Code = '{row['Code']}'" if df_assigned.shape[0] == 1 else f"(PNOID = '{row['PNOID']}' AND Code = '{row['Code']}')"
+        
+        df_assigned['Condition'] = df_assigned.apply(filter_func, axis=1)
+        conditions = [' OR '.join(df_assigned['Condition'].tolist())]
+        
+        df_inserted = self.get_table_df(self.config.get('AUTH', 'FEAT'), columns=['ID'], conditions=conditions)
+        ids = df_inserted['ID'].unique().tolist()
+        if ids:
+            self.delete_ids_from_table(self.config.get('AUTH', 'FEAT'), ids, 'ID')
+        else:
+            self.logger.info('No features to delete')
+
+    def collect_package(self, df, country_code):
         df['StartDate'] = df['StartDate'].astype(int)
         df['EndDate'] = df['EndDate'].astype(int)
         df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f"CountryCode='{country_code}'"])
@@ -371,6 +560,7 @@ class DBOperations:
         df_all_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f"CountryCode='{country_code}'"])
         df_all_pnos = df_all_pnos.drop('CountryCode', axis=1)
         for model_year in df_visa['ModelYear'].unique():
+            model_year = int(model_year)
             df_pnos = utils.filter_df_by_model_year(df_all_pnos, model_year)
             if df_pnos.empty:
                 self.logger.info("No existing PNOs found. It doesn't make sense to proceed without PNOs")
@@ -386,7 +576,7 @@ class DBOperations:
                 df_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_pno_prices, is_relation=True)
                 df_pnos_assigned.drop_duplicates(subset=['RelationID', 'StartDate'], keep='last', inplace=True)
                 self.upsert_data_from_df(df_pnos_assigned, self.config.get('RELATIONS', 'PNO_Custom'), relation_columns, conditional_columns)
-                utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)        
+                # utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)        
             
             if not df_color_pno_prices.empty:
                 df_color_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_color_pno_prices, is_relation=False)
@@ -394,8 +584,8 @@ class DBOperations:
                 df_colors = self.get_table_df(self.config.get('AUTH', 'COL'))
                 df_color, df_color_unpriced = utils.get_relation_ids(df_colors, df_color_pnos_assigned)
                 self.upsert_data_from_df(df_color, self.config.get('RELATIONS', 'COL_Custom'), relation_columns, conditional_columns)
-                utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
-                utils.log_df(df_color_unpriced, 'Color from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
+                # utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
+                # utils.log_df(df_color_unpriced, 'Color from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
 
             if not df_option_pno_prices.empty:
                 df_option_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_option_pno_prices, is_relation=False)
@@ -403,8 +593,8 @@ class DBOperations:
                 df_options = self.get_table_df(self.config.get('AUTH', 'OPT'))
                 df_option, df_option_unpriced = utils.get_relation_ids(df_options, df_option_pnos_assigned)
                 self.upsert_data_from_df(df_option, self.config.get('RELATIONS', 'OPT_Custom'), relation_columns, conditional_columns)
-                utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
-                utils.log_df(df_option_unpriced, 'Option frpm VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
+                # utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
+                # utils.log_df(df_option_unpriced, 'Option frpm VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
 
             if not df_upholstery_pno_prices.empty:
                 df_upholstery_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_upholstery_pno_prices, is_relation=False)
@@ -412,8 +602,8 @@ class DBOperations:
                 df_upholsteries = self.get_table_df(self.config.get('AUTH', 'UPH'))
                 df_upholstery, df_upholstery_unpriced = utils.get_relation_ids(df_upholsteries, df_upholstery_pnos_assigned)
                 self.upsert_data_from_df(df_upholstery, self.config.get('RELATIONS', 'UPH_Custom'), relation_columns, conditional_columns)
-                utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
-                utils.log_df(df_upholstery_unpriced, 'Upholstery from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
+                # utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
+                # utils.log_df(df_upholstery_unpriced, 'Upholstery from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
             
             if not df_package_pno_prices.empty:
                 df_package_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_package_pno_prices, is_relation=False)
@@ -421,8 +611,8 @@ class DBOperations:
                 df_packages = self.get_table_df(self.config.get('AUTH', 'PKG'))
                 df_package, df_package_unpriced = utils.get_relation_ids(df_packages, df_package_pnos_assigned)
                 self.upsert_data_from_df(df_package, self.config.get('RELATIONS', 'PKG_Custom'), relation_columns, conditional_columns)
-                utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
-                utils.log_df(df_package_unpriced, 'Package from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
+                # utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
+                # utils.log_df(df_package_unpriced, 'Package from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
 
     def consolidate_translations(self, country_code):
         df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f"CountryCode='{country_code}'"])
