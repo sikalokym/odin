@@ -19,7 +19,7 @@ def check_country():
         return jsonify({"error": "Country code is missing or invalid"}), 400
     supported_countries = get_supported_countries(country)
     if supported_countries.empty:
-        return jsonify({"error": "Country code is missing or invalid"}), 400
+        return jsonify({"error": "Country code is invalid"}), 400
 
 @bp_db_reader.route('/engine_cats', methods=['GET'])
 def retrieve_engine_cats(country, model_year):
