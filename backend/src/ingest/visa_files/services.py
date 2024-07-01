@@ -28,7 +28,7 @@ def ingest_visa_data(country_code, df_processed):
     if df_processed.empty:
         return
     
-    def process_and_upsert(df, condition_col, drop_cols, df_tmp):
+    def process_visa_type(df, condition_col, drop_cols, df_tmp):
         if condition_col:
             filtered_df = df[df[condition_col] != '']
         else:
@@ -46,11 +46,11 @@ def ingest_visa_data(country_code, df_processed):
     df_processed[['Color', 'Options', 'Upholstery', 'Package']] = df_processed[['Color', 'Options', 'Upholstery', 'Package']].fillna('')
 
     # Processing different cases
-    df_res = process_and_upsert(df_processed, None, ['Color', 'Options', 'Upholstery', 'Package'], df_res)
-    df_res = process_and_upsert(df_processed, 'Color', ['Options', 'Upholstery', 'Package'], df_res)
-    df_res = process_and_upsert(df_processed, 'Options', ['Color', 'Upholstery', 'Package'], df_res)
-    df_res = process_and_upsert(df_processed, 'Upholstery', ['Color', 'Options', 'Package'], df_res)
-    df_res = process_and_upsert(df_processed, 'Package', ['Color', 'Options', 'Upholstery'], df_res)
+    df_res = process_visa_type(df_processed, None, ['Color', 'Options', 'Upholstery', 'Package'], df_res)
+    df_res = process_visa_type(df_processed, 'Color', ['Options', 'Upholstery', 'Package'], df_res)
+    df_res = process_visa_type(df_processed, 'Options', ['Color', 'Upholstery', 'Package'], df_res)
+    df_res = process_visa_type(df_processed, 'Upholstery', ['Color', 'Options', 'Package'], df_res)
+    df_res = process_visa_type(df_processed, 'Package', ['Color', 'Options', 'Upholstery'], df_res)
     DBOperations.instance.assign_prices_from_visa_dataframe(country_code, df_res)
 
 def get_available_visa_files(country_code, model_year=None, visa_columns=None):

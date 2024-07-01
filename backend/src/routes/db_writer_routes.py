@@ -464,7 +464,7 @@ def copy_sales_channel(country, model_year):
         clo_df['ID'] = clo_df['ID'].apply(lambda x: str(uuid.uuid4()))
         clo_df['ChannelID'] = clo_df['ChannelID'].apply(lambda x: df_sales_channels[df_sales_channels['OldID'] == x]['ID'].values[0])
     
-    df_sales_channels.drop(columns=['OldID'], inplace=True)
+    df_sales_channels = df_sales_channels.drop(columns=['OldID'])
     try:
         DBOperations.instance.upsert_data_from_df(df_sales_channels, table_name, df_sales_channels.columns.tolist(), ['ID'])
         DBOperations.instance.upsert_data_from_df(discounts_df, discount_table, discounts_df.columns.tolist(), ['ID'])

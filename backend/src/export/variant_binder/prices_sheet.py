@@ -49,7 +49,7 @@ def get_sheet(ws, df_valid_pnos, df_sales_versions, title, time, df_engines_type
         curr_row = insert_engines_type_title(ws, type, curr_row)
         en_group_prices = group.groupby('Engine').agg({'Price': 'mean'}).sort_values(by='Price', ascending=True).index.tolist()
         df_group_en['Code'] = pd.Categorical(df_group_en['Code'], en_group_prices)
-        df_group_en.sort_values(by='Code', inplace=True)
+        df_group_en = df_group_en.sort_values(by='Code')
         curr_row = insert_table(ws, group, df_sales_versions, df_group_gb, df_group_en, curr_row)
         curr_row += 1
     
@@ -112,8 +112,6 @@ def insert_mwst_line(ws, curr_row, curr_col):
         TextBlock(InlineFont(b=True), 'EUR inkl. 19% MwSt.'),
         '\nEUR ohne MwSt.'
     )
-    # Assign the RichText to the cell
-    
     ws.row_dimensions[curr_row].height = 28
     ws.merge_cells(start_row=curr_row, start_column=1, end_row=curr_row, end_column=curr_col)
     ws.cell(row=curr_row, column=1).value = rich
@@ -211,7 +209,7 @@ def fetch_vb_price_data(country, df_valid_pnos, time):
 
     # sort Code by en_codes
     df_en['Code'] = pd.Categorical(df_en['Code'], en_codes)
-    df_en.sort_values(by='Code', inplace=True)
+    df_en = df_en.sort_values(by='Code')
 
     df_en['CustomName'] = df_en['CustomName'].combine_first(df_en['MarketText'])
     df_en = df_en[['Code', 'CustomName', 'Performance']]

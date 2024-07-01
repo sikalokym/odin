@@ -186,10 +186,11 @@ def fetch_color_data(sales_versions, time):
     else:
         pno_color_price_conditions.append(f"RelationID in {tuple(rel_codes)}")
     df_pno_color_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'COL_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax', 'CustomName'], conditions=pno_color_price_conditions)
+    df_pno_color_price = df_pno_color_price.drop_duplicates()
 
-    sales_versions.rename(columns={'ID': 'TmpCode'}, inplace=True)
+    sales_versions = sales_versions.rename(columns={'ID': 'TmpCode'})
     df_pno_color = df_pno_color.merge(sales_versions[['TmpCode', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='TmpCode', how='left')
-    df_pno_color.drop(columns='TmpCode', inplace=True)
+    df_pno_color = df_pno_color.drop(columns='TmpCode')
     df_pno_color_with_sv = df_pno_color[df_pno_color['SalesVersion'].notna()]
 
     # Replace ID with Price from df_pno_color_price
@@ -201,13 +202,13 @@ def fetch_color_data(sales_versions, time):
 
     # Concatenate Price and PriceBeforeTax
     df_pno_color_with_price['Price'] = df_pno_color_with_price.apply(lambda x: f"{x['Price']}/{x['PriceBeforeTax']}", axis=1)
-
+    df_pno_color_with_price = df_pno_color_with_price.drop_duplicates()
+    
     # Create the pivot table
     pivot_df = df_pno_color_with_price.pivot_table(index=['Code', 'Price'], columns='SalesVersion', values='RuleName', aggfunc='first')
 
     # Drop the now unneeded columns and duplicates
-    df_pno_color_with_price.drop(['ID', 'PNOID', 'RelationID', 'RuleName', 'SalesVersion', 'SalesVersionName', 'PriceBeforeTax'], axis=1, inplace=True)
-    df_pno_color_with_price.drop_duplicates(inplace=True)
+    df_pno_color_with_price = df_pno_color_with_price.drop(['ID', 'PNOID', 'RelationID', 'RuleName', 'SalesVersion', 'SalesVersionName', 'PriceBeforeTax'], axis=1).drop_duplicates()
 
     # Join the pivoted DataFrame with the original one. sort after code ascending
     df_result = df_pno_color_with_price.join(pivot_df, on=['Code', 'Price']).sort_values(by='Code')
@@ -232,16 +233,17 @@ def fetch_color_data(sales_versions, time):
     
     for rule, group in df_rules.groupby('RuleCode'):
         group = group.groupby('ItemCode').agg({'FeatureCode': lambda x: rule_texts[rule] + ' ' + ', '.join(list(x))}).reset_index()
-        group.rename(columns={'FeatureCode': rule}, inplace=True)
+        group = group.rename(columns={'FeatureCode': rule})
         df_result = pd.merge(df_result, group, left_on='Code', right_on='ItemCode', how='left')
-        df_result.drop(columns=['ItemCode'], inplace=True)
+        df_result = df_result.drop(columns=['ItemCode'])
         # accumulate the rules in the Rules column with a new line separator
         df_result['Rules'] = df_result.apply(lambda row: row['Rules'] + '\n' + row[rule] if pd.notnull(row[rule]) else row['Rules'], axis=1)
-        df_result.drop(columns=[rule], inplace=True)
+        df_result = df_result.drop(columns=[rule])
     
     # remove the first new line separator
     df_result['Rules'] = df_result['Rules'].apply(lambda x: x[1:] if x.startswith('\n') else x)
-
+    
+    df_result = df_result.fillna('')
     return df_result
 
 def fetch_upholstery_data(sales_versions, time):
@@ -260,11 +262,12 @@ def fetch_upholstery_data(sales_versions, time):
     else:
         pno_upholstery_price_conditions.append(f"RelationID in {tuple(rel_codes)}")
     df_pno_upholstery_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax', 'CustomName', 'CustomCategory'], conditions=pno_upholstery_price_conditions)
-
-    sales_versions.rename(columns={'ID': 'TmpCode'}, inplace=True)
+    df_pno_upholstery_price = df_pno_upholstery_price.drop_duplicates()
+    
+    sales_versions = sales_versions.rename(columns={'ID': 'TmpCode'})
     df_pno_upholstery = df_pno_upholstery.merge(sales_versions[['TmpCode', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='TmpCode', how='left')
-    df_pno_upholstery.drop(columns='TmpCode', inplace=True)
-    df_pno_upholstery_with_sv = df_pno_upholstery[df_pno_upholstery['SalesVersion'].notna()]
+    df_pno_upholstery = df_pno_upholstery.drop(columns='TmpCode')
+    df_pno_upholstery_with_sv = df_pno_upholstery[df_pno_upholstery['SalesVersion'].notna()].drop_duplicates()
 
     # Replace ID with Price from df_pno_upholstery_price
     df_pno_upholstery_with_price = df_pno_upholstery_with_sv.merge(df_pno_upholstery_price, left_on='ID', right_on='RelationID', how='left')
@@ -280,8 +283,7 @@ def fetch_upholstery_data(sales_versions, time):
     pivot_df = df_pno_upholstery_with_price.pivot_table(index=['Code', 'Price'], columns='SalesVersion', values='RuleName', aggfunc='first')
 
     # Drop the now unneeded columns and duplicates
-    df_pno_upholstery_with_price.drop(['ID', 'PNOID', 'RelationID', 'RuleName', 'SalesVersion', 'SalesVersionName', 'PriceBeforeTax'], axis=1, inplace=True)
-    df_pno_upholstery_with_price.drop_duplicates(inplace=True)
+    df_pno_upholstery_with_price = df_pno_upholstery_with_price.drop(['ID', 'PNOID', 'RelationID', 'RuleName', 'SalesVersion', 'SalesVersionName', 'PriceBeforeTax'], axis=1).drop_duplicates()
 
     # Join the pivoted DataFrame with the original one. sort after code ascending
     df_result = df_pno_upholstery_with_price.join(pivot_df, on=['Code', 'Price']).sort_values(by='Code')
@@ -306,15 +308,17 @@ def fetch_upholstery_data(sales_versions, time):
     
     for rule, group in df_rules.groupby('RuleCode'):
         group = group.groupby('ItemCode').agg({'FeatureCode': lambda x: rule_texts[rule] + ' ' + ', '.join(list(x))}).reset_index()
-        group.rename(columns={'FeatureCode': rule}, inplace=True)
+        group = group.rename(columns={'FeatureCode': rule})
         df_result = pd.merge(df_result, group, left_on='Code', right_on='ItemCode', how='left')
-        df_result.drop(columns=['ItemCode'], inplace=True)
+        df_result = df_result.drop(columns=['ItemCode'])
         # accumulate the rules in the Rules column with a new line separator
         df_result['Rules'] = df_result.apply(lambda row: row['Rules'] + '\n' + row[rule] if pd.notnull(row[rule]) else row['Rules'], axis=1)
-        df_result.drop(columns=[rule], inplace=True)
+        df_result = df_result.drop(columns=[rule])
     
     # remove the first new line separator
     df_result['Rules'] = df_result['Rules'].apply(lambda x: x[1:] if x.startswith('\n') else x)
 
     df_result = df_result.sort_values('CustomCategory')
+    
+    df_result = df_result.fillna('')
     return df_result

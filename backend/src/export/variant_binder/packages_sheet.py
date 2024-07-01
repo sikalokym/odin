@@ -43,7 +43,7 @@ def get_sheet(ws, sales_versions, title, time):
                 return ''
 
         sales_versions['PKGPrice'] = sales_versions['SalesVersion'].apply(get_price)
-        group.drop(columns=['Code', 'Title', 'Price'], inplace=True)
+        group = group.drop(columns=['Code', 'Title', 'Price'])
         # combine lines on column RuleCode by keeping the first non NaN value in the sales versions columns
         group = group.groupby('RuleCode').first().reset_index()
         
@@ -165,10 +165,10 @@ def fetch_package_data(sales_versions, time):
     else:
         conditions.append(f"PNOID in {tuple(pno_ids)}")
     pno_package_conditions = conditions.copy() + ["Code not like 'PA%'"]
-    sales_versions.rename(columns={'ID': 'TmpCode'}, inplace=True)
+    sales_versions = sales_versions.rename(columns={'ID': 'TmpCode'})
     df_pno_package = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PKG'), columns=['ID', 'PNOID', 'Code', 'Title', 'RuleCode', 'RuleName', 'RuleBase', 'StartDate', 'EndDate'], conditions=pno_package_conditions)
     df_pno_package = filter_df_by_timestamp(df_pno_package, time)
-    df_pno_package.drop(columns=['StartDate', 'EndDate'], inplace=True)
+    df_pno_package = df_pno_package.drop(columns=['StartDate', 'EndDate'])
     df_pno_package['RuleCode'] = df_pno_package['RuleCode'].apply(lambda x: str(x).lstrip('0'))
 
     rule_codes = df_pno_package['RuleCode'].unique().tolist()
@@ -180,7 +180,7 @@ def fetch_package_data(sales_versions, time):
     df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Reference as RuleCode', 'RuleName', 'CustomName'], conditions=pno_features_conditions)
     
     uph_codes = list(set(rule_codes) - set(df_pno_features.RuleCode.unique().tolist()))
-    df_pkg_uph = None
+    df_pkg_uph = pd.DataFrame()
     if len(uph_codes):
         uph_conditions = conditions.copy() + [f"StartDate <= {time}", f"EndDate >= {time}"]
         if len(uph_codes) == 1:
@@ -188,7 +188,7 @@ def fetch_package_data(sales_versions, time):
         else:
             uph_conditions.append(f"Code in {tuple(uph_codes)}")
         df_uph = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'UPH'), columns=['ID', 'PNOID', 'Code'], conditions=uph_conditions)
-        df_uph.rename(columns={'Code': 'RuleCode'}, inplace=True)
+        df_uph = df_uph.rename(columns={'Code': 'RuleCode'})
         rel_ids = df_uph.ID.unique().tolist()
         uph_features_conditions = []
         if len(rel_ids) == 1:
@@ -197,19 +197,19 @@ def fetch_package_data(sales_versions, time):
             uph_features_conditions.append(f"RelationID in {tuple(rel_ids)}")
         df_uph_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), columns=['RelationID', 'CustomName'], conditions=uph_features_conditions)
         df_uph = df_uph.merge(df_uph_relations, left_on='ID', right_on='RelationID', how='left')
-        df_uph.drop(columns=['ID', 'RelationID'], inplace=True)
+        df_uph = df_uph.drop(columns=['ID', 'RelationID'])
         df_pkg_uph = df_uph.merge(df_pno_package[['PNOID', 'RuleCode', 'RuleName']], on=['PNOID', 'RuleCode'], how='left', suffixes=('_uph', '_package'))
         df_pkg_uph = df_pkg_uph.dropna(subset=['RuleName']).drop_duplicates(subset=['RuleCode', 'RuleName'])
+        df_pkg_uph = df_pkg_uph.CustomName.fillna('')
         
     df_merged = df_pno_features.merge(df_pno_package[['PNOID', 'RuleCode', 'RuleName']], on=['PNOID', 'RuleCode'], how='left', suffixes=('_features', '_package'))
     df_merged['RuleName'] = df_merged['RuleName_package'].combine_first(df_merged['RuleName_features'])
-    df_merged.drop(columns=['RuleName_features', 'RuleName_package'], inplace=True)
-    df_pno_package.drop(columns=['RuleName'], inplace=True)
+    df_merged = df_merged.drop(columns=['RuleName_features', 'RuleName_package'])
+    df_pno_package = df_pno_package.drop(columns=['RuleName'])
     df_merged = pd.concat([df_merged, df_pkg_uph], ignore_index=True)
-    merged_df_with_features = df_merged.merge(df_pno_package, on=['PNOID', 'RuleCode'], how='left')
+    merged_df_with_features = df_merged.merge(df_pno_package, on=['PNOID', 'RuleCode'], how='inner')
     df_pno_package_with_sv = merged_df_with_features.merge(sales_versions[['TmpCode', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='TmpCode', how='inner')
-    df_pno_package_with_sv.drop(columns=['TmpCode', 'PNOID'], inplace=True)
-    df_pno_package_with_sv.drop_duplicates(inplace=True)
+    df_pno_package_with_sv =df_pno_package_with_sv.drop(columns=['TmpCode', 'PNOID']).drop_duplicates()
     
     package_ids = df_pno_package_with_sv['ID'].dropna().unique().tolist()
     pno_package_price_conditions = []
@@ -219,9 +219,17 @@ def fetch_package_data(sales_versions, time):
         pno_package_price_conditions.append(f"RelationID in {tuple(package_ids)}")
 
     df_pno_package_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'PKG_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax', 'CustomName as PCustomName'], conditions=pno_package_price_conditions)
-    df_pno_package_with_price = df_pno_package_with_sv.merge(df_pno_package_price, left_on='ID', right_on='RelationID', how='left')
+    if df_pno_package_price.empty:
+        df_pno_package_with_sv['RelationID'] = None
+        df_pno_package_with_sv['Price'] = None
+        df_pno_package_with_sv['PriceBeforeTax'] = None
+        df_pno_package_with_sv['PCustomName'] = None
+    else:
+        df_pno_package_price = df_pno_package_price.drop_duplicates()
+        df_pno_package_with_sv = df_pno_package_with_sv.merge(df_pno_package_price, left_on='ID', right_on='RelationID', how='left')
 
     new_rows = []
+    df_pno_package_with_price  = df_pno_package_with_sv
     df = df_pno_package_with_price.copy()
 
     for rule_code in df['RuleCode'].unique():
@@ -243,8 +251,7 @@ def fetch_package_data(sales_versions, time):
     df_new_rows = pd.DataFrame(new_rows)
 
     # Append new_rows to the DataFrame
-    df_pno_package_with_price = pd.concat([df_pno_package_with_price, df_new_rows], ignore_index=True)
-    df_pno_package_with_price.dropna(subset=['ID'], inplace=True)
+    df_pno_package_with_price = pd.concat([df_pno_package_with_price, df_new_rows], ignore_index=True).dropna(subset=['ID'])
     # if a rulecode has rulename S for some salesversion, then it is duplicated for all Codes, sales versions and Prices
 
     # format prices to float using format_float_string
@@ -256,7 +263,7 @@ def fetch_package_data(sales_versions, time):
 
     # Title is custom name if available, else Title
     df_pno_package_with_price['Title'] = df_pno_package_with_price['PCustomName'].combine_first(df_pno_package_with_price['Title'])
-    df_pno_package_with_price.drop(columns=['ID', 'RelationID', 'PriceBeforeTax', 'PCustomName'], inplace=True)
+    df_pno_package_with_price = df_pno_package_with_price.drop(columns=['ID', 'RelationID', 'PriceBeforeTax', 'PCustomName'])
 
     # Create the pivot table
     pivot_df = df_pno_package_with_price.pivot_table(index=['Code', 'Price', 'RuleCode', 'RuleBase'], columns='SalesVersion', values='RuleName', aggfunc='first')

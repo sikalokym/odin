@@ -51,7 +51,7 @@ def get_sheet(ws, sales_versions, title):
 
     prev_svn = None
     for (sv, svn), group in df_sales_versions.groupby(['SalesVersion', 'SalesVersionName'], observed=False):
-        group.drop(columns=['SalesVersion', 'SalesVersionName'], inplace=True)
+        group = group.drop(columns=['SalesVersion', 'SalesVersionName'])
         df_options = group.sort_values(by=['CustomCategory', 'CustomName'], ascending=True)
 
         # Write the data to the worksheet
@@ -114,10 +114,8 @@ def fetch_sales_version_data(df_sales_versions):
 
     df_pno_features_sv = df_pno_features.merge(df_sales_versions[['ID', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='ID', how='inner')
     df_pno_features_sv['SalesVersion'] = pd.Categorical(df_pno_features_sv['SalesVersion'], sv_correct_order)
-    df_pno_features_sv.sort_values(by='SalesVersion', inplace=True)
-    df_pno_features_sv.drop_duplicates('Code', keep='first', inplace=True)
-
-    df_pno_features_sv.drop(columns=['ID', 'PNOID'], inplace=True)
+    df_pno_features_sv = df_pno_features_sv.sort_values(by='SalesVersion')
+    df_pno_features_sv = df_pno_features_sv.drop_duplicates('Code', keep='first').drop(columns=['ID', 'PNOID'])
 
     df_pno_features_sv = df_pno_features_sv.dropna(subset=['CustomName'])
 

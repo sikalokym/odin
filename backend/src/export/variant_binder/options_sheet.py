@@ -258,8 +258,11 @@ def fetch_options_data(sales_versions, time):
         conditions.append(f"PNOID in {tuple(pno_ids)}")
     opt_conds = conditions.copy() + ["Code not like 'A%'"]
     df_pno_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'OPT'), columns=['ID', 'PNOID', 'Code', 'RuleName', 'StartDate', 'EndDate'], conditions=opt_conds)
+    if df_pno_options.empty:
+        return pd.DataFrame(), pd.DataFrame()
     df_pno_options = filter_df_by_timestamp(df_pno_options, time)
-    df_pno_options.drop(columns=['StartDate', 'EndDate'], inplace=True)
+    df_pno_options = df_pno_options.drop(columns=['StartDate', 'EndDate'])
+    df_pno_options = df_pno_options.drop_duplicates()
     rel_codes = df_pno_options.ID.unique().tolist()
     pno_option_price_conditions = []
     if len(rel_codes) == 1:
@@ -267,7 +270,7 @@ def fetch_options_data(sales_versions, time):
     else:
         pno_option_price_conditions.append(f"RelationID in {tuple(rel_codes)}")
     df_pno_option_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'OPT_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax', 'CustomName'], conditions=pno_option_price_conditions)
-    
+    df_pno_option_price = df_pno_option_price.drop_duplicates()
     df_pno_options_with_price = df_pno_options.merge(df_pno_option_price, left_on='ID', right_on='RelationID', how='left')
     df_pno_options_with_price['OptCode'] = df_pno_options_with_price['Code'].apply(lambda x: x.lstrip('0') if x.isnumeric() else x)
     opt_codes = df_pno_options_with_price['OptCode'].unique().tolist()
@@ -277,7 +280,7 @@ def fetch_options_data(sales_versions, time):
     else:
         pno_features_conditions.append(f"Reference in {tuple(opt_codes)}")
     df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Reference', 'RuleName as FeatRule', 'CustomName as FeatName', 'CustomCategory'], conditions=pno_features_conditions)
-    df_pno_features.drop_duplicates(inplace=True)
+    df_pno_features = df_pno_features.drop_duplicates()
 
     df_pno_options_with_feat_ref = df_pno_options_with_price[~df_pno_options_with_price['RelationID'].isna()].copy()
     df_pno_options_without_feat_ref = df_pno_options_with_price[df_pno_options_with_price['RelationID'].isna()].copy()
@@ -294,12 +297,12 @@ def fetch_options_data(sales_versions, time):
     
     df_pno_options_merged = pd.concat([df_pno_options_feat_merged, df_pno_options_without_feat_ref], ignore_index=True)
     
-    sales_versions.rename(columns={'ID': 'TmpCode'}, inplace=True)
+    sales_versions = sales_versions.rename(columns={'ID': 'TmpCode'})
     df_pno_options_merged = df_pno_options_merged.merge(sales_versions[['TmpCode', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='TmpCode', how='left')
     df_pno_options_merged['CustomName'] = df_pno_options_merged['CustomName'].combine_first(df_pno_options_merged['FeatName'])
     df_pno_options_merged['RuleName'] = df_pno_options_merged['RuleName'].combine_first(df_pno_options_merged['FeatRule'])
-    df_pno_options_merged.drop(columns=['PNOID', 'OptCode', 'Code', 'RelationID', 'ID', 'TmpCode', 'FeatRule', 'FeatName'], inplace=True)
-    df_pno_options_merged.drop_duplicates()
+    df_pno_options_merged = df_pno_options_merged.drop(columns=['PNOID', 'OptCode', 'Code', 'RelationID', 'ID', 'TmpCode', 'FeatRule', 'FeatName']).drop_duplicates()
+    
     # Append zeros to the reference column
     df_pno_options_merged['Reference'] = df_pno_options_merged['Reference'].apply(lambda x: x.zfill(6) if x.isnumeric() else x)
 
@@ -334,7 +337,7 @@ def fetch_options_data(sales_versions, time):
             if not rows['RuleName'].str.contains('O').any():
                 return ['Pack Only']
             
-            rows.drop_duplicates(subset=['Price', 'PriceBeforeTax'], inplace=True)
+            rows = rows.drop_duplicates(subset=['Price', 'PriceBeforeTax'])
             
             # get a list of all prices in those rows
             prices = [f"{r['Price']}/{r['PriceBeforeTax']}" for _, r in rows.iterrows()]
@@ -348,7 +351,7 @@ def fetch_options_data(sales_versions, time):
     
     # Concatenate Price and PriceBeforeTax
     df_pno_options_merged['Price'] = df_pno_options_merged.apply(lambda x: get_prices(x), axis=1)
-    df_pno_options_merged.drop(['PriceBeforeTax'], axis=1, inplace=True)
+    df_pno_options_merged = df_pno_options_merged.drop(['PriceBeforeTax'], axis=1)
     df_pno_options_merged = df_pno_options_merged.explode('Price')
     
     # group by Reference, Price, RuleName, SalesVersion and SalesVersionName and aggregate the CustomName column by concatinating the values with a newline separator if they differ and not null nan or empty and the CustomCategory column by concatinating the values with a comma separator if they differ
@@ -358,14 +361,14 @@ def fetch_options_data(sales_versions, time):
     pivot_df = df_pno_options_merged.pivot_table(index=['Reference', 'Price'], columns='SalesVersion', values='RuleName', aggfunc='first')
 
     # Drop the now unneeded columns and duplicates
-    df_pno_options_merged.drop(['RuleName', 'SalesVersion', 'SalesVersionName'], axis=1, inplace=True)
+    df_pno_options_merged = df_pno_options_merged.drop(['RuleName', 'SalesVersion', 'SalesVersionName'], axis=1)
     df_pno_options_merged = df_pno_options_merged.drop_duplicates(['Reference', 'Price', 'CustomCategory'], keep='first')
     
     # Join the pivoted DataFrame with the original one. sort after code ascending
     df_result = df_pno_options_merged.join(pivot_df, on=['Reference', 'Price']).sort_values(by='Reference')
 
     # rename Reference to Code
-    df_result.rename(columns={'Reference': 'Code'}, inplace=True)
+    df_result = df_result.rename(columns={'Reference': 'Code'})
 
     # fill df_res columns for sv in sales_versions['SalesVersion'] with '-' if nan
     for sv in sales_versions['SalesVersion']:
@@ -394,12 +397,12 @@ def fetch_options_data(sales_versions, time):
     
     for rule, group in df_rules.groupby('RuleCode'):
         group = group.groupby('ItemCode').agg({'FeatureCode': lambda x: rule_texts[rule] + ' ' + ', '.join(list(x))}).reset_index()
-        group.rename(columns={'FeatureCode': rule}, inplace=True)
+        group = group.rename(columns={'FeatureCode': rule})
         df_result = pd.merge(df_result, group, left_on='Code', right_on='ItemCode', how='left')
-        df_result.drop(columns=['ItemCode'], inplace=True)
+        df_result = df_result.drop(columns=['ItemCode'])
         # accumulate the rules in the Rules column with a new line separator
         df_result['Rules'] = df_result.apply(lambda row: row['Rules'] + '\n' + row[rule] if pd.notnull(row[rule]) else row['Rules'], axis=1)
-        df_result.drop(columns=[rule], inplace=True)
+        df_result = df_result.drop(columns=[rule])
     
     # remove the first new line separator
     df_result['Rules'] = df_result['Rules'].apply(lambda x: x[1:] if x.startswith('\n') else x)
