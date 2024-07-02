@@ -57,8 +57,7 @@ def get_pnos(country, model_year):
     df_models = df_models.drop(columns=['StartDate', 'EndDate'], axis=1)
     
     df_pnos = df_pnos.merge(df_models, how='left', left_on='Model', right_on='Code')
-    df_pnos.drop(columns=['Code'], axis=1, inplace=True)
-    df_pnos.drop_duplicates(inplace=True)
+    df_pnos = df_pnos.drop(columns=['Code'], axis=1).drop_duplicates()
     return df_pnos.to_json(orient='records'), 200
 
 @bp_db_reader.route('/models', methods=['GET'])
@@ -79,8 +78,7 @@ def get_models(country, model_year):
     df_models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), columns=['Code', 'CustomName', 'MarketText', 'StartDate', 'EndDate'], conditions=conditions)
     df_models = filter_df_by_model_year(df_models, model_year)
     df_models = filter_model_year_by_translation(df_models, conditional_columns=['CustomName'])
-    df_models = df_models.drop(columns=['StartDate', 'EndDate'], axis=1)
-    df_models.drop_duplicates(inplace=True)
+    df_models = df_models.drop(columns=['StartDate', 'EndDate'], axis=1).drop_duplicates()
 
     df_models = df_models.sort_values(by='Code', ascending=True)
 
@@ -102,8 +100,7 @@ def get_sales_versions(country, model_year):
     df_sales_versions = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), columns=['Code', 'CustomName', 'MarketText', 'StartDate', 'EndDate'], conditions=conditions)
     df_sales_versions = filter_df_by_model_year(df_sales_versions, model_year)
     df_sales_versions = filter_model_year_by_translation(df_sales_versions, conditional_columns=['CustomName'])
-    df_sales_versions = df_sales_versions.drop(columns=['StartDate', 'EndDate'], axis=1)
-    df_sales_versions.drop_duplicates(inplace=True)
+    df_sales_versions = df_sales_versions.drop(columns=['StartDate', 'EndDate'], axis=1).drop_duplicates()
 
     df_sales_versions = df_sales_versions.sort_values(by='Code', ascending=True)
 
@@ -127,8 +124,7 @@ def get_engines(country, model_year):
     df_engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), columns=['Code', 'MarketText', 'CustomName', 'Performance', 'EngineCategory', 'EngineType', 'StartDate', 'EndDate'], conditions=conditions)
     df_engines = filter_df_by_model_year(df_engines, model_year)
     df_engines = filter_model_year_by_translation(df_engines, conditional_columns=['CustomName', 'Performance', 'EngineCategory', 'EngineType'])
-    df_engines = df_engines.drop(columns=['StartDate', 'EndDate'], axis=1)
-    df_engines.drop_duplicates(inplace=True)
+    df_engines = df_engines.drop(columns=['StartDate', 'EndDate'], axis=1).drop_duplicates()
 
     df_engines = df_engines.sort_values(by='Code', ascending=True)
 
@@ -152,8 +148,7 @@ def get_gearboxes(country, model_year):
     df_gearboxes = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'G'), columns=['Code', 'CustomName', 'MarketText', 'StartDate', 'EndDate'], conditions=conditions)
     df_gearboxes = filter_df_by_model_year(df_gearboxes, model_year)
     df_gearboxes = filter_model_year_by_translation(df_gearboxes, conditional_columns=['CustomName'])
-    df_gearboxes = df_gearboxes.drop(columns=['StartDate', 'EndDate'], axis=1)
-    df_gearboxes.drop_duplicates(inplace=True)
+    df_gearboxes = df_gearboxes.drop(columns=['StartDate', 'EndDate'], axis=1).drop_duplicates()
 
     df_gearboxes = df_gearboxes.sort_values(by='Code', ascending=True)
 
@@ -187,12 +182,15 @@ def get_options(country, model_year):
         conditions.append(f"PNOID in {tuple(ids)}")
 
     df_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'OPT'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'"])
+    if df_options.empty:
+        return jsonify([])
     df_options = filter_df_by_model_year(df_options, model_year)
-    df_options.drop(columns=['StartDate', 'EndDate'], inplace=True)
-    df_options.drop_duplicates(subset='Code', inplace=True)
+    df_options = df_options.drop(columns=['StartDate', 'EndDate']).drop_duplicates(subset='Code')
 
     df_pno_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'OPT'), columns=['ID', 'PNOID', 'Code'], conditions=conditions)
-    df_pno_options.drop_duplicates(inplace=True)
+    if df_pno_options.empty:
+        return jsonify([])
+    df_pno_options = df_pno_options.drop_duplicates()
     
     df_options_custom = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'OPT_Custom'), columns=['RelationID', 'CustomName'])
     if df_options_custom.empty:
@@ -202,7 +200,7 @@ def get_options(country, model_year):
         df_pno_options = df_pno_options.drop(columns=['RelationID'])
     
     df_pno_options['MarketText'] = df_pno_options['Code'].map(df_options.set_index('Code')['MarketText'])
-    df_pno_options.drop(columns=['ID'], inplace=True)
+    df_pno_options = df_pno_options.drop(columns=['ID'])
 
     df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Code as FeatCode', 'Reference', 'CustomName as FeatText', 'CustomCategory'], conditions=conditions)
 
@@ -255,8 +253,7 @@ def get_options(country, model_year):
     }).reset_index()
     
     df_final = df_pno_options_merged.sort_values(by='Code', ascending=True)
-    df_final = df_final[['Code', 'MarketText', 'CustomName', 'CustomCategory', 'hasFeature']]
-    df_final.drop_duplicates(inplace=True)
+    df_final = df_final[['Code', 'MarketText', 'CustomName', 'CustomCategory', 'hasFeature']].drop_duplicates()
 
     return df_final.to_json(orient='records')
 
@@ -289,12 +286,16 @@ def get_colors(country, model_year):
         conditions.append(f"PNOID in {tuple(ids)}")
 
     df_colors = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'COL'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'"])
+    if df_colors.empty:
+        return jsonify([])
+    
     df_colors = filter_df_by_model_year(df_colors, model_year)
-    df_colors.drop(columns=['StartDate', 'EndDate'], inplace=True)
-    df_colors.drop_duplicates(subset='Code', inplace=True)
+    df_colors = df_colors.drop(columns=['StartDate', 'EndDate']).drop_duplicates(subset='Code')
 
     df_pno_colors = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'COL'), columns=['ID', 'PNOID', 'Code'], conditions=conditions)
-    df_pno_colors.drop_duplicates(inplace=True)
+    if df_pno_colors.empty:
+        return jsonify([])
+    df_pno_colors = df_pno_colors.drop_duplicates()
     
     df_colors_custom = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'COL_Custom'), columns=['RelationID', 'CustomName'])
     if df_colors_custom.empty:
@@ -304,7 +305,7 @@ def get_colors(country, model_year):
         df_pno_colors = df_pno_colors.drop(columns=['RelationID'])
     
     df_pno_colors['MarketText'] = df_pno_colors['Code'].map(df_colors.set_index('Code')['MarketText'])
-    df_pno_colors.drop(columns=['ID'], inplace=True)
+    df_pno_colors = df_pno_colors.drop(columns=['ID'])
     
     # Create mappings
     pno_id_to_model = df_pnos.set_index('ID')['Model'].to_dict()
@@ -340,8 +341,7 @@ def get_colors(country, model_year):
         'CustomName': aggregate_custom_name
     }).reset_index()
     
-    df_pno_colors = df_pno_colors.sort_values(by='Code', ascending=True)
-    df_pno_colors.drop_duplicates(inplace=True)
+    df_pno_colors = df_pno_colors.sort_values(by='Code', ascending=True).drop_duplicates()
     
     return df_pno_colors.to_json(orient='records')
 
@@ -374,11 +374,12 @@ def get_upholstery(country, model_year):
 
     df_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'UPH'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'"])
     df_upholstery = filter_df_by_model_year(df_upholstery, model_year)
-    df_upholstery.drop(columns=['StartDate', 'EndDate'], inplace=True)
-    df_upholstery.drop_duplicates(subset='Code', inplace=True)
+    df_upholstery = df_upholstery.drop(columns=['StartDate', 'EndDate']).drop_duplicates(subset='Code')
 
     df_pno_upholstery = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'UPH'), columns=['ID', 'PNOID', 'Code'], conditions=conditions)
-    df_pno_upholstery.drop_duplicates(inplace=True)
+    if df_pno_upholstery.empty:
+        return jsonify([])
+    df_pno_upholstery = df_pno_upholstery.drop_duplicates()
     
     df_upholstery_custom = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), columns=['RelationID', 'CustomName', 'CustomCategory'])
     if df_upholstery_custom.empty:
@@ -389,12 +390,12 @@ def get_upholstery(country, model_year):
         df_pno_upholstery = df_pno_upholstery.drop(columns=['RelationID'])
     
     df_pno_upholstery['MarketText'] = df_pno_upholstery['Code'].map(df_upholstery.set_index('Code')['MarketText'])
-    df_pno_upholstery.drop_duplicates(inplace=True)
+    df_pno_upholstery = df_pno_upholstery.drop_duplicates()
 
     # Create mappings
     pno_id_to_model = df_pnos.set_index('ID')['Model'].to_dict()
     custom_name_to_pnoid = df_pno_upholstery.groupby('CustomName')['PNOID'].apply(list).to_dict()
-    df_pno_upholstery.drop(columns=['ID', 'PNOID'], inplace=True)
+    df_pno_upholstery = df_pno_upholstery.drop(columns=['ID', 'PNOID'])
 
     # Aggregate data
     def aggregate_custom_name(custom_names):
@@ -470,9 +471,9 @@ def get_features(country, model_year):
         conditions=[f"CountryCode = '{country}'"]
     )
     df_features = filter_df_by_model_year(df_features, model_year)
-    df_features.drop(columns=['StartDate', 'EndDate'], inplace=True)
+    df_features = df_features.drop(columns=['StartDate', 'EndDate'])
     df_features['Code'] = df_features['Code'].str.strip()
-    df_features.drop_duplicates(subset='Code', inplace=True)
+    df_features = df_features.drop_duplicates(subset='Code')
 
     # Query PNO features and custom features
     df_pno_features = DBOperations.instance.get_table_df(
@@ -531,7 +532,7 @@ def get_features(country, model_year):
 
     # Sort and remove duplicates
     df_pno_features = df_pno_features.sort_values(by='Code', ascending=True)
-    df_pno_features.drop_duplicates(inplace=True)
+    df_pno_features = df_pno_features.drop_duplicates()
 
     # Return as JSON
     return df_pno_features.to_json(orient='records')
@@ -566,11 +567,12 @@ def get_packages(country, model_year):
 
     df_packages = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'PKG'), columns=['Code', 'MarketText', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'"])
     df_packages = filter_df_by_model_year(df_packages, model_year)
-    df_packages.drop(columns=['StartDate', 'EndDate'], inplace=True)
-    df_packages.drop_duplicates(subset='Code', inplace=True)
+    df_packages = df_packages.drop(columns=['StartDate', 'EndDate']).drop_duplicates(subset='Code')
     
     df_pno_packages = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PKG'), columns=['ID', 'PNOID', 'Code'], conditions=conditions)
-    df_pno_packages.drop_duplicates(inplace=True)
+    if df_pno_packages.empty:
+        return jsonify([])
+    df_pno_packages = df_pno_packages.drop_duplicates()
 
     df_packages_custom = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'PKG_Custom'), columns=['RelationID', 'CustomName'])
     if df_packages_custom.empty:
@@ -580,7 +582,7 @@ def get_packages(country, model_year):
         df_pno_packages = df_pno_packages.drop(columns=['RelationID'])
     
     df_pno_packages['MarketText'] = df_pno_packages['Code'].map(df_packages.set_index('Code')['MarketText'])
-    df_pno_packages.drop_duplicates(inplace=True)
+    df_pno_packages = df_pno_packages.drop_duplicates()
 
     # Create mappings
     pno_id_to_model = df_pnos.set_index('ID')['Model'].to_dict()
@@ -753,7 +755,7 @@ def get_visa_files(country, model_year):
         if df_visa.empty:
             return jsonify([])
         
-        df_visa.drop_duplicates(inplace=True)
+        df_visa = df_visa.drop_duplicates()
             
         codes = df_visa['CarType'].tolist()
         conditions = [f"CountryCode = '{country}'"]
@@ -768,8 +770,7 @@ def get_visa_files(country, model_year):
         df_models = df_models.drop(columns=['StartDate', 'EndDate'], axis=1)
         
         df_visa = df_visa.merge(df_models, how='left', left_on='CarType', right_on='Code')
-        df_visa.drop(columns=['Code'], axis=1, inplace=True)
-        df_visa.drop_duplicates(inplace=True)
+        df_visa = df_visa.drop(columns=['Code'], axis=1).drop_duplicates()
         return df_visa.to_json(orient='records'), 200
     except Exception as e:
         return str(e), 500
@@ -781,5 +782,5 @@ def get_visa_file_data(country, model_year):
     conditions = [f"VisaFile = '{visa_file}'", f"CountryCode = '{country}'", f"ModelYear = '{model_year}'"]
 
     df_visa_file = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=conditions)
-    df_visa_file.drop(columns=['LoadingDate', 'CountryCode'], inplace=True)
+    df_visa_file = df_visa_file.drop(columns=['LoadingDate', 'CountryCode'])
     return df_visa_file.to_json(orient='records')
