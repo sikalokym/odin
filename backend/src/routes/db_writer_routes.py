@@ -28,6 +28,8 @@ def write_models(country, model_year):
     # Create a DataFrame from the list of JSON objects
     df_models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), conditions=[f"CountryCode = '{country}'"])
     df_models = filter_df_by_model_year(df_models, model_year)
+    if 'ModelYear' in df_models.columns:
+        df_models = df_models.drop(columns=['ModelYear'])
     update_columns = ['CustomName']
 
     # Update the columns in the df_models DataFrame
@@ -48,6 +50,8 @@ def write_engines(country, model_year):
     # Create a DataFrame from the list of JSON objects
     df_engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), conditions=[f"CountryCode = '{country}'"])
     df_engines = filter_df_by_model_year(df_engines, model_year)
+    if 'ModelYear' in df_engines.columns:
+        df_engines = df_engines.drop(columns=['ModelYear'])
     update_columns = ['CustomName', 'Performance', 'EngineCategory', 'EngineType']
 
     # Update the columns in the df_engines DataFrame
@@ -68,6 +72,8 @@ def write_sales_versions(country, model_year):
     # Create a DataFrame from the list of JSON objects
     df_sales_versions = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), conditions=[f"CountryCode = '{country}'"])
     df_sales_versions = filter_df_by_model_year(df_sales_versions, model_year)
+    if 'ModelYear' in df_sales_versions.columns:
+        df_sales_versions = df_sales_versions.drop(columns=['ModelYear'])
     update_columns = ['CustomName']
 
     # Update the columns in the df_sales_versions DataFrame
@@ -88,6 +94,8 @@ def write_gearboxes(country, model_year):
     # Create a DataFrame from the list of JSON objects
     df_gearboxes = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'G'), conditions=[f"CountryCode = '{country}'"])
     df_gearboxes = filter_df_by_model_year(df_gearboxes, model_year)
+    if 'ModelYear' in df_gearboxes.columns:
+        df_gearboxes = df_gearboxes.drop(columns=['ModelYear'])
     update_columns = ['CustomName']
 
     # Update the columns in the df_gearboxes DataFrame
