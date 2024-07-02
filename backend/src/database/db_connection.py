@@ -11,9 +11,10 @@ class DatabaseConnection:
     def close_connection(self):
         self.logger.debug('Closing database connection')
         try:
-            if not self.connection.closed:
+            if self.connection and not self.connection.closed:
                 self.connection.close()
-                self.logger.debug('Database connection closed')
+            self.connection = None
+            self.logger.debug('Database connection closed')
         except pyodbc.Error as e:
             self.logger.error('Failed to close database connection', exc_info=True)
             raise e
@@ -33,3 +34,10 @@ class DatabaseConnection:
                     raise e
                 else:
                     sleep(1)
+    
+    @classmethod
+    def reconnect(self):
+        self.logger.debug('Reconnecting to database')
+        self.close_connection()
+        self.logger.debug('Reconnected to database')
+        return self.get_db_connection()
