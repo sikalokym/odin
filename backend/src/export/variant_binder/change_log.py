@@ -38,9 +38,6 @@ def get_sheet(ws, entities_ids_dict, pnos_ids, title, time, country):
 
     df_change_log = pd.concat([df_change_log, df_pno_change_log])
     
-    if df_change_log.empty:
-        return None
-
     # relations_tables = ['PNO_Custom', 'PNOColorCustom', 'PNOOptionsCustom', 'PNOUpholsteryCustom', 'PNOPackageCustom']
 
     # Write the headers
@@ -74,5 +71,7 @@ def get_sheet(ws, entities_ids_dict, pnos_ids, title, time, country):
     ws['C2'].alignment = Alignment(horizontal='left', vertical='center')
     ws['C2'].font = Font(size=10, bold=True)
 
+    if df_change_log.empty:
+        return None
     for change in df_change_log.itertuples():
        ws.append([change.ChangeDate.strftime("%Y-%m-%d"), f'{change.ChangeTable}', f'{change.ChangeField} hat sich geändert: {change.ChangeFrom} -> {change.ChangeTo}'])

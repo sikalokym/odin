@@ -25,11 +25,10 @@ def extract_variant_binder_pnos(country, model, engines_types, time):
         df_models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), columns=['Code', 'CustomName', 'StartDate', 'EndDate'], conditions=conditions)
         df_models = filter_model_year_by_translation(df_models, conditional_columns=['CustomName'])
         df_models = df_models.drop(columns=['StartDate', 'EndDate'], axis=1)
-        df_models.rename(columns={'Code': 'PNOCode'}, inplace=True)
+        df_models = df_models.rename(columns={'Code': 'PNOCode'})
         
         df_pnos = valid_pnos.merge(df_models, how='left', left_on='Model', right_on='PNOCode')
-        df_pnos.drop(columns=['PNOCode'], inplace=True)
-        df_pnos.drop_duplicates(inplace=True)
+        df_pnos = df_pnos.drop(columns=['PNOCode']).drop_duplicates()
         
         # Merge the sales versions with the pnos
         df_pnos = df_pnos.merge(sales_versions, how='left', on='SalesVersion')
@@ -100,7 +99,7 @@ def extract_variant_binder(country, model, engines_types, time, pno_ids=None, sv
         DBOperations.instance.logger.error(f"Error creating sheet: {e}", extra={'country': country})
     try:
         ws_7 = wb.create_sheet("Änderungen", 0)
-        entities_ids_dict = {'Typ': [model_id], 'SV': sales_versions.SVID.unique().tolist(), 'En': valid_engines.ID.explode().unique().tolist(), 'G': gb_ids}
+        entities_ids_dict = {'Typ': [model_id], 'SV': sales_versions.ID.unique().tolist(), 'En': valid_engines.ID.explode().unique().tolist(), 'G': gb_ids}
         err = change_log.get_sheet(ws_7, entities_ids_dict, valid_pnos.ID.unique().tolist(), title, time, country)
         if err:
             raise Exception('No data found for change log')
@@ -124,12 +123,6 @@ def _extract_variant_binder(country, model, engines_types, time, pno_ids=None, s
     default_sheet = wb.active
     wb.remove(default_sheet)
 
-    valid_engines = get_valid_engines(country, engines_types, time)
-    valid_pnos = get_valid_pnos(country, model, time, valid_engines)
-    if pno_ids:
-        valid_pnos = valid_pnos[valid_pnos['ID'].isin(pno_ids)]
-    
-    sales_versions = get_sales_versions(country, valid_pnos, time)
     valid_engines = get_valid_engines(country, engines_types, time)
     valid_pnos = get_valid_pnos(country, model, time, valid_engines)
     if pno_ids:
@@ -188,61 +181,65 @@ def get_model_name(country, model, time):
         raise Exception(f"No model found for model {model}")
 
 def get_sales_versions(country, pnos, time):
-    sv_codes = pnos['SalesVersion'].unique().tolist()
-    conditions = [f"CountryCode = '{country}'", f"StartDate <= {time}", f"EndDate >= {time}"]
-    if len(sv_codes) == 1:
-        conditions.append(f"Code = '{sv_codes[0]}'")
-    else:
-        conditions.append(f"Code in {tuple(sv_codes)}")
-    df_sv = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SV'), conditions=conditions)
-    df_sv.rename(columns={'Code': 'TmpCode', 'ID': 'SVID'}, inplace=True)
-    pno_condition = [f"StartDate <= {time}", f"EndDate >= {time}"]
-    df_pno_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'PNO_Custom'), conditions=pno_condition)
-    if df_pno_price.empty:
-        raise Exception("No price data found")
-
-    df_allowed_sv = pnos.merge(df_sv[['SVID', 'TmpCode', 'MarketText', 'CustomName']], left_on='SalesVersion', right_on='TmpCode', how='left')
-    df_allowed_sv['SalesVersionName'] = df_allowed_sv['CustomName'].combine_first(df_allowed_sv['MarketText'])
+    # Extract unique sales version codes
+    sv_codes = pnos['SalesVersion'].unique()
     
-    # Aggregate prices into a unique, sorted list and append 'Check Visa File'
+    # Construct conditions for querying sales versions
+    conditions = [
+        f"CountryCode = '{country}'",
+        f"StartDate <= '{time}'",
+        f"EndDate >= '{time}'",
+        f"Code in {tuple(sv_codes)}" if len(sv_codes) > 1 else f"Code = '{sv_codes[0]}'"
+    ]
+    
+    # Retrieve sales version data
+    df_sv = DBOperations.instance.get_table_df(
+        DBOperations.instance.config.get('TABLES', 'SV'), conditions=conditions)
+    df_sv = df_sv.rename(columns={'Code': 'TmpCode', 'ID': 'SVID'})
+
+    # Merge with PNO data
+    df_allowed_sv = pnos.merge(df_sv[['SVID', 'TmpCode', 'MarketText', 'CustomName']],
+                               left_on='SalesVersion', right_on='TmpCode', how='left')
+    df_allowed_sv['SalesVersionName'] = df_allowed_sv['CustomName'].combine_first(df_allowed_sv['MarketText'])
+
+    # Define a function for custom price aggregation
     def custom_price_aggregation(prices):
         if len(prices) == 1:
             return prices.iloc[0]
-        unique_sorted_prices = ', '.join(map(str, set(prices)))
-        return f"{unique_sorted_prices} Check Visa File"
+        return ', '.join(map(str, sorted(set(prices)))) + " Check Visa File"
 
-    # Group by 'RelationID' and aggregate using the custom function
-    aggregated_prices = df_pno_price.groupby('RelationID')['Price'].agg(custom_price_aggregation)
-
-    # Map the aggregated prices back to another DataFrame based on 'RelationID'
-    df_allowed_sv = df_allowed_sv.set_index('ID')
-    df_allowed_sv['SalesVersionPrice'] = df_allowed_sv.index.map(aggregated_prices)
-
-    # Reset index if needed
-    df_allowed_sv.reset_index(inplace=True)
+    # Retrieve and handle price data
+    pno_condition = [f"StartDate <= '{time}'", f"EndDate >= '{time}'"]
+    df_pno_price = DBOperations.instance.get_table_df(
+        DBOperations.instance.config.get('RELATIONS', 'PNO_Custom'), conditions=pno_condition)
     
+    if df_pno_price.empty:
+        df_allowed_sv['SalesVersionPrice'] = None
+    else:
+        aggregated_prices = df_pno_price.groupby('RelationID')['Price'].agg(custom_price_aggregation)
+        df_allowed_sv = df_allowed_sv.set_index('ID')
+        df_allowed_sv['SalesVersionPrice'] = df_allowed_sv.index.map(aggregated_prices)
+        df_allowed_sv.reset_index(inplace=True)
+
+    # Clean up and reformat data
     df_allowed_sv = df_allowed_sv[['ID', 'SalesVersion', 'SalesVersionName', 'SalesVersionPrice', 'SVID']]
+    df_allowed_sv['SalesVersionPrice'].fillna(value=np.nan, inplace=True)
+    df_allowed_sv['SalesVersionName'].replace('', np.nan, inplace=True)
+    df_allowed_sv['SalesVersionName'].fillna(df_allowed_sv['SalesVersion'], inplace=True)
 
-    # sort the sales versions by price
-    df_allowed_sv = df_allowed_sv.sort_values('SalesVersionPrice', ascending=True)
-    # replace empty names with None
-    df_allowed_sv['SalesVersionName'] = df_allowed_sv['SalesVersionName'].replace('', np.nan)
-    # fill empty salesversion names with salesversion
-    df_allowed_sv['SalesVersionName'] = df_allowed_sv['SalesVersionName'].combine_first(df_allowed_sv['SalesVersion'])
-
-    # group by SalesVersionName name's first word and represent each group with its maximum price and sort on price ascending and return the names and prices
+    # Group and sort by the first word in SalesVersionName and max price
     df_allowed_sv['SalesVersionNameGroup'] = df_allowed_sv['SalesVersionName'].str.split().str[0]
-    df = df_allowed_sv.groupby('SalesVersionNameGroup').agg({'SalesVersionName': list, 'SalesVersionPrice': 'max'}).sort_values('SalesVersionPrice', ascending=True)
-    # explode the list of names to get the names sorted by price
-    sorted_sv_names = df.explode('SalesVersionName')['SalesVersionName'].unique().tolist()
+    df_grouped = df_allowed_sv.groupby('SalesVersionNameGroup').agg({
+        'SalesVersionName': list, 'SalesVersionPrice': 'max'
+    }).sort_values('SalesVersionPrice', ascending=True)
 
+    sorted_sv_names = df_grouped.explode('SalesVersionName')['SalesVersionName'].unique()
     df_final = df_allowed_sv.set_index('SalesVersionName').loc[sorted_sv_names].reset_index()
-    df_final.drop(columns=['SalesVersionNameGroup'], inplace=True)
-    
-    ## salesversion name reset to empty string if it is equal to salesversion
-    df_final['SalesVersionName'] = df_final.apply(lambda x: '' if x['SalesVersionName'] == x['SalesVersion'] else x['SalesVersionName'], axis=1)
+    df_final = df_final.drop(columns=['SalesVersionNameGroup'])
+    df_final['SalesVersionName'] = df_final.apply(
+        lambda x: '' if x['SalesVersionName'] == x['SalesVersion'] else x['SalesVersionName'], axis=1)
 
-    return df_final
+    return df_final.reset_index(drop=True)
 
 def get_valid_engines(country, engine_cat, time):
     df_all_engines = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'En'), conditions=[f"CountryCode = '{country}'"])
@@ -251,17 +248,17 @@ def get_valid_engines(country, engine_cat, time):
         other_engines = df_engines[df_engines['EngineCategory'].isna()]
         if other_engines.empty:
             DBOperations.instance.logger.info(f"No engines found for the given engine category {engine_cat}")
-            return
+            return None
         other_engines['EngineType'] = ''
-        return other_engines.groupby('EngineType').agg({'Code': list}).reset_index()
+        return other_engines.groupby('EngineType').agg({'Code': list, 'CustomName': list, 'Performance': list, 'ID': list}).reset_index()
     elif engine_cat.lower() == 'all':
         df_engines['EngineType'] = ''
-        return df_engines.groupby('EngineType').agg({'Code': list}).reset_index()
+        return df_engines.groupby('EngineType').agg({'Code': list, 'CustomName': list, 'Performance': list, 'ID': list}).reset_index()
     
     df_engines = df_engines[df_engines['EngineCategory'] == engine_cat]
     if df_engines.empty:
         DBOperations.instance.logger.info(f"No engines found for the given engine category {engine_cat}")
-        return 
+        return None
     
     df_engines['EngineType'] = df_engines['EngineType'].replace('', np.nan).fillna(df_engines['EngineCategory'])
     
@@ -269,11 +266,10 @@ def get_valid_engines(country, engine_cat, time):
     return df_engines.groupby('EngineType').agg({'Code': list, 'CustomName': list, 'Performance': list, 'ID': list}).reset_index()
 
 def get_valid_pnos(country, model, time, engines_types):
-    conditions=[f"CountryCode = '{country}'", f"Model = '{model}'", f"Steering = '1'"]
+    conditions=[f"CountryCode = '{country}'", f"Model = '{model}'", f"(Steering = '1' OR Steering = '1.0')"]
     allowed_engines = engines_types['Code'].explode('Code').unique().tolist()
     if not allowed_engines:
         DBOperations.instance.logger.info(f"No engines found for the given engine category {engines_types}")
-        return
     elif len(allowed_engines) == 1:
         conditions.append(f"Engine = '{allowed_engines[0]}'")
     else:

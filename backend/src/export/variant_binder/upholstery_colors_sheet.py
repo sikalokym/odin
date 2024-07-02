@@ -82,7 +82,8 @@ def insert_table(ws, sales_versions, title, df_res):
             add_custom_category(ws, row['CustomCategory'])
             old_custom_category = row['CustomCategory']
             catgory_rows.append(ws.max_row)
-        svs = [cell_values.get(row[sv], row[sv]) for sv in sales_versions['SalesVersion']]
+        
+        svs = [cell_values.get(row[sv], row[sv]) if sv in df_res.columns else '' for sv in sales_versions['SalesVersion']]
         if row['Price'] == 'Pack Only'or row['Price'] == 'Serie':
             ws.append([row['Code'], row['CustomName'], row['Price']] + svs + ['', row['Rules']])
             ws.append([])

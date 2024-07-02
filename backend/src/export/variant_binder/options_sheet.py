@@ -54,7 +54,7 @@ def get_sheet(ws, sales_versions, title, time):
 
     # insert data into the sheet ab row 3
     for _, row in df_res.iterrows():
-        svs = [cell_values.get(row[sv], row[sv]) for sv in sales_versions['SalesVersion']]
+        svs = [cell_values.get(row[sv], row[sv]) if sv in df_res.columns else '' for sv in sales_versions['SalesVersion']]
         if row['Price'] == 'Pack Only'or row['Price'] == 'Serie':
             ws.append([row['Code'], row['CustomName'], row['Price']] + svs + ['', row['CustomCategory'], row['Rules']])
             ws.append([])
@@ -86,7 +86,7 @@ def prepare_sheet(ws, df_sales_versions, title):
     ws['C1'] = 'EUR inkl. 19 % MwSt.\n EUR ohne MwSt.'
     ws['A2'] = 'Code (ab Werk)\n + VCG Paket'
     ws['B2'] = 'Beschreibung'
-
+    df_sales_versions = df_sales_versions.reset_index(drop=True)
     for idx, row in df_sales_versions.iterrows():
         ws.cell(row=1, column=idx+4, value=f'{row["SalesVersionName"]}\nSV {row["SalesVersion"]}')
 

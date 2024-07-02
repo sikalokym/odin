@@ -169,6 +169,7 @@ def insert_meta_column(ws, curr_row, df_sales_version):
         ws.cell(row=curr_row, column=1).border = blr_border
 
 def insert_column(ws, col, curr_row, curr_col):
+    ws.column_dimensions[get_column_letter(curr_col)].width = 30
     for i, field in enumerate(col):
         ws.cell(row=curr_row, column=curr_col, value=field)
         ws.cell(row=curr_row, column=curr_col).alignment = Alignment(horizontal='center', vertical='center')
