@@ -101,6 +101,11 @@ export const usePNOStore = defineStore({
     },
     // PNO specific
     async fetchPnosFeatures(model, engine, salesversion, gearbox) {
+      if (this.model_year === '' || this.model_year === null || this.model_year === undefined || this.model_year === 0 || this.model_year === '0') {
+        // return empty array if model year is not set
+        this.pnosFeatures = [];
+        return;
+      }
       let path = `/db/${this.country.Code}/${this.model_year}/features?&model=${model}&engine=${engine}&sales_version=${salesversion}&gearbox=${gearbox}`
       return await index.get(path).then((response) => {
         this.pnosFeatures = response.data

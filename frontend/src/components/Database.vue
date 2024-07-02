@@ -2016,19 +2016,19 @@ export default {
         if (this.displaytable === 'Model' || this.displaytable === 'Features' || this.displaytable === 'Colors' || this.displaytable === 'Options' || this.displaytable === 'Upholstery') {
           await this.entitiesStore.fetchModels();
         }
-        if (this.displaytable === 'Engine') {
+        else if (this.displaytable === 'Engine') {
           await this.entitiesStore.fetchEngines();
         }
-        if (this.displaytable === 'SalesVersion') {
+        else if (this.displaytable === 'SalesVersion') {
           await this.entitiesStore.fetchSalesversions();
         }
-        if (this.displaytable === 'Gearbox') {
+        else if (this.displaytable === 'Gearbox') {
           await this.entitiesStore.fetchGearboxes();
         }
-        if (this.displaytable === 'VISA Files' || this.displaytable === 'Sales Channels') {
+        else if (this.displaytable === 'VISA Files' || this.displaytable === 'Sales Channels') {
           await this.entitiesStore.fetchVISAFiles();
         }
-        if (this.displaytable === 'Sales Channels') {
+        else if (this.displaytable === 'Sales Channels') {
           await this.entitiesStore.fetchSalesChannels();
         }
       } catch (error) {
@@ -2041,16 +2041,16 @@ export default {
         if (this.displaytable === 'Features') {
           await this.pnoStore.fetchPnosFeatures(this.model, this.engine, this.salesversion, this.gearbox);
         }
-        if (this.displaytable === 'Colors') {
+        else if (this.displaytable === 'Colors') {
           await this.pnoStore.fetchPnosColors(this.model, this.engine, this.salesversion, this.gearbox);
         }
-        if (this.displaytable === 'Options') {
+        else if (this.displaytable === 'Options') {
           await this.pnoStore.fetchPnosOptions(this.model, this.engine, this.salesversion, this.gearbox);
         }
-        if (this.displaytable === 'Upholstery') {
+        else if (this.displaytable === 'Upholstery') {
           await this.pnoStore.fetchPnosUpholstery(this.model, this.engine, this.salesversion, this.gearbox);
         }
-        if (this.displaytable === 'Packages') {
+        else if (this.displaytable === 'Packages') {
           await this.pnoStore.fetchPnosPackages(this.model, this.engine, this.salesversion, this.gearbox);
         }
       } catch (error) {
