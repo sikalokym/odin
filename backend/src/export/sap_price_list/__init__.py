@@ -43,6 +43,8 @@ def extract_sap_price_list(country, code, date, model_year):
     
     # Group by 'VisaFile' and sort by 'DateFrom', then rank
     df_visa['Order'] = df_visa.sort_values(by=['ModelYear', 'CarType', 'StartDate']).groupby(['ModelYear', 'CarType']).cumcount() + 1
+    df_visa = df_visa.drop(columns=['StartDate'])
+    df_visa = df_visa.sort_values(by=['ModelYear', 'CarType', 'Order']).drop_duplicates(subset=['VisaFile', 'CarType', 'ModelYear'])
     
     available_visa_files = df_visa['VisaFile'].unique().tolist()
     def process_row(visa):
@@ -61,8 +63,7 @@ def extract_sap_price_list(country, code, date, model_year):
     df_discounts = df_discounts.explode('VisaFile')
     df_discounts = df_discounts[df_discounts['VisaFile'].isin(available_visa_files)]
     
-    # Assign the visa file datefrom to the discount StartDate
-    df_discounts = df_discounts.merge(df_visa[['VisaFile', 'StartDate', 'Order']], left_on='VisaFile', right_on='VisaFile', suffixes=('_discount', '_visa'))
+    df_discounts = df_discounts.merge(df_visa[['VisaFile', 'Order']], left_on='VisaFile', right_on='VisaFile', suffixes=('_discount', '_visa'))
 
     df_discounts = df_discounts.merge(df_channels, left_on='ChannelID', right_on='ID', suffixes=('_discount', '_channel'))
     df_discounts = df_discounts.drop(columns=['ID_channel', 'ID_discount'])
