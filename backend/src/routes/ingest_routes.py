@@ -1,5 +1,10 @@
+import datetime
+import os
 from flask import Blueprint, request, jsonify
 
+from src.ingest.visa_files.preprocess import process_visa_df
+from src.database.db_operations import DBOperations
+from src.utils.sql_logging_handler import logger
 from src.ingest.cpam.services import ingest_all_cpam_data, ingest_cpam_data
 from src.ingest.visa_files.services import ingest_visa_data, ingest_visa_file
 from src.utils.ingest_utils import is_valid_car_type, is_valid_year
@@ -9,28 +14,48 @@ bp_ingest = Blueprint('ingest', __name__, url_prefix='/api/<country>/ingest')
 
 @bp_ingest.route('/cpam', methods=['GET'])
 def refresh_all_cpam_data(country):
-    year= request.args.get('year', '')
-    start_model_year = request.args.get('start_model_year', '2021')
-    load_successfull, load_unsuccessfull = ingest_all_cpam_data(country, year, start_model_year)
-    if not load_successfull and not load_unsuccessfull:
-        return jsonify({'error': 'No data loaded'}), 500
-    return jsonify({'success': load_successfull, 'failed': load_unsuccessfull}), 200
-
-@bp_ingest.route('/cpam/<year>/<car_type>', methods=['GET'])
-def refresh_cpam_data(country, year, car_type):
+    logger.info('Refreshing CPAM Data')
+    year= request.args.get('year', None)
+    if year is None or not year.isdigit():
+        logger.info('No year provided, refreshing current year and future years')
+        this_week = datetime.datetime.now().isocalendar()[1]
+        year = datetime.datetime.now().year
+        if this_week > 16:
+            year +=1
+    folder = f"{os.getcwd()}/dist/cpam_data/231/"
+    for sub_folder in os.listdir(folder):
+        if int(sub_folder) < int(year):
+            continue
+        new_folder = folder + sub_folder + '/'
+        if not os.path.isdir(new_folder):
+            continue
+        logger.info(f'Processing Year: {sub_folder}')
+        for subsub_folder in os.listdir(new_folder):
+            if not os.path.isdir(new_folder + subsub_folder):
+                continue
+            for _ in range(3):
+                try:
+                    logger.info(f'Processing Car Type: {subsub_folder}')
+                    ingest_cpam_data(sub_folder, subsub_folder, '231')
+                    break
+                except Exception as e:
+                    logger.error(f'Failed to ingest data for {subsub_folder} in {sub_folder}: {e}')
     
-    is_valid = is_valid_year(year, country)
-    if isinstance(is_valid, str):
-        return jsonify({'error': is_valid}), 500
-    if not is_valid:
-        return jsonify({'error': 'Invalid year'}), 400
+            conditions = [f"CountryCode = '{country}'", f"ModelYear = '{sub_folder}'", f"CarType = '{subsub_folder}'"]
+            df_raw = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=conditions)
+            if df_raw is None or df_raw.empty:
+                continue
     
-    if not is_valid_car_type(car_type, year, country):
-        return jsonify({'error': 'Invalid car type'}), 400
-    try:
-        ingest_cpam_data(year, car_type, country, 'M', '')
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+            df_processed = process_visa_df(df_raw)
+            if df_processed is None or df_processed.empty:
+                continue
+            
+            df_processed.insert(7, 'CountryCode', country)
+            ingest_visa_data(country, df_processed)
+    
+    DBOperations.instance.consolidate_translations(country)
+    DBOperations.instance.logger.info('CPAM Data Refreshed', extra={'country': country})
+    return 'Ingestion Over', 200
 
 @bp_ingest.route('/visa', methods=['GET'])
 def refresh_visa_data(country):

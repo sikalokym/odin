@@ -2,78 +2,79 @@ from cachetools import cached, TTLCache
 import pandas as pd
 import configparser
 import time
+import os
 
 from src.database.db_operations import DBOperations
 from src.ingest.visa_files.services import ingest_visa_data
 from src.utils.ingest_utils import get_authorization_status
 from src.utils.sql_logging_handler import logger
-from src.ingest.visa_files import preprocess
 import src.ingest.cpam.api as cpam
 import src.utils.db_utils as utils
 
 config = configparser.ConfigParser()
 config.read('config/cpam.cfg')
 
-def ingest_all_cpam_data_from(year, country_code):
-    """
-    Ingests all CPAM data for a specific year and market.
-
-    Args:
-        year (int): The year for which the data needs to be ingested.
-        country_code (str): The specific market for which the data needs to be ingested.
-
-    Returns:
-        tuple: A tuple containing two lists - `load_successful` and `load_unsuccessful`.
-            `load_successful` (list): A list of tuples representing the successfully loaded data.
-                Each tuple contains the year and car type.
-            `load_unsuccessful` (list): A list of tuples representing the unsuccessfully loaded data.
-                Each tuple contains the year and car type.
-    """
-    load_successful = []
-    load_unsuccessful = []
-    for car in cpam.get_car_types(year)['DataRows']:
-        start_time_in = time.perf_counter()
-        maf = config.get('SETTINGS', 'MARKET_AUTH_FLAG')
-        sw = config.get('SETTINGS', 'START_WEEK')
-        try:
-            ingest_cpam_data(year, car['Type'], country_code, maf, sw)
-            load_successful.append((year, car['Type']))
-        except Exception as e:
-            logger.error(f'Error processing car type {car["Type"]}: {e}', extra={'country_code': country_code})
-            load_unsuccessful.append((year, car['Type']))
-        end_time = time.perf_counter()
-        duration = end_time - start_time_in
-        logger.info(f'Car {car["Type"]} execution time: {duration:.2f} seconds')
-    return load_successful, load_unsuccessful
-
-def ingest_all_cpam_data(country_code, year=None, start_model_year=''):
-    load_successful = []
-    load_unsuccessful = []
-    logger.info('Starting CPAM data update', extra={'country_code': country_code})
+def fetch_all_cpam_data(country_code, year=None, start_model_year=''):
+    logger.info('Starting CPAM data fetching', extra={'country_code': country_code})
+    
     if year:
         all_years = [year]
     else:
         all_years = cpam.get_model_years(country_code, start_model_year=start_model_year)
         if not all_years or all_years == []:
             logger.error('No model years found', extra={'country_code': country_code})
-            return load_successful, load_unsuccessful
+            return
         else:
             all_years = all_years['Years']
-    maf = config.get('SETTINGS', 'MARKET_AUTH_FLAG')
     sw = config.get('SETTINGS', 'START_WEEK')
     for year in all_years:
         for car in cpam.get_car_types(year, country_code)['DataRows']:
-            print(f'Processing car type: {car["Type"]}')
+            print(f'Fetching car type: {car["Type"]}')
             try:
-                ingest_cpam_data(year, car['Type'], country_code, maf, sw)
-                load_successful.append((year, car['Type']))
+                fetch_cpam_data(year, car['Type'], country_code, sw)
             except Exception as e:
-                logger.error(f'Error processing car type {car["Type"]}: {e}', extra={'country_code': country_code})
-                load_unsuccessful.append((year, car['Type']))
-    logger.debug('CPAM data update completed', extra={'country_code': country_code})
-    return load_successful, load_unsuccessful
+                logger.error(f'Error fetching car type {car["Type"]}: {e}', extra={'country_code': country_code})
+    
+    logger.debug('CPAM data fetching completed', extra={'country_code': country_code})
 
-def ingest_cpam_data(year, car_type, country_code, maf, sw):
+def process_all_cpam_data(country_code, start_model_year=0):
+    logger.info('Starting CPAM data preprocessing', extra={'country_code': country_code})
+    folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/"
+    for sub_folder in os.listdir(folder):
+        new_folder = folder + sub_folder + '/'
+        if not os.path.isdir(new_folder) or int(sub_folder) < start_model_year:
+            continue
+        print(f'Processing Year: {sub_folder}')
+        for subsub_folder in os.listdir(new_folder):
+            if not os.path.isdir(new_folder + subsub_folder):
+                continue
+            print(f'Processing Car Type: {subsub_folder}')
+            try:
+                preprocess_cpam_data(sub_folder, subsub_folder, country_code)
+            except Exception as e:
+                logger.error(f'Error processing car type {subsub_folder}: {e}', extra={'country_code': country_code})
+    logger.debug('CPAM data preprocessing completed', extra={'country_code': country_code})
+
+def ingest_all_cpam_data(country_code, start_model_year=0):
+    logger.info('Starting CPAM data update', extra={'country_code': country_code})
+    folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/"
+    for sub_folder in os.listdir(folder):
+        new_folder = folder + sub_folder + '/'
+        if not os.path.isdir(new_folder) or int(sub_folder) != 2023:
+            continue
+        print(f'Ingesting Year: {sub_folder}')
+        for subsub_folder in os.listdir(new_folder):
+            if not os.path.isdir(new_folder + subsub_folder):
+                continue
+            print(f'Ingesting Car Type: {subsub_folder}')
+            try:
+                ingest_cpam_data(sub_folder, subsub_folder, country_code)
+            except Exception as e:
+                logger.error(f'Error ingesting car type {subsub_folder}: {e}', extra={'country_code': country_code})
+    
+    logger.debug('CPAM data ingestion completed', extra={'country_code': country_code})
+
+def fetch_cpam_data(year, car_type, country_code, sw):
     """
     Ingests CPAM data for a specific year, car type, spec market, MAF, and SW.
 
@@ -87,17 +88,18 @@ def ingest_cpam_data(year, car_type, country_code, maf, sw):
     Raises:
         ValueError: If the year or car type is invalid.
     """
-    logger.info(f'Processing car type: {car_type}')
-
-    # global_dict_auth = utils.df_from_datarows(cpam.get_dictionary(year, car_type, country_code, '', sw).get('DataRows', None))
-    # market_dict_auth = utils.df_from_datarows(cpam.get_dictionary(year, car_type, country_code, 'm', sw).get('DataRows', None))
     
-    # if market_dict_auth.empty:
-    #     logger.error('No data found for the market', extra={'country_code': country_code})
-    #     return
+    logger.info(f'Fetching data car type: {car_type} for year: {year}', extra={'country_code': country_code})
+    global_dict_auth = utils.df_from_datarows(cpam.get_dictionary(year, car_type, country_code, '', sw).get('DataRows', None))
+    market_dict_auth = utils.df_from_datarows(cpam.get_dictionary(year, car_type, country_code, 'm', sw).get('DataRows', None))
+    
+    if market_dict_auth.empty:
+        logger.warn('No data found for the market', extra={'country_code': country_code})
+        return
     
     global_authorization_auth = utils.df_from_datarows(cpam.get_authorization(year, car_type, country_code, '', sw).get('DataRows', None), ['Code', 'DataType'])
     market_authorization_auth = utils.df_from_datarows(cpam.get_authorization(year, car_type, country_code, 'm', sw).get('DataRows', None), ['Code', 'DataType'])
+    authorized_pnos = market_authorization_auth[market_authorization_auth['DataType'] == 'PNO'].copy()
     
     authorized_packages = utils.df_from_package_datarows(cpam.get_packages(year, car_type, country_code, 'm', sw).get('PackageDataRows', None))
     
@@ -107,32 +109,125 @@ def ingest_cpam_data(year, car_type, country_code, maf, sw):
     global_feat_auth = utils.df_from_datarows(cpam.get_features(year, car_type, country_code, '', sw).get('DataRows', None), ['Code', 'Special', 'Reference'])
     market_feat_auth = utils.df_from_datarows(cpam.get_features(year, car_type, country_code, 'm', sw).get('DataRows', None), ['Code', 'Special', 'Reference'])
     
-    # authorized_dictionaries, unauthorized_dictionaries = get_authorization_status(global_dict_auth, market_dict_auth)
-    authorized_authorizations, unauthorized_authorizations = get_authorization_status(global_authorization_auth, market_authorization_auth)
-    authorized_dependencies, unauthorized_dependencies = get_authorization_status(global_dependency_auth, market_dependency_auth)
-    authorized_features, unauthorized_features = get_authorization_status(global_feat_auth, market_feat_auth)
+    folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/{year}/{car_type}/raw"
+    # Create the folder if it doesn't exist
+    if not os.path.exists(folder):
+        os.makedirs(folder)
     
-    # DBOperations.instance.collect_entity(authorized_dictionaries, country_code)
-    # DBOperations.instance.collect_auth(authorized_authorizations, country_code)
-    DBOperations.instance.collect_package(authorized_packages, country_code)
-    DBOperations.instance.collect_dependency(authorized_dependencies, country_code)
-    DBOperations.instance.collect_feature(authorized_features, country_code)
+    ###############################################################################################################################################################################################################
+    global_dict_auth.to_csv(f"{folder}/global_dict_auth.csv")
+    market_dict_auth.to_csv(f"{folder}/market_dict_auth.csv")
+    global_authorization_auth.to_csv(f"{folder}/global_authorization_auth.csv")
+    market_authorization_auth.to_csv(f"{folder}/market_authorization_auth.csv")
+    authorized_pnos.to_csv(f"{folder}/authorized_pnos.csv")
+    authorized_packages.to_csv(f"{folder}/authorized_packages.csv")
+    global_dependency_auth.to_csv(f"{folder}/global_dependency_auth.csv")
+    market_dependency_auth.to_csv(f"{folder}/market_dependency_auth.csv")
+    global_feat_auth.to_csv(f"{folder}/global_feat_auth.csv")
+    market_feat_auth.to_csv(f"{folder}/market_feat_auth.csv")
+    ###############################################################################################################################################################################################################
     
-    DBOperations.instance.drop_feature(unauthorized_features, country_code)
-    DBOperations.instance.drop_dependency(unauthorized_dependencies, country_code)
-    DBOperations.instance.drop_auth(unauthorized_authorizations, country_code)
-    ### Don't drop entities because you might drop something used in a previous processed car type
-    # DBOperations.instance.drop_entity(unauthorized_dictionaries, country_code)
+    logger.info('Data fetched', extra={'country_code': country_code})
+
+def preprocess_cpam_data(year, car_type, country_code):
+    folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/{year}/{car_type}/raw"
+    if not os.path.exists(folder):
+        logger.error(f'Folder {folder} does not exist', extra={'country_code': country_code})
+        return
     
-    DBOperations.instance.consolidate_translations(country_code)
+    def cast_start_and_enddate_to_int(df):
+        if df.empty:
+            return df
+        df['StartDate'] = df['StartDate'].astype(int)
+        df['EndDate'] = df['EndDate'].astype(int)
+        return df
+    
+    ###############################################################################################################################################################################################################
+    global_dict_auth = pd.read_csv(f"{folder}/global_dict_auth.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).fillna('').reset_index(drop=True)
+    market_dict_auth = pd.read_csv(f"{folder}/market_dict_auth.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).fillna('').reset_index(drop=True)
+    global_authorization_auth = pd.read_csv(f"{folder}/global_authorization_auth.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).fillna('').reset_index(drop=True)
+    market_authorization_auth = pd.read_csv(f"{folder}/market_authorization_auth.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).fillna('').reset_index(drop=True)
+    authorized_pnos = pd.read_csv(f"{folder}/authorized_pnos.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).fillna('').reset_index(drop=True)
+    authorized_packages = pd.read_csv(f"{folder}/authorized_packages.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).fillna('').reset_index(drop=True)
+    global_dependency_auth = pd.read_csv(f"{folder}/global_dependency_auth.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).fillna('').reset_index(drop=True)
+    market_dependency_auth = pd.read_csv(f"{folder}/market_dependency_auth.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).fillna('').reset_index(drop=True)
+    global_feat_auth = pd.read_csv(f"{folder}/global_feat_auth.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).fillna('').reset_index(drop=True)
+    market_feat_auth = pd.read_csv(f"{folder}/market_feat_auth.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).fillna('').reset_index(drop=True)
+    ###############################################################################################################################################################################################################
+    
+    logger.info(f'Processing car type: {car_type} for year: {year} in folder: {folder}', extra={'country_code': country_code})
+    authorized_dictionaries, unauthorized_dictionaries = get_authorization_status(global_dict_auth, market_dict_auth)
+    authorized_authorizations, unauthorized_authorizations = get_authorization_status(global_authorization_auth, market_authorization_auth, authorized_pnos)
+    authorized_dependencies, unauthorized_dependencies = get_authorization_status(global_dependency_auth, market_dependency_auth, authorized_pnos)
+    authorized_features, unauthorized_features = get_authorization_status(global_feat_auth, market_feat_auth, authorized_pnos)
+    
+    folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/{year}/{car_type}/processed"
+    # Create the folder if it doesn't exist
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    
+    ###############################################################################################################################################################################################################
+    authorized_dictionaries.to_csv(f"{folder}/authorized_dictionaries.csv")
+    unauthorized_dictionaries.to_csv(f"{folder}/unauthorized_dictionaries.csv")
+    authorized_authorizations.to_csv(f"{folder}/authorized_authorizations.csv")
+    unauthorized_authorizations.to_csv(f"{folder}/unauthorized_authorizations.csv")
+    authorized_packages.to_csv(f"{folder}/authorized_packages.csv")
+    authorized_dependencies.to_csv(f"{folder}/authorized_dependencies.csv")
+    unauthorized_dependencies.to_csv(f"{folder}/unauthorized_dependencies.csv")
+    authorized_features.to_csv(f"{folder}/authorized_features.csv")
+    unauthorized_features.to_csv(f"{folder}/unauthorized_features.csv")
+    ###############################################################################################################################################################################################################
+    
+    logger.info('Data processed', extra={'country_code': country_code})
+
+def ingest_cpam_data(year, car_type, country_code):
+    folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/{year}/{car_type}/processed"
+    if not os.path.exists(folder):
+        logger.error(f'Folder {folder} does not exist', extra={'country_code': country_code})
+        return
+    def cast_start_and_enddate_to_int(df):
+        if df.empty:
+            return df
+        df['StartDate'] = df['StartDate'].astype(int)
+        df['EndDate'] = df['EndDate'].astype(int)
+        return df
+    ###############################################################################################################################################################################################################
+    authorized_authorizations = pd.read_csv(f"{folder}/authorized_authorizations.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
+    authorized_dictionaries = pd.read_csv(f"{folder}/authorized_dictionaries.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
+    authorized_packages = pd.read_csv(f"{folder}/authorized_packages.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
+    authorized_dependencies = pd.read_csv(f"{folder}/authorized_dependencies.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
+    authorized_features = pd.read_csv(f"{folder}/authorized_features.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
+    unauthorized_authorizations = pd.read_csv(f"{folder}/unauthorized_authorizations.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
+    # unauthorized_dictionaries = pd.read_csv(f"{folder}/unauthorized_dictionaries.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
+    unauthorized_dependencies = pd.read_csv(f"{folder}/unauthorized_dependencies.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
+    unauthorized_features = pd.read_csv(f"{folder}/unauthorized_features.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
+    ###############################################################################################################################################################################################################
+    
+    if not authorized_dictionaries.empty:
+        DBOperations.instance.collect_entity(authorized_dictionaries, country_code)
+    if authorized_authorizations.empty:
+        return
+    if not unauthorized_authorizations.empty:
+        DBOperations.instance.drop_auth(unauthorized_authorizations, country_code)
+    df_pnos = DBOperations.instance.collect_auth(authorized_authorizations, country_code)
+    if df_pnos.empty:
+        return
+    if not unauthorized_features.empty:
+        DBOperations.instance.drop_feature(unauthorized_features, df_pnos)
+    if not unauthorized_dependencies.empty:
+        DBOperations.instance.drop_dependency(unauthorized_dependencies, df_pnos)
+    if not authorized_packages.empty:
+        DBOperations.instance.collect_package(authorized_packages, df_pnos)
+    if not authorized_dependencies.empty:
+        DBOperations.instance.collect_dependency(authorized_dependencies, df_pnos)
+    if not authorized_features.empty:
+        DBOperations.instance.collect_feature(authorized_features, df_pnos)
+    ## Don't drop entities because you might drop something used in a previously processed car type   
+    # if not unauthorized_dictionaries.empty:
+    #     DBOperations.instance.drop_entity(unauthorized_dictionaries, country_code)
     
     logger.info('Data insertion completed', extra={'country_code': country_code})
 
-    conditions = [f"CountryCode = '{country_code}'", f"ModelYear = '{year}'", f"CarType = '{car_type}'"]
-    df_raw = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=conditions)
-    df_processed = preprocess.process_visa_df(df_raw)
-    df_processed.insert(7, 'CountryCode', country_code)
-    ingest_visa_data(country_code, df_processed)
 
 cache = TTLCache(maxsize=100, ttl=60)
 

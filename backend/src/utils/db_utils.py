@@ -21,8 +21,15 @@ def find_variant_matching_pno_ids(row, df_pno, attributes):
 
     # Check each attribute
     for attr in attributes:
-        if pd.notna(row[attr]) and row[attr].strip() != "":
-            matches = matches[(matches[attr] == row[attr])]
+        if pd.isna(row[attr]):
+            continue
+        if not isinstance(row[attr], str):
+            row[attr] = str(row[attr])
+        
+        if row[attr].strip() == "":
+            continue
+        
+        matches = matches[(matches[attr] == str(row[attr]))]
 
     if matches.empty:
         return None
@@ -154,7 +161,7 @@ def sort_df_empty_to_filled(df):
         2  value1  value3  value6
     """
     
-    df.replace(['', '-', '--'], None, inplace=True)
+    df = df.replace(['', '-', '--'], None)
 
     # Calculate the number of NaNs in each row and create a new column
     df['NaN_Count'] = df.isna().sum(axis=1)
@@ -163,7 +170,7 @@ def sort_df_empty_to_filled(df):
     df_sorted = df.sort_values(by='NaN_Count', ascending=False)
 
     # Optionally, drop the 'NaN_Count' column if it's no longer needed
-    df_sorted.drop('NaN_Count', axis=1, inplace=True)
+    df_sorted = df_sorted.drop('NaN_Count', axis=1)
 
     return df_sorted
 
@@ -224,7 +231,7 @@ def df_from_package_datarows(datarows):
 
     # Create the DataFrame
     df = pd.DataFrame(flat_data)
-    return df
+    return df.fillna('')
 
 def get_pno_ids_from_variants(df_pno, df_variants, is_relation=False):
     """
@@ -272,7 +279,7 @@ def get_relation_ids(df_relation, df_assigned):
     df['RelationID'] = df.apply(lambda row: find_matching_relation_ids(row, df_relation), axis=1)
     filtered_df = df[df['RelationID'].notna()]
     not_found_df = df[df['RelationID'].isna()]
-    not_found_df.drop('RelationID', axis=1, inplace=True)
+    not_found_df = not_found_df.drop('RelationID', axis=1)
     
     expanded_df = filtered_df.explode('RelationID')
     final_df = expanded_df.drop(['PNOID', 'Code'], axis=1)
@@ -334,7 +341,7 @@ def filter_model_year_by_translation(df, conditional_columns):
         # filter based on number of unique entries in conditional columns
         df['TmpModelYear'] = df['Code'].apply(lambda x: '' if df[df['Code'] == x][conditional_columns].nunique().max() <= 1 else None)
         df['ModelYear'] = df['TmpModelYear'].combine_first(df['ModelYear'])
-        df.drop(columns=['TmpModelYear'], inplace=True)
+        df = df.drop(columns=['TmpModelYear'])
     else:
         df = df.sort_values('StartDate', ascending=False).drop_duplicates('Code', keep='first')
     return df

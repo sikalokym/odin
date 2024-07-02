@@ -53,16 +53,77 @@ def is_valid_engine_category(engine_category, year, country_code, model):
     # Check if engine_category is in all_cats
     return engine_category.lower() in all_cats
 
-def get_authorization_status(global_auth, market_auth):
-    merged_df = market_auth.merge(global_auth, on=market_auth.columns.tolist(), how='left', indicator=True)
-
+def get_authorization_status(global_auth, market_auth, pnos=None):
+    join_cols = market_auth.columns.tolist()
+    merged_df = market_auth.merge(global_auth, on=join_cols, how='left', indicator=True)
+    
     locally_authorized = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
     
-    merged_df = global_auth.merge(market_auth, on=global_auth.columns.tolist(), how='left', indicator=True)
-
+    merged_df = global_auth.merge(market_auth, on=join_cols, how='left', indicator=True)
+    
     globally_authorized = merged_df[merged_df['_merge'] == 'both'].drop(columns=['_merge'])
-    unauthorized = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
+    globally_unauthorized = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
 
     authorized = pd.concat([globally_authorized, locally_authorized])
+    if pnos is not None:
+        unauthorized_all = filter_unauth_from_auth(globally_unauthorized, locally_authorized)
+        unauthorized_expanded = fill_pnos(unauthorized_all, pnos)
+        unauthorized = filter_unauth_from_auth(unauthorized_expanded, locally_authorized)
+    else:
+        unauthorized = globally_unauthorized
     
     return authorized, unauthorized
+
+def fill_pnos(df, pnos):
+    attributes = ['Model', 'Engine', 'SalesVersion', 'Steering', 'Gearbox', 'Body', 'MarketCode']
+    df_non_att_cols = [col for col in df.columns.tolist() if col not in attributes]
+    df_res = pd.DataFrame(columns=df.columns)
+    for _, row in df.iterrows():
+        conds = [f"{att} == '{row[att]}'" for att in attributes if not isinstance(row[att], str) or row[att].strip() != ""]
+        df_filtered = pnos.query(' & '.join(conds))
+        # take the non attribute columns from the row
+        df_filtered = df_filtered[attributes]
+        for col in df_non_att_cols:
+            df_filtered[col] = row[col]
+        df_res = pd.concat([df_res, df_filtered])
+    return df_res
+
+def filter_unauth_from_auth(df1, df2):
+    """Get variant matches between two DataFrames.
+
+    Args:
+        df1 (DataFrame): First DataFrame
+        df2 (DataFrame): Second DataFrame
+
+    Returns:
+        DataFrame: DataFrame containing df1 rows that are not in df2 based on the attributes
+    """
+    attributes = ['Model', 'Engine', 'SalesVersion', 'Steering', 'Gearbox', 'Body', 'MarketCode']
+    all_cols = df2.columns.tolist()
+    non_atts = [col for col in all_cols if col not in attributes and col not in ['StartDate', 'EndDate']]
+    idxs = []
+    allowed = []
+    for _, row in df2.iterrows():
+        conds = [f"{non_att} == '{row[non_att]}'" for non_att in non_atts]
+        init_matches = df1.query(' & '.join(conds))
+        if init_matches.empty:
+            continue
+        matches = init_matches[(init_matches['EndDate'] <= row['EndDate']) & (init_matches['StartDate'] >= row['StartDate'])]
+
+        # Check each attribute
+        for attr in attributes:
+            if pd.isna(row[attr]):
+                continue
+            if not isinstance(row[attr], str):
+                row[attr] = str(row[attr])
+            
+            if row[attr].strip() == "":
+                continue
+            
+            matches = matches[(matches[attr] == str(row[attr]))]
+
+        idxs += init_matches[~init_matches.index.isin(matches.index)].index.tolist()
+        allowed += matches.index.tolist()
+    
+    idxs = list(set(idxs) - set(allowed))
+    return df1.loc[idxs]
