@@ -91,26 +91,6 @@ IF EXISTS (SELECT * FROM sys.tables WHERE name = 'PNOCustomFeature')
 DROP TABLE [dbo].[PNOCustomFeature]
 GO
 
-IF EXISTS (SELECT * FROM sys.tables WHERE name = 'OptionForbiddsOption')
-DROP TABLE [dbo].[OptionForbiddsOption]
-GO
-
-IF EXISTS (SELECT * FROM sys.tables WHERE name = 'OptionRequiresOption')
-DROP TABLE [dbo].[OptionRequiresOption]
-GO
-
-IF EXISTS (SELECT * FROM sys.tables WHERE name = 'OptionForbiddenWithUpholsteries')
-DROP TABLE [dbo].[OptionForbiddenWithUpholsteries]
-GO
-
-IF EXISTS (SELECT * FROM sys.tables WHERE name = 'OptionForbiddenWithColours')
-DROP TABLE [dbo].[OptionForbiddenWithColours]
-GO
-
-IF EXISTS (SELECT * FROM sys.tables WHERE name = 'UpholsteryRequiresOption')
-DROP TABLE [dbo].[UpholsteryRequiresOption]
-GO
-
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'PNO')
 DROP TABLE [dbo].[PNO]
 GO
