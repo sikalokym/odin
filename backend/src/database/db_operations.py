@@ -354,21 +354,21 @@ class DBOperations:
             else:
                 conditions.append(f"PNOID in {tuple(pno_ids)}")
             df_inserted = self.get_table_df(self.config.get('AUTH', data_type), columns=['ID as RelationID', 'Code', 'StartDate', 'EndDate'], conditions=conditions)
-            
+            ids = df_inserted['RelationID'].unique().tolist()
             conditions = []
-            if len(pno_ids) == 1:
-                conditions.append(f"RelationID = '{pno_ids[0]}'")
+            if len(ids) == 1:
+                conditions.append(f"RelationID = '{ids[0]}'")
             else:
-                conditions.append(f"RelationID in {tuple(pno_ids)}")
+                conditions.append(f"RelationID in {tuple(ids)}")
             df_relation = self.get_table_df(self.config.get('RELATIONS', f'{data_type}_Custom'), conditions=conditions)
-            
             if df_relation.empty:
                 df_inserted['CustomName'] = ''
-                self.upsert_data_from_df(df_inserted, self.config.get('RELATIONS', f'{data_type}_Custom'), ['RelationID', 'StartDate', 'EndDate'], ['RelationID'])
+                self.upsert_data_from_df(df_inserted, self.config.get('RELATIONS', f'{data_type}_Custom'), ['RelationID', 'CustomName', 'StartDate', 'EndDate'], ['RelationID'])
                 continue
-            df_inserted = df_inserted.merge(df_relation, on=['RelationID'], how='left', indicator=True)
+            df_relation = df_relation.drop(['StartDate', 'EndDate'], axis=1)
+            df_inserted = df_inserted.merge(df_relation, on=['RelationID'], how='left')
             
-            group['CustomName'] = group.groupby('Code').apply(utils.fill_custom_name).reset_index(drop=True)
+            df_inserted['CustomName'] = df_inserted.groupby('Code').apply(utils.fill_custom_name).reset_index(drop=True)
             self.upsert_data_from_df(df_inserted, self.config.get('RELATIONS', f'{data_type}_Custom'), ['RelationID', 'CustomName', 'StartDate', 'EndDate'], ['RelationID'])
         
         return df_pnos
@@ -582,6 +582,30 @@ class DBOperations:
         package_conditional_columns = ['PNOID', 'Code', 'RuleCode', 'StartDate']
         self.logger.info('Inserting packages')
         self.upsert_data_from_df(df_assigned, self.config.get('AUTH', 'PKG'), package_columns, package_conditional_columns)
+        pno_ids = df_assigned['PNOID'].unique().tolist()
+        
+        conditions = []
+        if len(pno_ids) == 1:
+            conditions.append(f"PNOID = '{pno_ids[0]}'")
+        else:
+            conditions.append(f"PNOID in {tuple(pno_ids)}")
+        df_inserted = self.get_table_df(self.config.get('AUTH', 'PKG'), columns=['ID as RelationID', 'Code', 'StartDate', 'EndDate'], conditions=conditions)
+        ids = df_inserted['RelationID'].unique().tolist()
+        conditions = []
+        if len(ids) == 1:
+            conditions.append(f"RelationID = '{ids[0]}'")
+        else:
+            conditions.append(f"RelationID in {tuple(ids)}")
+        df_relation = self.get_table_df(self.config.get('RELATIONS', 'PKG_Custom'), conditions=conditions)
+        if df_relation.empty:
+            df_inserted['CustomName'] = ''
+            self.upsert_data_from_df(df_inserted, self.config.get('RELATIONS', 'PKG_Custom'), ['RelationID', 'CustomName', 'StartDate', 'EndDate'], ['RelationID'])
+            return
+        df_relation = df_relation.drop(['StartDate', 'EndDate'], axis=1)
+        df_inserted = df_inserted.merge(df_relation, on=['RelationID'], how='left')
+        
+        df_inserted['CustomName'] = df_inserted.groupby('Code').apply(utils.fill_custom_name).reset_index(drop=True)
+        self.upsert_data_from_df(df_inserted, self.config.get('RELATIONS', 'PKG_Custom'), ['RelationID', 'CustomName', 'StartDate', 'EndDate'], ['RelationID'])
 
     def assign_prices_from_visa_dataframe(self, country_code, df_visa):
         if df_visa.empty:
@@ -660,16 +684,21 @@ class DBOperations:
         for data_type in ['COL', 'UPH', 'PKG']:
             
             df_codes = self.get_table_df(self.config.get('AUTH', data_type), columns=['ID', 'Code'], conditions=conds)
-            ids = df_codes['ID'].unique().tolist()
-            
-            conditions=[]
-            if len(ids) == 1:
-                conditions.append(f"RelationID = '{ids[0]}'")
-            else:
-                conditions.append(f"RelationID in {tuple(ids)}")
-            
-            table_name = self.config.get('RELATIONS', f'{data_type}_Custom')
-            df_all_translation = self.get_table_df(table_name, columns=['RelationID', 'CustomName'], conditions=conditions)
+            all_ids = df_codes['ID'].unique().tolist()
+            # Fetch every 5000 ids at a time
+            df_all_translation = pd.DataFrame()
+            chunk_size = 5000
+            for i in range(0, len(all_ids), chunk_size):
+                ids = all_ids[i:i+chunk_size]
+                conditions=[]
+                if len(ids) == 1:
+                    conditions.append(f"RelationID = '{ids[0]}'")
+                else:
+                    conditions.append(f"RelationID in {tuple(ids)}")
+                
+                table_name = self.config.get('RELATIONS', f'{data_type}_Custom')
+                df_part_translation = self.get_table_df(table_name, columns=['RelationID', 'CustomName'], conditions=conditions)
+                df_all_translation = pd.concat([df_all_translation, df_part_translation])
             
             if df_all_translation[(df_all_translation['CustomName'].isnull()) | (df_all_translation['CustomName'] == '')].empty:
                 self.logger.warning(f"No empty translations in {table_name} were found", extra={'country_code': country_code})
