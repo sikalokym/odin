@@ -15,8 +15,6 @@ class SQLLoggingHandler(logging.Handler):
             return
         # Get the current datetime
         rec_date = self.formatter.formatTime(record, self.formatter.default_time_format)
-
-        print(f"Logging message to database: {record.levelname} - {record.getMessage()}")
         
         # Get the log level number
         levelno = record.levelno
