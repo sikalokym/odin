@@ -318,9 +318,11 @@ def filter_df_by_model_year(df, model_year):
         if not model_year.isdigit():
             raise ValueError("Model year must be a valid integer.")
         model_year = int(model_year)
+        df['ModelYear'] = df['StartDate'].apply(get_model_year_from_date)
         if not model_year:
-            df['ModelYear'] = df['StartDate'].apply(get_model_year_from_date)
             return df
+        else:
+            return df[df['ModelYear'] == model_year].drop(columns=['ModelYear'])
     elif not isinstance(model_year, int):
         raise ValueError("Model year must be an integer or string.")
     return df[((df['StartDate'].apply(get_model_year_from_date) <= model_year) & (df['EndDate'].apply(get_model_year_from_date) >= model_year)) | (df['StartDate'].apply(get_model_year_from_date) == model_year) | (df['EndDate'].apply(get_model_year_from_date) == model_year)]
