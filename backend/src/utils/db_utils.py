@@ -402,30 +402,19 @@ def format_float_string(float_string):
 
 def log_df(df, msg_prefix, callable_logger, country_code=None):
     """
-    Logs each row of the DataFrame using a specified logging function.
-
-    This function iterates through each row of a provided DataFrame `df` and constructs a log message
-    prefixed with `msg_prefix`. It appends each column's name and value to this message.
-    The message is then passed to the `callable_logger` function.
-
-    If `country_code` is not provided, the function attempts to retrieve it from the first row
-    of the 'CountryCode' column in the DataFrame. If the 'CountryCode' column is missing, the function
-    returns without logging.
+    Logs DataFrame rows in batch to reduce the number of log entries.
+    Each DataFrame row will be concatenated into a single large string, which is then logged at once.
+    This reduces the number of logging calls and can significantly improve performance.
 
     Parameters:
-    - df (pd.DataFrame): The DataFrame to log. Each row is logged separately.
-    - msg_prefix (str): A string to prefix to each log message for context or categorization.
-    - callable_logger (callable): A logging function that takes two arguments: the message string
-      and an optional 'extra' dictionary containing additional data about the log (in this case, 'country_code').
-    - country_code (str, optional): An optional country code to include in the log. If not provided,
-      the function attempts to extract it from the DataFrame.
-
-    Returns:
-    - None: This function does not return any value.
+    - df (pd.DataFrame): The DataFrame to log.
+    - msg_prefix (str): A string prefix for each log message.
+    - callable_logger (callable): A logging function.
+    - country_code (str, optional): Country code to include in the log. If not provided,
+      attempts to extract it from the DataFrame's 'CountryCode' column.
 
     Raises:
-    - KeyError: If the 'country_code' is not supplied and the 'CountryCode' column is missing in the DataFrame.
-    
+    - KeyError: If 'country_code' is not supplied and 'CountryCode' column is missing in the DataFrame.
     """
     if df.empty:
         return
@@ -434,12 +423,18 @@ def log_df(df, msg_prefix, callable_logger, country_code=None):
             country_code = df['CountryCode'].iloc[0]
         except KeyError:
             return
+
+    # Initialize message list
+    messages = []
     for _, row in df.iterrows():
-        msg = msg_prefix + ' '
-        for column in df.columns:
-            msg += f'{column}: {row[column]} '
-        
-        callable_logger(msg, extra={'country_code': country_code})
+        msg = [msg_prefix]
+        msg.extend(f"{col}: {val}" for col, val in row.items())
+        messages.append(', '.join(msg))
+
+    # Combine all messages into one large string and log it
+    full_message = "\n".join(messages)
+    callable_logger(full_message, extra={'country_code': country_code})
+
 
 def get_column_map(reverse=False):
     """
