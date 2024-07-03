@@ -205,11 +205,13 @@ def fetch_color_data(sales_versions, time):
     df_pno_color_with_price['Price'] = df_pno_color_with_price.apply(lambda x: f"{x['Price']}/{x['PriceBeforeTax']}", axis=1)
     df_pno_color_with_price = df_pno_color_with_price.drop_duplicates()
     
+    df_pno_color_with_price = df_pno_color_with_price.groupby(['Code', 'Price', 'RuleName', 'SalesVersion', 'SalesVersionName']).agg({'CustomName': lambda x: ';\n'.join(sorted(x.dropna().unique()))}).reset_index()
+    
     # Create the pivot table
     pivot_df = df_pno_color_with_price.pivot_table(index=['Code', 'Price'], columns='SalesVersion', values='RuleName', aggfunc='first')
 
     # Drop the now unneeded columns and duplicates
-    df_pno_color_with_price = df_pno_color_with_price.drop(['ID', 'PNOID', 'RelationID', 'RuleName', 'SalesVersion', 'SalesVersionName', 'PriceBeforeTax'], axis=1).drop_duplicates()
+    df_pno_color_with_price = df_pno_color_with_price.drop(['RuleName', 'SalesVersion', 'SalesVersionName'], axis=1).drop_duplicates()
 
     # Join the pivoted DataFrame with the original one. sort after code ascending
     df_result = df_pno_color_with_price.join(pivot_df, on=['Code', 'Price']).sort_values(by='Code')
@@ -279,12 +281,14 @@ def fetch_upholstery_data(sales_versions, time):
 
     # Concatenate Price and PriceBeforeTax
     df_pno_upholstery_with_price['Price'] = df_pno_upholstery_with_price.apply(lambda x: f"{x['Price']}/{x['PriceBeforeTax']}", axis=1)
-
+    
+    df_pno_upholstery_with_price = df_pno_upholstery_with_price.groupby(['Code', 'Price', 'RuleName', 'SalesVersion', 'SalesVersionName']).agg({'CustomName': lambda x: ';\n'.join(sorted(x.dropna().unique())), 'CustomCategory': lambda x: ';\n'.join(sorted(x.dropna().unique()))}).reset_index()
+    
     # Create the pivot table
     pivot_df = df_pno_upholstery_with_price.pivot_table(index=['Code', 'Price'], columns='SalesVersion', values='RuleName', aggfunc='first')
 
     # Drop the now unneeded columns and duplicates
-    df_pno_upholstery_with_price = df_pno_upholstery_with_price.drop(['ID', 'PNOID', 'RelationID', 'RuleName', 'SalesVersion', 'SalesVersionName', 'PriceBeforeTax'], axis=1).drop_duplicates()
+    df_pno_upholstery_with_price = df_pno_upholstery_with_price.drop(['RuleName', 'SalesVersion', 'SalesVersionName'], axis=1).drop_duplicates()
 
     # Join the pivoted DataFrame with the original one. sort after code ascending
     df_result = df_pno_upholstery_with_price.join(pivot_df, on=['Code', 'Price']).sort_values(by='Code')

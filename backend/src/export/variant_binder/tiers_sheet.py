@@ -38,7 +38,7 @@ def get_sheet(ws, sales_versions, title, df_res):
 
     # insert data into the sheet ab row 3
     for _, row in df_res.iterrows():
-        svs = [cell_values.get(row[sv], row[sv]) if sv in df_res.columns else '' for sv in sales_versions]
+        svs = [cell_values.get(row[sv], row[sv]) if sv in df_res.columns else '' for sv in sales_versions['SalesVersion']]
         if row['Price'] == 'Pack Only'or row['Price'] == 'Serie':
             ws.append([row['Code'], row['CustomName'], row['Price']] + svs + ['', row['CustomCategory'], row['Rules']])
             ws.append([])
