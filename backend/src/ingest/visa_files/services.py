@@ -25,6 +25,7 @@ def ingest_visa_data(country_code, df_processed):
         df_raw = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=[f"CountryCode = '{country_code}'"])
         df_processed = preprocess.process_visa_df(df_raw)
         df_processed.insert(7, 'CountryCode', country_code)
+        df_processed = df_processed.fillna('')
     if df_processed.empty:
         return
     
