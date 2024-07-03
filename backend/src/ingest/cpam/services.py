@@ -5,6 +5,7 @@ import time
 import os
 
 from src.database.db_operations import DBOperations
+from src.ingest.visa_files.preprocess import process_visa_df
 from src.ingest.visa_files.services import ingest_visa_data
 from src.utils.ingest_utils import get_authorization_status
 from src.utils.sql_logging_handler import logger
@@ -60,7 +61,7 @@ def ingest_all_cpam_data(country_code, start_model_year=0):
     folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/"
     for sub_folder in os.listdir(folder):
         new_folder = folder + sub_folder + '/'
-        if not os.path.isdir(new_folder) or int(sub_folder) != 2023:
+        if not os.path.isdir(new_folder) or int(sub_folder) < start_model_year:
             continue
         print(f'Ingesting Year: {sub_folder}')
         for subsub_folder in os.listdir(new_folder):
@@ -68,10 +69,30 @@ def ingest_all_cpam_data(country_code, start_model_year=0):
                 continue
             print(f'Ingesting Car Type: {subsub_folder}')
             try:
-                ingest_cpam_data(sub_folder, subsub_folder, country_code)
+                for _ in range(3):
+                    try:
+                        logger.info(f'Processing Car Type: {subsub_folder}')
+                        ingest_cpam_data(sub_folder, subsub_folder, country_code)
+                        break
+                    except Exception as e:
+                        logger.error(f'Failed to ingest data for {subsub_folder} in {sub_folder}: {e}')
+                
+                conditions = [f"CountryCode = '{country_code}'", f"ModelYear = '{sub_folder}'", f"CarType = '{subsub_folder}'"]
+                df_raw = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=conditions)
+                if df_raw is None or df_raw.empty:
+                    continue
+        
+                df_processed = process_visa_df(df_raw)
+                if df_processed is None or df_processed.empty:
+                    continue
+                
+                df_processed.insert(7, 'CountryCode', country_code)
+                ingest_visa_data(country_code, df_processed)
+        
             except Exception as e:
                 logger.error(f'Error ingesting car type {subsub_folder}: {e}', extra={'country_code': country_code})
     
+    DBOperations.instance.consolidate_translations(country_code)
     logger.debug('CPAM data ingestion completed', extra={'country_code': country_code})
 
 def fetch_cpam_data(year, car_type, country_code, sw):
