@@ -273,7 +273,7 @@ def write_options(country, model_year):
     for col in update_columns:
         df_pno_options_relations[col] = data[col]
     all_columns = df_pno_options_relations.columns.tolist()
-    conditional_columns = list(set(all_columns) - set(update_columns))
+    conditional_columns = ['RelationID']
 
     DBOperations.instance.upsert_data_from_df(df_pno_options_relations, DBOperations.instance.config.get('RELATIONS', 'OPT_Custom'), all_columns, conditional_columns)
     return 'Options written successfully', 200
@@ -317,7 +317,7 @@ def write_colors(country, model_year):
     for col in update_columns:
         df_pno_colors_relations[col] = data[col]
     all_columns = df_pno_colors_relations.columns.tolist()
-    conditional_columns = list(set(all_columns) - set(update_columns))
+    conditional_columns = ['RelationID']
 
     DBOperations.instance.upsert_data_from_df(df_pno_colors_relations, DBOperations.instance.config.get('RELATIONS', 'COL_Custom'), all_columns, conditional_columns)
     return 'Colors written successfully', 200
@@ -361,7 +361,7 @@ def write_upholstery(country, model_year):
     for col in update_columns:
         df_pno_upholstery_relations[col] = data[col]
     all_columns = df_pno_upholstery_relations.columns.tolist()
-    conditional_columns = list(set(all_columns) - set(update_columns))
+    conditional_columns = ['RelationID']
 
     DBOperations.instance.upsert_data_from_df(df_pno_upholstery_relations, DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), all_columns, conditional_columns)
     return 'Upholstery written successfully', 200
@@ -404,7 +404,7 @@ def write_packages(country, model_year):
     for col in update_columns:
         df_pno_packages_relations[col] = data[col]
     all_columns = df_pno_packages_relations.columns.tolist()
-    conditional_columns = list(set(all_columns) - set(update_columns))
+    conditional_columns = ['RelationID']
 
     DBOperations.instance.upsert_data_from_df(df_pno_packages_relations, DBOperations.instance.config.get('RELATIONS', 'PKG_Custom'), all_columns, conditional_columns)
     return 'Packages written successfully', 200
