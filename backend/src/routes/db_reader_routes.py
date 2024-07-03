@@ -248,7 +248,7 @@ def get_options(country, model_year):
     df_pno_options_merged = df_pno_options_merged.groupby('Code').agg({
         'MarketText': 'first', 
         'CustomName': aggregate_custom_name,
-        'CustomCategory': 'first',
+        'CustomCategory': aggregate_custom_name,
         'hasFeature': 'first'
     }).reset_index()
     
@@ -425,7 +425,7 @@ def get_upholstery(country, model_year):
     df_pno_upholstery = df_pno_upholstery.groupby('Code').agg({
         'MarketText': 'first', 
         'CustomName': aggregate_custom_name,
-        'CustomCategory': 'first'
+        'CustomCategory': aggregate_custom_name
     }).reset_index()
     
     df_pno_upholstery = df_pno_upholstery.sort_values(by='Code', ascending=True)
@@ -526,7 +526,7 @@ def get_features(country, model_year):
     df_pno_features = df_pno_features.groupby('Code').agg({
         'MarketText': 'first', 
         'CustomName': aggregate_custom_name,
-        'CustomCategory': 'first', 
+        'CustomCategory': aggregate_custom_name, 
         'ID': lambda x: ','.join(x) if x.any() else ''
     }).reset_index()
 
