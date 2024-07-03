@@ -338,7 +338,9 @@ class DBOperations:
         df_pnos = df_pnos.drop('CountryCode', axis=1)
         
         df_assigned, df_unassigned = utils.get_pno_ids_from_variants(df_pnos, df)
-        # utils.log_df(df_unassigned, ' from CPAM were not assigned to any existing authorized PNOs:', self.logger.warning)
+        for data_type, group in df_assigned.groupby('DataType'):
+            group = group.drop('DataType', axis=1)
+            utils.log_df(df_unassigned, f'{data_type} from CPAM were not assigned to any existing authorized PNOs. Should have been removed as it was deauthorized::', self.logger.error)
         
         auth_columns = ['PNOID', 'Code', 'RuleName', 'StartDate', 'EndDate']
         auth_conditional_columns = ['PNOID', 'Code', 'StartDate']
@@ -486,7 +488,7 @@ class DBOperations:
 
     def collect_dependency(self, df, df_pnos):
         df_assigned, df_unassigned = utils.get_pno_ids_from_variants(df_pnos, df, is_relation=False)
-        utils.log_df(df_unassigned, 'Dependencies from CPAM were not assigned to any existing authorized PNOs:', self.logger.warning)
+        utils.log_df(df_unassigned, 'Dependencies from CPAM were not assigned to any existing authorized PNOs. Should have been removed as it was deauthorized::', self.logger.error)
 
         df_final = df_assigned.explode('FeatureCode')
         df_final.insert(2, 'RuleName', df_final['RuleCode'].map(lambda x: self.config.get('DEPENDENCIES_NAMES', x)))
@@ -533,7 +535,7 @@ class DBOperations:
     
     def collect_feature(self, df, df_pnos):
         df_assigned, df_unassigned = utils.get_pno_ids_from_variants(df_pnos, df)
-        utils.log_df(df_unassigned, 'Feature from CPAM were not assigned to any existing authorized PNOs:', self.logger.warning)
+        utils.log_df(df_unassigned, 'Feature from CPAM were not assigned to any existing authorized PNOs. Should have been removed as it was deauthorized::', self.logger.error)
 
         # Column reference might include comma seperated values: split then explode
         df_assigned['Reference'] = df_assigned['Reference'].str.split(',')
@@ -576,7 +578,7 @@ class DBOperations:
 
         df_assigned, df_unassigned = utils.get_pno_ids_from_variants(df_pnos, df)
         df_assigned = df_assigned.fillna('')
-        utils.log_df(df_unassigned, 'Package from CPAM were not assigned to any existing authorized PNOs:', self.logger.warning)
+        utils.log_df(df_unassigned, 'Package from CPAM were not assigned to any existing authorized PNOs. Should have been removed as it was deauthorized:', self.logger.error)
         
         package_columns = ['PNOID', 'Code', 'Title', 'RuleCode', 'RuleType', 'RuleName', 'RuleBase', 'StartDate', 'EndDate']
         package_conditional_columns = ['PNOID', 'Code', 'RuleCode', 'StartDate']
@@ -630,7 +632,7 @@ class DBOperations:
                 df_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_pno_prices, is_relation=True)
                 df_pnos_assigned = df_pnos_assigned.drop_duplicates(subset=['RelationID', 'StartDate'], keep='last')
                 self.upsert_data_from_df(df_pnos_assigned, self.config.get('RELATIONS', 'PNO_Custom'), relation_columns, conditional_columns)
-                # utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)        
+                utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)        
             
             if not df_color_pno_prices.empty:
                 df_color_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_color_pno_prices, is_relation=False)
@@ -638,8 +640,8 @@ class DBOperations:
                 df_colors = self.get_table_df(self.config.get('AUTH', 'COL'))
                 df_color, df_color_unpriced = utils.get_relation_ids(df_colors, df_color_pnos_assigned)
                 self.upsert_data_from_df(df_color, self.config.get('RELATIONS', 'COL_Custom'), relation_columns, conditional_columns)
-                # utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
-                # utils.log_df(df_color_unpriced, 'Color from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
+                utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
+                utils.log_df(df_color_unpriced, 'Color from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
 
             if not df_option_pno_prices.empty:
                 df_option_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_option_pno_prices, is_relation=False)
@@ -647,8 +649,8 @@ class DBOperations:
                 df_options = self.get_table_df(self.config.get('AUTH', 'OPT'))
                 df_option, df_option_unpriced = utils.get_relation_ids(df_options, df_option_pnos_assigned)
                 self.upsert_data_from_df(df_option, self.config.get('RELATIONS', 'OPT_Custom'), relation_columns, conditional_columns)
-                # utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
-                # utils.log_df(df_option_unpriced, 'Option frpm VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
+                utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
+                utils.log_df(df_option_unpriced, 'Option frpm VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
 
             if not df_upholstery_pno_prices.empty:
                 df_upholstery_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_upholstery_pno_prices, is_relation=False)
@@ -656,8 +658,8 @@ class DBOperations:
                 df_upholsteries = self.get_table_df(self.config.get('AUTH', 'UPH'))
                 df_upholstery, df_upholstery_unpriced = utils.get_relation_ids(df_upholsteries, df_upholstery_pnos_assigned)
                 self.upsert_data_from_df(df_upholstery, self.config.get('RELATIONS', 'UPH_Custom'), relation_columns, conditional_columns)
-                # utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
-                # utils.log_df(df_upholstery_unpriced, 'Upholstery from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
+                utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
+                utils.log_df(df_upholstery_unpriced, 'Upholstery from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
             
             if not df_package_pno_prices.empty:
                 df_package_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_package_pno_prices, is_relation=False)
@@ -665,8 +667,8 @@ class DBOperations:
                 df_packages = self.get_table_df(self.config.get('AUTH', 'PKG'))
                 df_package, df_package_unpriced = utils.get_relation_ids(df_packages, df_package_pnos_assigned)
                 self.upsert_data_from_df(df_package, self.config.get('RELATIONS', 'PKG_Custom'), relation_columns, conditional_columns)
-                # utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
-                # utils.log_df(df_package_unpriced, 'Package from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
+                utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
+                utils.log_df(df_package_unpriced, 'Package from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
 
     def consolidate_translations(self, country_code):
         df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f"CountryCode='{country_code}'"])
