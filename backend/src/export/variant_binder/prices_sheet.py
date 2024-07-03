@@ -1,11 +1,11 @@
 from openpyxl.cell.rich_text import TextBlock, CellRichText
-from openpyxl.cell.text import InlineFont
 from openpyxl.styles import Font, PatternFill, Border, Alignment, Side
 from openpyxl.utils import get_column_letter
+from openpyxl.cell.text import InlineFont
 import pandas as pd
 
-from src.database.db_operations import DBOperations
 from src.utils.db_utils import filter_df_by_timestamp, format_float_string
+from src.database.db_operations import DBOperations
 
 
 black_side = Side(color='000000', border_style='thin')

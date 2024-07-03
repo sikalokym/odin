@@ -1,6 +1,7 @@
-import logging
 import logging.handlers
+import logging
 import os
+
 from src.database.db_operations import DBOperations
 
 class SQLLoggingHandler(logging.Handler):

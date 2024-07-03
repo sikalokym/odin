@@ -1,3 +1,8 @@
+from flask import Flask, render_template_string
+from threading import Thread, Lock
+from flask_cors import CORS
+import time
+
 from src.database.db_connection import DatabaseConnection
 from src.database.db_operations import DBOperations
 from src.routes.db_reader_routes import bp_db_reader
@@ -8,10 +13,6 @@ from src.utils.sql_logging_handler import logger
 from src.routes.ingest_routes import bp_ingest
 import src.utils.scheduler as scheduler
 
-from flask import Flask, render_template_string
-from flask_cors import CORS
-import time
-from threading import Thread, Lock
 
 app = Flask(__name__)
 CORS(app)

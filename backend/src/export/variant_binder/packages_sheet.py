@@ -1,8 +1,10 @@
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from openpyxl.utils import get_column_letter
-from src.database.db_operations import DBOperations
-from src.utils.db_utils import filter_df_by_timestamp, format_float_string
 import pandas as pd
+
+from src.utils.db_utils import filter_df_by_timestamp, format_float_string
+from src.database.db_operations import DBOperations
+
 
 all_border = Border(top=Side(style='thin', color='000000'),
                     bottom=Side(style='thin', color='000000'),

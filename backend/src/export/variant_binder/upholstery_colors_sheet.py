@@ -1,8 +1,9 @@
+from openpyxl.styles import PatternFill, Border, Alignment, Border, Side, Font
+import pandas as pd
+
 from src.database.db_operations import DBOperations
 from src.utils.db_utils import filter_df_by_timestamp, format_float_string
 
-from openpyxl.styles import PatternFill, Border, Alignment, Border, Side, Font
-import pandas as pd
 
 cell_values = {
     'B': '•',

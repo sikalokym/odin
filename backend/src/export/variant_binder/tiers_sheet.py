@@ -1,5 +1,7 @@
 from openpyxl.styles import PatternFill, Border, Alignment, Side
+
 import src.export.variant_binder.options_sheet as options_sheet
+
 
 cell_values = {
     'S': '•',

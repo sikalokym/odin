@@ -1,13 +1,14 @@
+from apscheduler.schedulers.background import BackgroundScheduler
+from pytz import utc
+import configparser
 import datetime
+import atexit
+import os
+
 from src.database.db_connection import DatabaseConnection
 from src.database.db_operations import DBOperations
 from src.ingest.cpam.services import fetch_all_cpam_data, get_supported_countries, ingest_all_cpam_data, process_all_cpam_data
 from src.utils.sql_logging_handler import logger
-from apscheduler.schedulers.background import BackgroundScheduler
-from pytz import utc
-import configparser
-import atexit
-import os
 
 
 def schedule_fetch_task():

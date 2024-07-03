@@ -1,11 +1,12 @@
-import io
-import zipfile
-import pandas as pd
 import configparser
+import pandas as pd
+import zipfile
+import io
 
 from src.database.db_operations import DBOperations
 from src.ingest.visa_files.services import get_available_visa_files
 from src.utils.db_utils import format_float_string, get_column_map
+
 
 config = configparser.ConfigParser()
 config.read('config/sap_price_list.cfg')

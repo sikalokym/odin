@@ -1,6 +1,8 @@
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
-from src.database.db_operations import DBOperations
 import pandas as pd
+
+from src.database.db_operations import DBOperations
+
 
 all_border = Border(top=Side(style='thin', color='000000'),
                     bottom=Side(style='thin', color='000000'),

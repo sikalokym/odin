@@ -3,7 +3,6 @@ from contextlib import contextmanager
 import configparser
 import pandas as pd
 import logging
-import pyodbc
 import time
 
 from src.database.db_connection import DatabaseConnection

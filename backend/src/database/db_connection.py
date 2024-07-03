@@ -1,7 +1,7 @@
-import os
-import pyodbc
-import logging
 from time import sleep
+import logging
+import pyodbc
+import os
 
 class DatabaseConnection:
     logger = logging.getLogger(__name__)

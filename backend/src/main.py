@@ -1,29 +1,25 @@
-import datetime
-import time
+from dotenv import load_dotenv
 from zipfile import ZipFile
 import pandas as pd
-from dotenv import load_dotenv
+import datetime
+import time
 
-from src.routes.ingest_routes import refresh_all_cpam_data
-import src.utils.db_utils as utils
-from src.database.db_operations import DBOperations
-from src.export.sap_price_list import extract_sap_price_list
-from src.export.variant_binder import _extract_variant_binder, extract_variant_binder_pnos
 from src.ingest.cpam.services import fetch_cpam_data, ingest_all_cpam_data, ingest_cpam_data, process_all_cpam_data
+from src.export.variant_binder import _extract_variant_binder, extract_variant_binder_pnos
+from src.export.sap_price_list import extract_sap_price_list
 from src.ingest.visa_files.services import ingest_visa_data
-from src.ingest.visa_files import preprocess
-# from src.utils.scheduler import cpam_scheduler
+from src.routes.ingest_routes import refresh_all_cpam_data
+from src.database.db_operations import DBOperations
 from src.utils.sql_logging_handler import logger
+from src.utils.scheduler import cpam_scheduler
+from src.ingest.visa_files import preprocess
+import src.utils.db_utils as utils
+
 
 # Load environment variables
 load_dotenv(override=True)
 DBOperations.create_instance(test=0, logger=logger)
 
-def main():
-    df_extern_features = pd.read_csv('Features.csv', sep=';')
-    df_extern_features = df_extern_features.fillna('')
-    DBOperations.instance.upsert_data_from_df(df_extern_features, DBOperations.instance.config.get('AUTH', 'FEAT'), ['Code', 'CustomName', 'CustomCategory'], ['Code'])
-    
 if __name__ == "__main__":
     current_time = pd.Timestamp.now()
     # ingest_all_cpam_data('231')
@@ -31,7 +27,7 @@ if __name__ == "__main__":
     # ingest_all_cpam_data('231', year='', start_model_year='2021')
     # ingest_all_cpam_data('231', year='2021')
     # scheduled_task()
-    # ingest_cpam_data('2026', '246', '231', '')
+    # ingest_cpam_data('2025', '536', '231')
     # import os
     # folder = f"{os.getcwd()}/dist/cpam_data/231/"
     # for sub_folder in os.listdir(folder):
@@ -52,8 +48,9 @@ if __name__ == "__main__":
     # df_processed = preprocess.process_visa_df(df_raw)
     # df_processed.insert(7, 'CountryCode', '231')
     # ingest_visa_data('231', df_processed)
-    # _extract_variant_binder('231', '246', "All", 202422)
-    main()
+    # ingest_visa_data('231', None)
+    # _extract_variant_binder('231', '246', "Plug-in Hybrid", 202422)
+    # main()
     # DBOperations.instance.consolidate_translations('231')
     # zip_buffer = extract_sap_price_list('231', 'All', None, '2025')
     # with ZipFile(zip_buffer) as zf:

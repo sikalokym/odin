@@ -1,13 +1,13 @@
-import datetime
 from flask import Blueprint, request, jsonify
+import datetime
 
+from src.ingest.visa_files.services import ingest_visa_data, ingest_visa_file
+from src.ingest.cpam.services import ingest_all_cpam_data
 from src.database.db_operations import DBOperations
 from src.utils.sql_logging_handler import logger
-from src.ingest.cpam.services import ingest_all_cpam_data
-from src.ingest.visa_files.services import ingest_visa_data, ingest_visa_file
+
 
 bp_ingest = Blueprint('ingest', __name__, url_prefix='/api/<country>/ingest')
-
 
 @bp_ingest.route('/cpam', methods=['GET'])
 def refresh_all_cpam_data(country):

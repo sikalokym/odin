@@ -1,10 +1,11 @@
+import configparser
+import requests
+import logging
 import os
+
 from src.utils.xml_templates import model_year_req_xml, car_types_req_xml, dictionary_req_xml, authorization_req_xml, packages_req_xml, dependency_rules_req_xml, features_req_xml
 from src.utils.xml_templates import model_year_resp_template, car_types_resp_template, dictionary_resp_template, authorization_resp_template, packages_resp_template, dependency_rules_resp_template, features_resp_template
 from src.utils.parse_xml import parse_xml
-import requests
-import configparser
-import logging
 
 
 logger = logging.getLogger(__name__)

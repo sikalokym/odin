@@ -2,8 +2,9 @@ from openpyxl.styles import Font, PatternFill, Border, Alignment, Side
 from openpyxl.utils import get_column_letter
 import pandas as pd
 
-from src.database.db_operations import DBOperations
 from src.utils.db_utils import filter_df_by_timestamp, format_float_string
+from src.database.db_operations import DBOperations
+
 
 cell_values = {
     'S': '•',

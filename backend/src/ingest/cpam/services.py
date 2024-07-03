@@ -1,16 +1,16 @@
 from cachetools import cached, TTLCache
 import pandas as pd
 import configparser
-import time
 import os
 
-from src.database.db_operations import DBOperations
 from src.ingest.visa_files.preprocess import process_visa_df
 from src.ingest.visa_files.services import ingest_visa_data
 from src.utils.ingest_utils import get_authorization_status
+from src.database.db_operations import DBOperations
 from src.utils.sql_logging_handler import logger
 import src.ingest.cpam.api as cpam
 import src.utils.db_utils as utils
+
 
 config = configparser.ConfigParser()
 config.read('config/cpam.cfg')
