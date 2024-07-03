@@ -226,10 +226,10 @@ def ingest_cpam_data(year, car_type, country_code):
     
     if not authorized_dictionaries.empty:
         DBOperations.instance.collect_entity(authorized_dictionaries, country_code)
-    if authorized_authorizations.empty:
-        return
     if not unauthorized_authorizations.empty:
         DBOperations.instance.drop_auth(unauthorized_authorizations, country_code)
+    if authorized_authorizations.empty:
+        return
     df_pnos = DBOperations.instance.collect_auth(authorized_authorizations, country_code)
     if df_pnos.empty:
         return
