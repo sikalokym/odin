@@ -355,8 +355,18 @@ def fetch_options_data(sales_versions, time):
     df_pno_options_merged = df_pno_options_merged.drop(['PriceBeforeTax'], axis=1)
     df_pno_options_merged = df_pno_options_merged.explode('Price')
     
+    # Group by 'Reference' and 'Price', aggregate 'CustomName' and 'CustomCategory' columns
+    aggregated = df_pno_options_merged.groupby(['Reference', 'Price']).agg({
+        'CustomName': lambda x: ';\n'.join(sorted(x.dropna().unique())),
+        'CustomCategory': lambda x: ';\n'.join(sorted(x.dropna().unique()))
+    }).reset_index()
+    df_pno_options_merged = df_pno_options_merged.drop(columns=['CustomName', 'CustomCategory'])
+    
+    # Merge the aggregated columns back to the original dataframe
+    df_merged = df_pno_options_merged.merge(aggregated, on=['Reference', 'Price'])
+
     # group by Reference, Price, RuleName, SalesVersion and SalesVersionName and aggregate the CustomName column by concatinating the values with a newline separator if they differ and not null nan or empty and the CustomCategory column by concatinating the values with a comma separator if they differ
-    df_pno_options_merged = df_pno_options_merged.groupby(['Reference', 'Price', 'RuleName', 'SalesVersion', 'SalesVersionName']).agg({'CustomName': lambda x: ';\n'.join(sorted(x.dropna().unique())), 'CustomCategory': lambda x: ';\n'.join(sorted(x.dropna().unique()))}).reset_index()
+    df_pno_options_merged = df_merged.groupby(['Reference', 'Price', 'RuleName', 'SalesVersion', 'SalesVersionName']).agg({'CustomName': 'first', 'CustomCategory': 'first'}).reset_index()
     
     # Create the pivot table
     pivot_df = df_pno_options_merged.pivot_table(index=['Reference', 'Price'], columns='SalesVersion', values='RuleName', aggfunc='first')

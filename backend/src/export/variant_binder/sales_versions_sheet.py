@@ -120,5 +120,6 @@ def fetch_sales_version_data(df_sales_versions):
     df_pno_features_sv = df_pno_features_sv.drop_duplicates('Code', keep='first').drop(columns=['ID', 'PNOID'])
 
     df_pno_features_sv = df_pno_features_sv.dropna(subset=['CustomName'])
+    df_pno_features_sv = df_pno_features_sv[df_pno_features_sv['CustomName'] != '']
 
     return df_pno_features_sv

@@ -206,7 +206,17 @@ def fetch_color_data(sales_versions, time):
     df_pno_color_with_price['Price'] = df_pno_color_with_price.apply(lambda x: f"{x['Price']}/{x['PriceBeforeTax']}", axis=1)
     df_pno_color_with_price = df_pno_color_with_price.drop_duplicates()
     
-    df_pno_color_with_price = df_pno_color_with_price.groupby(['Code', 'Price', 'RuleName', 'SalesVersion', 'SalesVersionName']).agg({'CustomName': lambda x: ';\n'.join(sorted(x.dropna().unique()))}).reset_index()
+    # Group by 'Code' and 'Price', aggregate 'CustomName' and 'CustomCategory' columns
+    aggregated = df_pno_color_with_price.groupby(['Code', 'Price']).agg({
+        'CustomName': lambda x: ';\n'.join(sorted(x.dropna().unique()))
+    }).reset_index()
+    df_pno_color_with_price = df_pno_color_with_price.drop(columns=['CustomName'])
+    
+    # Merge the aggregated columns back to the original dataframe
+    df_merged = df_pno_color_with_price.merge(aggregated, on=['Code', 'Price'])
+
+    # group by Code, Price, RuleName, SalesVersion and SalesVersionName and aggregate the CustomName column by concatinating the values with a newline separator if they differ and not null nan or empty and the CustomCategory column by concatinating the values with a comma separator if they differ
+    df_pno_color_with_price = df_merged.groupby(['Code', 'Price', 'RuleName', 'SalesVersion', 'SalesVersionName']).agg({'CustomName': 'first'}).reset_index()
     
     # Create the pivot table
     pivot_df = df_pno_color_with_price.pivot_table(index=['Code', 'Price'], columns='SalesVersion', values='RuleName', aggfunc='first')
@@ -283,7 +293,18 @@ def fetch_upholstery_data(sales_versions, time):
     # Concatenate Price and PriceBeforeTax
     df_pno_upholstery_with_price['Price'] = df_pno_upholstery_with_price.apply(lambda x: f"{x['Price']}/{x['PriceBeforeTax']}", axis=1)
     
-    df_pno_upholstery_with_price = df_pno_upholstery_with_price.groupby(['Code', 'Price', 'RuleName', 'SalesVersion', 'SalesVersionName']).agg({'CustomName': lambda x: ';\n'.join(sorted(x.dropna().unique())), 'CustomCategory': lambda x: ';\n'.join(sorted(x.dropna().unique()))}).reset_index()
+    # Group by 'Code' and 'Price', aggregate 'CustomName' and 'CustomCategory' columns
+    aggregated = df_pno_upholstery_with_price.groupby(['Code', 'Price']).agg({
+        'CustomName': lambda x: ';\n'.join(sorted(x.dropna().unique())),
+        'CustomCategory': lambda x: ';\n'.join(sorted(x.dropna().unique()))
+    }).reset_index()
+    df_pno_upholstery_with_price = df_pno_upholstery_with_price.drop(columns=['CustomName', 'CustomCategory'])
+    
+    # Merge the aggregated columns back to the original dataframe
+    df_merged = df_pno_upholstery_with_price.merge(aggregated, on=['Code', 'Price'])
+
+    # group by Code, Price, RuleName, SalesVersion and SalesVersionName and aggregate the CustomName column by concatinating the values with a newline separator if they differ and not null nan or empty and the CustomCategory column by concatinating the values with a comma separator if they differ
+    df_pno_upholstery_with_price = df_merged.groupby(['Code', 'Price', 'RuleName', 'SalesVersion', 'SalesVersionName']).agg({'CustomName': 'first', 'CustomCategory': 'first'}).reset_index()
     
     # Create the pivot table
     pivot_df = df_pno_upholstery_with_price.pivot_table(index=['Code', 'Price'], columns='SalesVersion', values='RuleName', aggfunc='first')
