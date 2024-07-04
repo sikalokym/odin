@@ -2025,11 +2025,12 @@ export default {
         else if (this.displaytable === 'Gearbox') {
           await this.entitiesStore.fetchGearboxes();
         }
-        else if (this.displaytable === 'VISA Files' || this.displaytable === 'Sales Channels') {
-          await this.entitiesStore.fetchVISAFiles();
-        }
         else if (this.displaytable === 'Sales Channels') {
           await this.entitiesStore.fetchSalesChannels();
+          await this.entitiesStore.fetchVISAFiles();
+        }
+        else if (this.displaytable === 'VISA Files') {
+          await this.entitiesStore.fetchVISAFiles();
         }
       } catch (error) {
         console.error('Error fetching data', error);
@@ -2304,8 +2305,7 @@ export default {
     },
     //Import Sales Channels
     async fetchSalesChannelsImport() {
-      console.log(this.model_year_import)
-      await this.entitiesStore.setModelYearImport(this.model_year_import)
+      this.entitiesStore.setModelYearImport(this.model_year_import)
       await this.entitiesStore.fetchSalesChannelsImport().catch((error) => {
         console.error('Error fetching sales channels', error)
       })
