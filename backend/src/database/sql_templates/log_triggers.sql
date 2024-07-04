@@ -195,7 +195,7 @@ GO
 
 CREATE TRIGGER [dbo].[trg_PNO_InsertUpdate]
 ON [dbo].[PNO]
-AFTER UPDATE, INSERT
+AFTER UPDATE, INSERT, DELETE
 AS
 BEGIN
     -- Log Inserts
@@ -241,12 +241,27 @@ BEGIN
         SELECT inserted.CountryCode, CAST(inserted.ID AS VARCHAR(128)), 'PNO', GETDATE(), 'Update', 'EndDate', CONVERT(VARCHAR, deleted.EndDate, 120), CONVERT(VARCHAR, inserted.EndDate, 120)
         FROM inserted JOIN deleted ON inserted.ID = deleted.ID WHERE deleted.EndDate <> inserted.EndDate;
     END
+
+    -- Log Deletes
+    ELSE IF EXISTS (SELECT * FROM deleted) AND NOT EXISTS (SELECT * FROM inserted)
+    BEGIN
+        INSERT INTO ChangeLog (CountryCode, ChangeCode, ChangeTable, ChangeDate, ChangeType, ChangeField, ChangeFrom, ChangeTo)
+        SELECT '',
+            CAST(ID AS VARCHAR(128)), 
+            'PNO', 
+            GETDATE(), 
+            'Deauthorized',
+            'ID',
+            ID,
+            ''
+        FROM deleted;
+    END
 END
 GO
 
 CREATE TRIGGER [dbo].[trg_PNOPackage_InsertUpdate]
 ON [dbo].[PNOPackage]
-AFTER UPDATE, INSERT
+AFTER UPDATE, INSERT, DELETE
 AS
 BEGIN
     -- Log Inserts
@@ -286,12 +301,27 @@ BEGIN
         SELECT '', CAST(inserted.ID AS VARCHAR(128)), 'PNOFeature', GETDATE(), 'Update', 'EndDate', CONVERT(VARCHAR, deleted.EndDate, 120), CONVERT(VARCHAR, inserted.EndDate, 120)
         FROM inserted JOIN deleted ON inserted.ID = deleted.ID WHERE deleted.EndDate <> inserted.EndDate;
     END
+
+    -- Log Deletes
+    ELSE IF EXISTS (SELECT * FROM deleted) AND NOT EXISTS (SELECT * FROM inserted)
+    BEGIN
+        INSERT INTO ChangeLog (CountryCode, ChangeCode, ChangeTable, ChangeDate, ChangeType, ChangeField, ChangeFrom, ChangeTo)
+        SELECT '',
+            CAST(ID AS VARCHAR(128)), 
+            'PNOPackage', 
+            GETDATE(), 
+            'Deauthorized',
+            'ID',
+            ID,
+            ''
+        FROM deleted;
+    END
 END
 GO
 
 CREATE TRIGGER [dbo].[trg_PNOFeature_InsertUpdate]
 ON [dbo].[PNOFeature]
-AFTER UPDATE, INSERT
+AFTER UPDATE, INSERT, DELETE
 AS
 BEGIN
     -- Log Inserts
@@ -331,12 +361,27 @@ BEGIN
         SELECT '', CAST(inserted.ID AS VARCHAR(128)), 'PNOFeature', GETDATE(), 'Update', 'EndDate', CONVERT(VARCHAR, deleted.EndDate, 120), CONVERT(VARCHAR, inserted.EndDate, 120)
         FROM inserted JOIN deleted ON inserted.ID = deleted.ID WHERE deleted.EndDate <> inserted.EndDate;
     END
+
+    -- Log Deletes
+    ELSE IF EXISTS (SELECT * FROM deleted) AND NOT EXISTS (SELECT * FROM inserted)
+    BEGIN
+        INSERT INTO ChangeLog (CountryCode, ChangeCode, ChangeTable, ChangeDate, ChangeType, ChangeField, ChangeFrom, ChangeTo)
+        SELECT '',
+            CAST(ID AS VARCHAR(128)), 
+            'PNOFeature', 
+            GETDATE(), 
+            'Deauthorized',
+            'ID',
+            ID,
+            ''
+        FROM deleted;
+    END
 END
 GO
 
 CREATE TRIGGER [dbo].[trg_PNOCustomFeature_InsertUpdate]
 ON [dbo].[PNOCustomFeature]
-AFTER UPDATE, INSERT
+AFTER UPDATE, INSERT, DELETE
 AS
 BEGIN
     -- Log Inserts
@@ -367,12 +412,27 @@ BEGIN
         SELECT '', CAST(inserted.ID AS VARCHAR(128)), 'PNOCustomFeature', GETDATE(), 'Update', 'EndDate', CONVERT(VARCHAR, deleted.EndDate, 120), CONVERT(VARCHAR, inserted.EndDate, 120)
         FROM inserted JOIN deleted ON inserted.ID = deleted.ID WHERE deleted.EndDate <> inserted.EndDate;
     END
+
+    -- Log Deletes
+    ELSE IF EXISTS (SELECT * FROM deleted) AND NOT EXISTS (SELECT * FROM inserted)
+    BEGIN
+        INSERT INTO ChangeLog (CountryCode, ChangeCode, ChangeTable, ChangeDate, ChangeType, ChangeField, ChangeFrom, ChangeTo)
+        SELECT '',
+            CAST(ID AS VARCHAR(128)), 
+            'PNOCustomFeature', 
+            GETDATE(), 
+            'Deauthorized',
+            'ID',
+            ID,
+            ''
+        FROM deleted;
+    END
 END
 GO
 
 CREATE TRIGGER [dbo].[trg_PNOUpholsteryCustom_InsertUpdate]
 ON [dbo].[PNOUpholsteryCustom]
-AFTER UPDATE, INSERT
+AFTER UPDATE, INSERT, DELETE
 AS
 BEGIN
     -- Log Inserts
@@ -408,7 +468,21 @@ BEGIN
         UNION ALL
         SELECT '', CAST(inserted.RelationID AS VARCHAR(128)), 'PNOUpholsteryCustom', GETDATE(), 'Update', 'EndDate', CAST(deleted.EndDate AS VARCHAR), CAST(inserted.EndDate AS VARCHAR)
         FROM inserted JOIN deleted ON inserted.RelationID = deleted.RelationID WHERE deleted.EndDate <> inserted.EndDate;
+    END
 
+    -- Log Deletes
+    ELSE IF EXISTS (SELECT * FROM deleted) AND NOT EXISTS (SELECT * FROM inserted)
+    BEGIN
+        INSERT INTO ChangeLog (CountryCode, ChangeCode, ChangeTable, ChangeDate, ChangeType, ChangeField, ChangeFrom, ChangeTo)
+        SELECT '',
+            CAST(RelationID AS VARCHAR(128)), 
+            'PNOUpholsteryCustom', 
+            GETDATE(), 
+            'Deauthorized',
+            'RelationID',
+            RelationID,
+            ''
+        FROM deleted;
     END
 END
 GO
@@ -438,7 +512,7 @@ BEGIN
     -- Generate the dynamic SQL for creating the trigger
     SET @sql = N'CREATE TRIGGER [dbo].[trg_' + @tableName + '_InsertUpdate] 
 ON [dbo].[' + @tableName + ']
-AFTER UPDATE, INSERT
+AFTER UPDATE, INSERT, DELETE
 AS
 BEGIN
     -- Log Inserts
@@ -465,6 +539,21 @@ BEGIN
         UNION ALL
         SELECT '''', CAST(inserted.PNOID AS VARCHAR(128)), ''' + @tableName + ''', GETDATE(), ''Update'', ''EndDate'', CAST(deleted.EndDate AS VARCHAR), CAST(inserted.EndDate AS VARCHAR)
         FROM inserted JOIN deleted ON inserted.ID = deleted.ID WHERE deleted.EndDate <> inserted.EndDate;
+    END
+
+    -- Log Deletes
+    ELSE IF EXISTS (SELECT * FROM deleted) AND NOT EXISTS (SELECT * FROM inserted)
+    BEGIN
+        INSERT INTO ChangeLog (CountryCode, ChangeCode, ChangeTable, ChangeDate, ChangeType, ChangeField, ChangeFrom, ChangeTo)
+        SELECT '''',
+            CAST(PNOID AS VARCHAR(128)), 
+            ''' + @tableName + ''', 
+            GETDATE(), 
+            ''Deauthorized'',
+            ''PNOID'',
+            PNOID,
+            ''''
+        FROM deleted;
     END
 END';
 
@@ -507,7 +596,7 @@ BEGIN
     -- Generate the dynamic SQL for creating the trigger
     SET @sql = N'CREATE TRIGGER [dbo].[trg_' + @tableName + '_InsertUpdate] 
 ON [dbo].[' + @tableName + ']
-AFTER UPDATE, INSERT
+AFTER UPDATE, INSERT, DELETE
 AS
 BEGIN
     -- Log Inserts
@@ -540,6 +629,21 @@ BEGIN
         UNION ALL
         SELECT '''', CAST(inserted.RelationID AS VARCHAR(128)), ''' + @tableName + ''', GETDATE(), ''Update'', ''EndDate'', CAST(deleted.EndDate AS VARCHAR), CAST(inserted.EndDate AS VARCHAR)
         FROM inserted JOIN deleted ON inserted.RelationID = deleted.RelationID WHERE deleted.EndDate <> inserted.EndDate;
+    END
+
+    -- Log Deletes
+    ELSE IF EXISTS (SELECT * FROM deleted) AND NOT EXISTS (SELECT * FROM inserted)
+    BEGIN
+        INSERT INTO ChangeLog (CountryCode, ChangeCode, ChangeTable, ChangeDate, ChangeType, ChangeField, ChangeFrom, ChangeTo)
+        SELECT '''',
+            CAST(RelationID AS VARCHAR(128)), 
+            ''' + @tableName + ''', 
+            GETDATE(), 
+            ''Deauthorized'',
+            ''RelationID'',
+            RelationID,
+            ''''
+        FROM deleted;
     END
 END';
 
