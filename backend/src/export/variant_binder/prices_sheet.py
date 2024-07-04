@@ -32,6 +32,7 @@ def get_sheet(ws, df_valid_pnos, df_sales_versions, title, time, df_engines_type
     df_price, df_gb, df_en, gb_ids = fetch_vb_price_data(country, df_valid_pnos, time)
     
     max_code_length = df_engines_types['Code'].apply(lambda x: len(set(x))).max()
+    max_num_of_characters = df_en['CustomName'].apply(lambda x: len(x)).max()
     prepare_sheet(ws, title, max_code_length)
     curr_row = 3
     for _, row in df_engines_types.iterrows():
@@ -50,7 +51,7 @@ def get_sheet(ws, df_valid_pnos, df_sales_versions, title, time, df_engines_type
         en_group_prices = group.groupby('Engine').agg({'Price': 'mean'}).sort_values(by='Price', ascending=True).index.tolist()
         df_group_en['Code'] = pd.Categorical(df_group_en['Code'], en_group_prices)
         df_group_en = df_group_en.sort_values(by='Code')
-        curr_row = insert_table(ws, group, df_sales_versions, df_group_gb, df_group_en, curr_row)
+        curr_row = insert_table(ws, group, df_sales_versions, df_group_gb, df_group_en, curr_row, max_num_of_characters)
         curr_row += 1
     
     return gb_ids
@@ -82,7 +83,7 @@ def insert_engines_type_title(ws, type, curr_row):
     ws.cell(row=curr_row, column=1).font = Font(name='Arial', sz=18, bold=True)
     return curr_row + 1
 
-def insert_table(ws, df_price, df_sv, df_gb, df_en, curr_row):
+def insert_table(ws, df_price, df_sv, df_gb, df_en, curr_row, max_num_of_characters):
     mwst_row = curr_row
     df = df_price.copy()
     prepend_string = df.Model.iloc[0] + ' SV '
@@ -100,7 +101,7 @@ def insert_table(ws, df_price, df_sv, df_gb, df_en, curr_row):
             en_performance = df_en[df_en['Code'] == en].iloc[0]['Performance']
             values = get_price_column(group, df_sv)
             col = [en_name, gb_name, en_performance] + values + [en, gb]
-            curr_col, curr_row_end = insert_column(ws, col, curr_row, curr_col)
+            curr_col, curr_row_end = insert_column(ws, col, curr_row, curr_col, max_num_of_characters)
     insert_mwst_line(ws, mwst_row, curr_col -1)
     for i in [mwst_row+1, mwst_row+2, mwst_row+3]:
         for j in range(1, curr_col):
@@ -168,8 +169,8 @@ def insert_meta_column(ws, curr_row, df_sales_version):
         ws.cell(row=curr_row, column=1).fill = PatternFill(start_color='bfbfbf', end_color='bfbfbf', fill_type='solid')
         ws.cell(row=curr_row, column=1).border = blr_border
 
-def insert_column(ws, col, curr_row, curr_col):
-    ws.column_dimensions[get_column_letter(curr_col)].width = 30
+def insert_column(ws, col, curr_row, curr_col, max_num_of_characters):
+    ws.column_dimensions[get_column_letter(curr_col)].width = max_num_of_characters + 10
     for i, field in enumerate(col):
         ws.cell(row=curr_row, column=curr_col, value=field)
         ws.cell(row=curr_row, column=curr_col).alignment = Alignment(horizontal='center', vertical='center')

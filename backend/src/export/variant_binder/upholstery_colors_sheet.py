@@ -87,11 +87,15 @@ def insert_table(ws, sales_versions, title, df_res):
         svs = [cell_values.get(row[sv], row[sv]) if sv in df_res.columns else '' for sv in sales_versions['SalesVersion']]
         if row['Price'] == 'Pack Only'or row['Price'] == 'Serie':
             ws.append([row['Code'], row['CustomName'], row['Price']] + svs + ['', row['Rules']])
+            row_height = int(len(row['CustomName']) / 74) * 15 + 15
+            ws.row_dimensions[ws.max_row].height = row_height
             ws.append([])
         else:
             prices = row['Price'].split('/')
             if len(prices) > 1:
                 ws.append([row['Code'], row['CustomName'], prices[0]] + svs + ['', row['Rules']])
+                row_height = int(len(row['CustomName']) / 74) * 15 + 15
+                ws.row_dimensions[ws.max_row].height = row_height
                 ws.cell(row=ws.max_row, column=3).alignment = Alignment(horizontal='center', vertical='bottom')
                 ws.append(['', '', prices[1]] + svs) 
                 ws.cell(row=ws.max_row, column=3).alignment = Alignment(horizontal='center', vertical='top')
