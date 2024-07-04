@@ -685,7 +685,7 @@
       <tbody>
         <tr v-for="pno in visa_files" :key="pno.id" :class="{ 'editing': pno.edited }">
           <td class="VISAColumn" style="background-color: #f4f4f4; text-align: center;">
-            {{ pno.CarType }}
+            {{ '[' + pno.CarType + '] ' + pno.CustomName }}
           </td>
           <td class="VISAColumn" style="background-color: #f4f4f4; text-align: left;">
             <input v-model="pno.VisaFile" @focus="saveOriginalVISAFileName(pno)" @change="pushUpdateVISAFile(pno)"
