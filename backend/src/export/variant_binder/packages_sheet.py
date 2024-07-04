@@ -53,12 +53,14 @@ def get_sheet(ws, sales_versions, title, time):
         
         df_options = group.sort_values(by='RuleCode', ascending=True)
 
+        # Note: The logic gere works in some cases, but not in all. It is better to keep the original data as is. Discuss with the team.
         # check if any column has a NaN value, then set all values of that column to empty string
-        for col in df_options.columns:
-            if col in ['RuleCode', 'RuleBase', 'CustomName']:
-                continue
-            if df_options[col].isnull().values.any():
-                df_options[col] = ''
+        # for col in df_options.columns:
+        #     if col in ['RuleCode', 'RuleBase', 'CustomName']:
+        #         continue
+        #     if df_options[col].isnull().values.any():
+        #         df_options[col] = ''
+        df_options = df_options.fillna('')
 
         # Write the data to the worksheet
         prices = sales_versions[(sales_versions['PKGPrice'] != '') & (sales_versions['PKGPrice'] != 'S')]['PKGPrice'].unique().tolist()
@@ -97,7 +99,7 @@ def get_sheet(ws, sales_versions, title, time):
                 ws.cell(row=len(ws["A"]), column=col).fill = PatternFill(start_color='BFBFBF', end_color='BFBFBF', fill_type='solid')
 
         for _, row in df_options.iterrows():
-            ws.append([row['RuleCode'], row['CustomName'], row['RuleBase']] + [cell_values[row[sv] if sv in df_options.columns else ''] for sv in sales_versions.columns])
+            ws.append([row['RuleCode'], row['CustomName'], row['RuleBase']] + [cell_values[row[sv] if sv in df_options.columns else '-'] for sv in sales_versions['SalesVersion']])
             for cell in ws[len(ws["A"])]:
                 if cell.column > 2:
                     cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
