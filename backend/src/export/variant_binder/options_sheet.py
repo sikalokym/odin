@@ -70,7 +70,7 @@ def get_sheet(ws, sales_versions, title, time):
                 ws.row_dimensions[ws.max_row].height = row_height
                 ws.append(['', '', prices[1]] + svs) 
                 ws.cell(row=ws.max_row, column=3).alignment = Alignment(horizontal='center', vertical='top')
-
+    
     prepare_sheet(ws, sales_versions, f'{title} - Optionen')
 
     return df_rad
@@ -187,7 +187,7 @@ def prepare_sheet(ws, df_sales_versions, title):
 
     # Formatting of "Pack Only" options
     for row in range(3, max_r + 1):  
-        if ws.cell(row=row, column=3).value == "Pack Only":
+        if ws.cell(row=row, column=3).value == "Pack Only" or ws.cell(row=row, column=ws.max_column-1).value == "Intern":
             ws.cell(row=row, column=3).alignment = Alignment(horizontal='center', vertical='center')
             for col in range(1, max_c + 1):
                 ws.cell(row=row, column=col).font = Font(color="A6A6A6", bold = False)
@@ -361,8 +361,8 @@ def fetch_options_data(sales_versions, time):
     
     # Group by 'Reference' and 'Price', aggregate 'CustomName' and 'CustomCategory' columns
     aggregated = df_pno_options_merged.groupby(['Reference', 'Price']).agg({
-        'CustomName': lambda x: ';\n'.join(sorted(x.dropna().unique())),
-        'CustomCategory': lambda x: ';\n'.join(sorted(x.dropna().unique()))
+        'CustomName': lambda x: ';\n'.join(sorted([y for y in x.dropna().unique() if y])),
+        'CustomCategory': lambda x: ';\n'.join(sorted([y for y in x.dropna().unique() if y]))
     }).reset_index()
     df_pno_options_merged = df_pno_options_merged.drop(columns=['CustomName', 'CustomCategory'])
     

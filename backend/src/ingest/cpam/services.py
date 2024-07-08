@@ -220,7 +220,7 @@ def ingest_cpam_data(year, car_type, country_code):
     authorized_features = pd.read_csv(f"{folder}/authorized_features.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
     unauthorized_authorizations = pd.read_csv(f"{folder}/unauthorized_authorizations.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
     # unauthorized_dictionaries = pd.read_csv(f"{folder}/unauthorized_dictionaries.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
-    unauthorized_dependencies = pd.read_csv(f"{folder}/unauthorized_dependencies.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
+    # unauthorized_dependencies = pd.read_csv(f"{folder}/unauthorized_dependencies.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
     unauthorized_features = pd.read_csv(f"{folder}/unauthorized_features.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
     ###############################################################################################################################################################################################################
     
@@ -235,15 +235,15 @@ def ingest_cpam_data(year, car_type, country_code):
         return
     if not unauthorized_features.empty:
         DBOperations.instance.drop_feature(unauthorized_features, df_pnos)
-    if not unauthorized_dependencies.empty:
-        DBOperations.instance.drop_dependency(unauthorized_dependencies, df_pnos)
+    # if not unauthorized_dependencies.empty:
+    #     DBOperations.instance.drop_dependency(unauthorized_dependencies, df_pnos)
     if not authorized_packages.empty:
         DBOperations.instance.collect_package(authorized_packages, df_pnos)
     if not authorized_dependencies.empty:
         DBOperations.instance.collect_dependency(authorized_dependencies, df_pnos)
     if not authorized_features.empty:
         DBOperations.instance.collect_feature(authorized_features, df_pnos)
-    ## Don't drop entities because you might drop something used in a previously processed car type   
+    # # Don't drop entities because you might drop something used in a previously processed car type   
     # if not unauthorized_dictionaries.empty:
     #     DBOperations.instance.drop_entity(unauthorized_dictionaries, country_code)
     

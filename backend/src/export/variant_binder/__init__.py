@@ -3,9 +3,9 @@ from io import BytesIO
 import pandas as pd
 import numpy as np
 
-from src.database.db_operations import DBOperations
 from src.export.variant_binder import prices_sheet, options_sheet, upholstery_colors_sheet, packages_sheet, sales_versions_sheet, tiers_sheet, change_log
 from src.utils.db_utils import filter_df_by_timestamp, filter_model_year_by_translation, get_model_year_from_date
+from src.database.db_operations import DBOperations
 
 
 def extract_variant_binder_pnos(country, model, engines_types, time):

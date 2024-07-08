@@ -1,8 +1,9 @@
 from openpyxl.styles import PatternFill, Border, Alignment, Border, Side, Font
 import pandas as pd
+import numpy as np
 
-from src.database.db_operations import DBOperations
 from src.utils.db_utils import filter_df_by_timestamp, format_float_string
+from src.database.db_operations import DBOperations
 
 
 cell_values = {
@@ -84,7 +85,16 @@ def insert_table(ws, sales_versions, title, df_res):
             old_custom_category = row['CustomCategory']
             catgory_rows.append(ws.max_row)
         
-        svs = [cell_values.get(row[sv], row[sv]) if sv in df_res.columns else '' for sv in sales_versions['SalesVersion']]
+        svs = []
+        for sv in sales_versions['SalesVersion']:
+            if sv in df_res.columns:
+                parts = row[sv].split('\n')
+                if len(parts) > 1:
+                    svs.append(cell_values.get(parts[0], parts[0]) + '\n' + parts[1])
+                else:
+                    svs.append(cell_values.get(parts[0], parts[0]))
+            else:
+                svs.append('')
         if row['Price'] == 'Pack Only'or row['Price'] == 'Serie':
             ws.append([row['Code'], row['CustomName'], row['Price']] + svs + ['', row['Rules']])
             row_height = int(len(row['CustomName']) / 74) * 15 + 15
@@ -212,7 +222,7 @@ def fetch_color_data(sales_versions, time):
     
     # Group by 'Code' and 'Price', aggregate 'CustomName' and 'CustomCategory' columns
     aggregated = df_pno_color_with_price.groupby(['Code', 'Price']).agg({
-        'CustomName': lambda x: ';\n'.join(sorted(x.dropna().unique()))
+        'CustomName': lambda x: ';\n'.join(sorted([y for y in x.dropna().unique() if y]))
     }).reset_index()
     df_pno_color_with_price = df_pno_color_with_price.drop(columns=['CustomName'])
     
@@ -282,6 +292,23 @@ def fetch_upholstery_data(sales_versions, time):
     df_pno_upholstery_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax', 'CustomName', 'CustomCategory'], conditions=pno_upholstery_price_conditions)
     df_pno_upholstery_price = df_pno_upholstery_price.drop_duplicates()
     
+    # Load features that
+    feat_conditions = conditions.copy() + ["Code LIKE 'NC%'"]
+    df_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Reference as Code', 'CustomName as DecorInlay'], conditions=feat_conditions)
+    df_features['Code'] = df_features['Code'].apply(lambda x: x.strip().split('(u)')[0])
+    feat_codes = df_pno_upholstery['Code'].unique().tolist()
+    df_features = df_features[df_features['Code'].isin(feat_codes)]
+    df_pno_upholstery = df_pno_upholstery.merge(df_features, on=['PNOID', 'Code'], how='left')
+    
+    # Condition to check not NaN, not None, and not empty
+    condition = df_pno_upholstery['DecorInlay'].notna() & (df_pno_upholstery['DecorInlay'] != '')
+
+    # Apply the condition and update the RuleName column
+    df_pno_upholstery['RuleName'] = np.where(condition,
+                                            df_pno_upholstery['RuleName'] + '\n' + df_pno_upholstery['DecorInlay'],
+                                            df_pno_upholstery['RuleName'])
+    df_pno_upholstery = df_pno_upholstery.drop(columns='DecorInlay')
+    
     sales_versions = sales_versions.rename(columns={'ID': 'TmpCode'})
     df_pno_upholstery = df_pno_upholstery.merge(sales_versions[['TmpCode', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='TmpCode', how='left')
     df_pno_upholstery = df_pno_upholstery.drop(columns='TmpCode')
@@ -299,17 +326,18 @@ def fetch_upholstery_data(sales_versions, time):
     
     # Group by 'Code' and 'Price', aggregate 'CustomName' and 'CustomCategory' columns
     aggregated = df_pno_upholstery_with_price.groupby(['Code', 'Price']).agg({
-        'CustomName': lambda x: ';\n'.join(sorted(x.dropna().unique())),
-        'CustomCategory': lambda x: ';\n'.join(sorted(x.dropna().unique()))
+        'CustomName': lambda x: ';\n'.join(sorted([y for y in x.dropna().unique() if y])),
+        'CustomCategory': lambda x: ';\n'.join(sorted([y for y in x.dropna().unique() if y]))
     }).reset_index()
+    
     df_pno_upholstery_with_price = df_pno_upholstery_with_price.drop(columns=['CustomName', 'CustomCategory'])
     
     # Merge the aggregated columns back to the original dataframe
     df_merged = df_pno_upholstery_with_price.merge(aggregated, on=['Code', 'Price'])
 
-    # group by Code, Price, RuleName, SalesVersion and SalesVersionName and aggregate the CustomName column by concatinating the values with a newline separator if they differ and not null nan or empty and the CustomCategory column by concatinating the values with a comma separator if they differ
+    # Group by Code, Price, RuleName, SalesVersion and SalesVersionName and aggregate the CustomName column by concatinating the values with a newline separator if they differ and not null nan or empty and the CustomCategory column by concatinating the values with a comma separator if they differ
     df_pno_upholstery_with_price = df_merged.groupby(['Code', 'Price', 'RuleName', 'SalesVersion', 'SalesVersionName']).agg({'CustomName': 'first', 'CustomCategory': 'first'}).reset_index()
-    
+        
     # Create the pivot table
     pivot_df = df_pno_upholstery_with_price.pivot_table(index=['Code', 'Price'], columns='SalesVersion', values='RuleName', aggfunc='first')
 
@@ -331,7 +359,7 @@ def fetch_upholstery_data(sales_versions, time):
 
     df_result['Rules'] = ''
     if df_rules.empty:
-        return df_result
+        return df_result.sort_values('CustomCategory')
     
     # strip the whitespace from the ItemCode and FeatureCode columns
     df_rules['ItemCode'] = df_rules['ItemCode'].str.strip()

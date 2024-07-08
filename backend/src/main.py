@@ -23,7 +23,6 @@ DBOperations.create_instance(test=0, logger=logger)
 if __name__ == "__main__":
     current_time = pd.Timestamp.now()
     # ingest_all_cpam_data('231')
-    # cpam_scheduler.start()
     # ingest_all_cpam_data('231', year='', start_model_year='2021')
     # ingest_all_cpam_data('231', year='2021')
     # scheduled_task()
@@ -49,10 +48,17 @@ if __name__ == "__main__":
     # df_processed.insert(7, 'CountryCode', '231')
     # ingest_visa_data('231', df_processed)
     # ingest_visa_data('231', None)
-    # _extract_variant_binder('231', '246', "Plug-in Hybrid", 202422)
+    # _extract_variant_binder('231', '539', "All", 202502)
+    # ingest_all_cpam_data('231')
+    # _extract_variant_binder('231', '256', "All", 202422)
     # main()
     # DBOperations.instance.consolidate_translations('231')
     # zip_buffer = extract_sap_price_list('231', 'All', None, '2025')
     # with ZipFile(zip_buffer) as zf:
     #     zf.extractall('dist/sap_price_list_main_test')
+    # cpam_scheduler.start()
+    # i = 10
+    # while i:
+    #     time.sleep(10)
+    #     i -= 1
     print(f'Execution time: {pd.Timestamp.now() - current_time}')
