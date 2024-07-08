@@ -65,10 +65,10 @@
     <button style="display:block;width:180px; height:50px; display: inline-block; margin-top: 64px;"
       @click="reset">Reset Filters</button>
     <hr class="divider" style="margin-top: 40px;">
-    <!-- CPAM Refresh Button >
+    <!-- CPAM Refresh Button -->
     <span style="font-size: 32px;">Manage Sources</span>
     <button style="display:block;width:180px; height:50px; display: inline-block; margin-top:10px;"
-      @click="refreshCPAM">Refresh CPAM data</button-->
+      @click="refreshCPAM">Refresh CPAM data</button>
 
     <!-- Country Select Dropdown Menu -->
     <div class="country bottom-div">
@@ -162,8 +162,8 @@
             {{ pno.MarketText }}
           </td>
           <td>
-            <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true"
-              @change="pushUpdateModel(pno)" />
+            <input type="text" v-model="pno.CustomName" @input="pno.edited = true"
+              @change="pushUpdateModel(pno)"/>
           </td>
         </tr>
       </tbody>
@@ -209,7 +209,7 @@
             {{ pno.MarketText }}
           </td>
           <td>
-            <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true" @change="pushUpdateSV(pno)" />
+            <input type="text" v-model="pno.CustomName" @input="pno.edited = true" @change="pushUpdateSV(pno)" />
           </td>
         </tr>
       </tbody>
@@ -282,19 +282,19 @@
             {{ pno.MarketText }}
           </td>
           <td>
-            <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true"
+            <input type="text" v-model="pno.CustomName" @input="pno.edited = true"
               @change="pushUpdateEngine(pno)" />
           </td>
           <td>
-            <input type="EngineCategory" v-model="pno.EngineCategory" @input="pno.edited = true"
+            <input type="text" v-model="pno.EngineCategory" @input="pno.edited = true"
               @change="pushUpdateEngine(pno)" />
           </td>
           <td>
-            <input type="SubCategory" v-model="pno.EngineType" @input="pno.edited = true"
+            <input type="text" v-model="pno.EngineType" @input="pno.edited = true"
               @change="pushUpdateEngine(pno)" />
           </td>
           <td>
-            <input type="Performance" v-model="pno.Performance" @input="pno.edited = true"
+            <input type="text" v-model="pno.Performance" @input="pno.edited = true"
               @change="pushUpdateEngine(pno)" />
           </td>
         </tr>
@@ -341,7 +341,7 @@
             {{ pno.MarketText }}
           </td>
           <td>
-            <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true"
+            <input type="text" v-model="pno.CustomName" @input="pno.edited = true"
               @change="pushUpdateGearbox(pno)" />
           </td>
         </tr>
@@ -491,7 +491,7 @@
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
           <td>
-            <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true"
+            <input type="text" v-model="pno.CustomName" @input="pno.edited = true"
               @change="pushUpdateColor(pno)" />
           </td>
         </tr>
@@ -601,12 +601,11 @@
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
           <td>
-            <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true"
+            <input type="text" v-model="pno.CustomName" @input="pno.edited = true"
               @change="pushUpdateUpholstery(pno)" />
           </td>
           <td>
-            <!-- <input type="UpholsteryCategory" v-model="pno.Category" @input="pno.edited = true" @change="pushUpdateUpholstery(pno)" />    -->
-            <input type="UpholsteryCategory" v-model="pno.CustomCategory" @input="pno.edited = true"
+            <input type="text" v-model="pno.CustomCategory" @input="pno.edited = true"
               @change="pushUpdateUpholstery(pno)" />
           </td>
         </tr>
@@ -651,7 +650,7 @@
           <td style="background-color: #f4f4f4;">{{ pno.Code }}</td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
           <td>
-            <input type="MarketText" v-model="pno.CustomName" @input="pno.edited = true"
+            <input type="text" v-model="pno.CustomName" @input="pno.edited = true"
               @change="pushUpdatePackage(pno)" />
           </td>
         </tr>
@@ -1263,14 +1262,14 @@
       <tbody>
         <tr v-for="pno in sales_channels" :key="pno.id" :class="{ 'editing': pno.edited }">
           <td>
-            <input type="Code" v-model="pno.Code" @input="pno.edited = true" @change="pushUpdateSalesChannel(pno)" />
+            <input type="text" v-model="pno.Code" @input="pno.edited = true" @change="pushUpdateSalesChannel(pno)" />
           </td>
           <td>
-            <input type="ChannelName" v-model="pno.ChannelName" @input="pno.edited = true"
+            <input type="text" v-model="pno.ChannelName" @input="pno.edited = true"
               @change="pushUpdateSalesChannel(pno)" />
           </td>
           <td>
-            <input type="Comment" v-model="pno.Comment" @input="pno.edited = true"
+            <input type="text" v-model="pno.Comment" @input="pno.edited = true"
               @change="pushUpdateSalesChannel(pno)" />
           </td>
           <td>
@@ -1291,13 +1290,13 @@
       <tbody>
         <tr v-for="pno in newsaleschannel" :key="pno.id" :class="{ 'editing': pno.edited }">
           <td>
-            <input type="Code" v-model="pno.Code" @input="pno.edited = true" />
+            <input type="text" v-model="pno.Code" @input="pno.edited = true" />
           </td>
           <td>
-            <input type="ChannelName" v-model="pno.ChannelName" @input="pno.edited = true" style="--dp-border-color: #8d8d8d;"/>
+            <input type="text" v-model="pno.ChannelName" @input="pno.edited = true" style="--dp-border-color: #8d8d8d;"/>
           </td>
           <td>
-            <input type="Comment" v-model="pno.Comment" @input="pno.edited = true" style="--dp-border-color: #8d8d8d;"/>
+            <input type="text" v-model="pno.Comment" @input="pno.edited = true" style="--dp-border-color: #8d8d8d;"/>
           </td>
           <td>
             <VueDatePicker v-model="pno.DateFrom" :format="format" :enable-time-picker="false" 
@@ -1441,17 +1440,17 @@
         <tr v-for="pno in discounts" :key="pno.id"
           :class="{ 'editing': pno.edited, 'selected': pno.id === selectedRow }">
           <td>
-            <input type="DiscountPercentage" v-model="pno.DiscountPercentage" @input="pno.edited = true"
+            <input type="text" v-model="pno.DiscountPercentage" @input="pno.edited = true"
               @change="pushUpdateDiscount(pno)"
               :disabled="(pno.RetailPrice !== null && pno.RetailPrice !== '') || (pno.WholesalePrice !== null && pno.WholesalePrice !== '')" />
           </td>
           <td>
-            <input type="RetailPrice" v-model="pno.RetailPrice" @input="pno.edited = true"
+            <input type="text" v-model="pno.RetailPrice" @input="pno.edited = true"
               @change="pushUpdateDiscount(pno)"
               :disabled="pno.DiscountPercentage !== null && pno.DiscountPercentage !== ''" />
           </td>
           <td>
-            <input type="WholesalePrice" v-model="pno.WholesalePrice" @input="pno.edited = true"
+            <input type="text" v-model="pno.WholesalePrice" @input="pno.edited = true"
               @change="pushUpdateDiscount(pno)"
               :disabled="pno.DiscountPercentage !== null && pno.DiscountPercentage !== ''" />
           </td>
@@ -1471,15 +1470,15 @@
       <tbody>
         <tr v-for="pno in newdiscount" :key="pno.id">
           <td>
-            <input type="DiscountPercentage" v-model="pno.DiscountPercentage" @input="pno.edited = true"
+            <input type="text" v-model="pno.DiscountPercentage" @input="pno.edited = true"
               :disabled="(pno.RetailPrice !== null && pno.RetailPrice !== '') || (pno.WholesalePrice !== null && pno.WholesalePrice !== '')" />
           </td>
           <td>
-            <input type="RetailPrice" v-model="pno.RetailPrice" @input="pno.edited = true"
+            <input type="text" v-model="pno.RetailPrice" @input="pno.edited = true"
               :disabled="pno.DiscountPercentage !== null && pno.DiscountPercentage !== ''" />
           </td>
           <td>
-            <input type="WholesalePrice" v-model="pno.WholesalePrice" @input="pno.edited = true"
+            <input type="text" v-model="pno.WholesalePrice" @input="pno.edited = true"
               :disabled="pno.DiscountPercentage !== null && pno.DiscountPercentage !== ''" />
           </td>
           <v-select :options="this.entitiesStore.visafiles.map(file => '[' + file.CarType + '] ' + file.CustomName)" v-model="pno.AffectedVisaFile"
@@ -1567,15 +1566,15 @@
       <tbody>
         <tr v-for="pno in custom_local_options" :key="pno.id" :class="{ 'editing': pno.edited }">
           <td>
-            <input type="FeatureCode" v-model="pno.FeatureCode" @input="pno.edited = true"
+            <input type="text" v-model="pno.FeatureCode" @input="pno.edited = true"
               @change="pushUpdateXCode(pno)" />
           </td>
           <td>
-            <input type="FeatureRetailPrice" v-model="pno.FeatureRetailPrice" @input="pno.edited = true"
+            <input type="text" v-model="pno.FeatureRetailPrice" @input="pno.edited = true"
               @change="pushUpdateXCode(pno)" />
           </td>
           <td>
-            <input type="FeatureWholesalePrice" v-model="pno.FeatureWholesalePrice" @input="pno.edited = true"
+            <input type="text" v-model="pno.FeatureWholesalePrice" @input="pno.edited = true"
               @change="pushUpdateXCode(pno)" />
           </td>
           <td>
@@ -1599,13 +1598,13 @@
       <tbody>
       <tr v-for="pno in newcustomlocaloption" :key="pno.id" :class="{ 'editing': pno.edited }">
         <td>
-          <input type="FeatureCode" v-model="pno.FeatureCode" @input="pno.edited = true" />
+          <input type="text" v-model="pno.FeatureCode" @input="pno.edited = true" />
         </td>
         <td>
-          <input type="FeatureRetailPrice" v-model="pno.FeatureRetailPrice" @input="pno.edited = true" />
+          <input type="text" v-model="pno.FeatureRetailPrice" @input="pno.edited = true" />
         </td>
         <td>
-          <input type="FeatureWholesalePrice" v-model="pno.FeatureWholesalePrice" @input="pno.edited = true" />
+          <input type="text" v-model="pno.FeatureWholesalePrice" @input="pno.edited = true" />
         </td>
         <td>
           <v-select :options="this.entitiesStore.visafiles.map(file => '[' + file.CarType + '] ' + file.CustomName)" v-model="pno.AffectedVisaFile"
@@ -1707,7 +1706,6 @@ export default {
     },
     models() {
       let models = this.pnoStore.modelCustomNameTuples
-      let modelNames = this.pnoStore.customNames
       return models
     },
     engines() {
