@@ -88,6 +88,9 @@ def insert_table(ws, sales_versions, title, df_res):
         svs = []
         for sv in sales_versions['SalesVersion']:
             if sv in df_res.columns:
+                if pd.isna(row[sv]):
+                    svs.append('')
+                    continue
                 parts = row[sv].split('\n')
                 if len(parts) > 1:
                     svs.append(cell_values.get(parts[0], parts[0]) + '\n' + parts[1])

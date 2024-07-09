@@ -26,7 +26,7 @@ if __name__ == "__main__":
     # ingest_all_cpam_data('231', year='', start_model_year='2021')
     # ingest_all_cpam_data('231', year='2021')
     # scheduled_task()
-    # ingest_cpam_data('2025', '536', '231')
+    # ingest_cpam_data('2025', '256', '231')
     # import os
     # folder = f"{os.getcwd()}/dist/cpam_data/231/"
     # for sub_folder in os.listdir(folder):
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     # ingest_visa_data('231', None)
     # _extract_variant_binder('231', '539', "All", 202502)
     # ingest_all_cpam_data('231')
-    # _extract_variant_binder('231', '256', "All", 202422)
+    _extract_variant_binder('231', '256', "All", 202422)
     # main()
     # DBOperations.instance.consolidate_translations('231')
     # zip_buffer = extract_sap_price_list('231', 'All', None, '2025')

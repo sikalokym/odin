@@ -76,6 +76,7 @@ def ingest_all_cpam_data(country_code, start_model_year=0):
                         break
                     except Exception as e:
                         logger.error(f'Failed to ingest data for {subsub_folder} in {sub_folder}: {e}')
+                        raise e
                 
                 conditions = [f"CountryCode = '{country_code}'", f"ModelYear = '{sub_folder}'", f"CarType = '{subsub_folder}'"]
                 df_raw = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=conditions)
@@ -195,7 +196,8 @@ def preprocess_cpam_data(year, car_type, country_code):
     authorized_packages.to_csv(f"{folder}/authorized_packages.csv")
     authorized_dependencies.to_csv(f"{folder}/authorized_dependencies.csv")
     unauthorized_dependencies.to_csv(f"{folder}/unauthorized_dependencies.csv")
-    authorized_features.to_csv(f"{folder}/authorized_features.csv")
+    # (de-)auth needs further discussions and work cause references have commas
+    market_feat_auth.to_csv(f"{folder}/authorized_features.csv")
     unauthorized_features.to_csv(f"{folder}/unauthorized_features.csv")
     ###############################################################################################################################################################################################################
     
@@ -231,12 +233,12 @@ def ingest_cpam_data(year, car_type, country_code):
     if authorized_authorizations.empty:
         return
     df_pnos = DBOperations.instance.collect_auth(authorized_authorizations, country_code)
-    if df_pnos.empty:
-        return
-    if not unauthorized_features.empty:
-        DBOperations.instance.drop_feature(unauthorized_features, df_pnos)
-    # if not unauthorized_dependencies.empty:
-    #     DBOperations.instance.drop_dependency(unauthorized_dependencies, df_pnos)
+    # if df_pnos.empty:
+    #     return
+    # if not unauthorized_features.empty:
+    #     DBOperations.instance.drop_feature(unauthorized_features, df_pnos)
+    # # if not unauthorized_dependencies.empty:
+    # #     DBOperations.instance.drop_dependency(unauthorized_dependencies, df_pnos)
     if not authorized_packages.empty:
         DBOperations.instance.collect_package(authorized_packages, df_pnos)
     if not authorized_dependencies.empty:

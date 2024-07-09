@@ -324,13 +324,12 @@ class DBOperations:
         conditional_columns = ['Code', 'CountryCode', 'StartDate']
         df_pno = df_pno.drop(['RuleName', 'DataType'], axis=1)
         
-        # if not df_pno.empty:
-            # self.upsert_data_from_df(df_pno, self.config.get('AUTH', 'PNO'), pno_columns, conditional_columns)
+        if not df_pno.empty:
+            self.upsert_data_from_df(df_pno, self.config.get('AUTH', 'PNO'), pno_columns, conditional_columns)
         df_pno['Condition'] = df_pno.apply(lambda row: f"Code = '{row['Code']}' AND CountryCode = '{row['CountryCode']}' AND StartDate = {row['StartDate']}", axis=1)
         conditions = [' OR '.join(df_pno['Condition'].tolist())]
         
         df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=conditions)
-        return df_pnos
     
         if df_pnos.empty:
             self.logger.warning("No existing PNOs found. It doesn't make sense to proceed without PNOs")
@@ -543,7 +542,7 @@ class DBOperations:
         df_assigned = df_assigned.fillna('')
 
         feature_columns = ['PNOID', 'Code', 'Special', 'Reference', 'Options', 'RuleName', 'StartDate', 'EndDate']
-        feature_conditional_columns = ['PNOID', 'Code', 'StartDate']
+        feature_conditional_columns = ['PNOID', 'Code', 'Reference', 'StartDate']
         self.logger.info('Inserting features')
         self.upsert_data_from_df(df_assigned, self.config.get('AUTH', 'FEAT'), feature_columns, feature_conditional_columns)
     

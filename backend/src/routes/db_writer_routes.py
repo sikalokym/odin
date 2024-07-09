@@ -18,7 +18,7 @@ def check_country():
     supported_countries = get_supported_countries(country)
     if supported_countries.empty:
         return 'Country code is missing or invalid', 400
-    
+
 @bp_db_writer.route('/models', methods=['POST'])
 def write_models(country, model_year):
     data = request.get_json()
@@ -62,7 +62,7 @@ def write_engines(country, model_year):
 
     DBOperations.instance.upsert_data_from_df(df_engines, DBOperations.instance.config.get('TABLES', 'En'), all_columns, conditional_columns)
     return 'Engines written successfully', 200
-    
+
 @bp_db_writer.route('/sales_versions', methods=['POST'])
 def write_sales_versions(country, model_year):
     data = request.get_json()
@@ -265,15 +265,14 @@ def write_options(country, model_year):
     else:
         options_conditions.append(f"RelationID in {tuple(rel_ids)}")
 
-    df_pno_options_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'OPT_Custom'), conditions=options_conditions)
-
     update_columns = ['CustomName']
+    conditional_columns = ['RelationID', 'StartDate']
+    df_pno_options_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'OPT_Custom'), columns=conditional_columns+update_columns, conditions=options_conditions)
 
     # Update the columns in the df_pno_options_relation DataFrame
     for col in update_columns:
         df_pno_options_relations[col] = data[col]
     all_columns = df_pno_options_relations.columns.tolist()
-    conditional_columns = ['RelationID']
 
     DBOperations.instance.upsert_data_from_df(df_pno_options_relations, DBOperations.instance.config.get('RELATIONS', 'OPT_Custom'), all_columns, conditional_columns)
     return 'Options written successfully', 200
@@ -309,16 +308,15 @@ def write_colors(country, model_year):
     else:
         colors_conditions.append(f"RelationID in {tuple(rel_ids)}")
 
-    df_pno_colors_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'COL_Custom'), conditions=colors_conditions)
-
     update_columns = ['CustomName']
+    conditional_columns = ['RelationID', 'StartDate']
+    df_pno_colors_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'COL_Custom'), columns=conditional_columns+update_columns, conditions=colors_conditions)
 
     # Update the columns in the df_pno_colors_relation DataFrame
     for col in update_columns:
         df_pno_colors_relations[col] = data[col]
     all_columns = df_pno_colors_relations.columns.tolist()
-    conditional_columns = ['RelationID']
-
+    
     DBOperations.instance.upsert_data_from_df(df_pno_colors_relations, DBOperations.instance.config.get('RELATIONS', 'COL_Custom'), all_columns, conditional_columns)
     return 'Colors written successfully', 200
 
@@ -353,15 +351,14 @@ def write_upholstery(country, model_year):
     else:
         uph_conditions.append(f"RelationID in {tuple(rel_ids)}")
 
-    df_pno_upholstery_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), conditions=uph_conditions)
-
     update_columns = ['CustomName', 'CustomCategory']
-
+    conditional_columns = ['RelationID', 'StartDate']
+    df_pno_upholstery_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), columns=conditional_columns+update_columns, conditions=uph_conditions)
+    
     # Update the columns in the df_pno_upholstery_relation DataFrame
     for col in update_columns:
         df_pno_upholstery_relations[col] = data[col]
     all_columns = df_pno_upholstery_relations.columns.tolist()
-    conditional_columns = ['RelationID']
 
     DBOperations.instance.upsert_data_from_df(df_pno_upholstery_relations, DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), all_columns, conditional_columns)
     return 'Upholstery written successfully', 200
@@ -396,15 +393,14 @@ def write_packages(country, model_year):
     else:
         package_conditions.append(f"RelationID in {tuple(rel_ids)}")
 
-    df_pno_packages_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'PKG_Custom'), columns=['RelationID', 'CustomName'], conditions=package_conditions)
-
     update_columns = ['CustomName']
+    conditional_columns = ['RelationID', 'StartDate']
+    df_pno_packages_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'PKG_Custom'), columns=conditional_columns+update_columns, conditions=package_conditions)
 
     # Update the columns in the df_pno_packages_relation DataFrame
     for col in update_columns:
         df_pno_packages_relations[col] = data[col]
     all_columns = df_pno_packages_relations.columns.tolist()
-    conditional_columns = ['RelationID']
 
     DBOperations.instance.upsert_data_from_df(df_pno_packages_relations, DBOperations.instance.config.get('RELATIONS', 'PKG_Custom'), all_columns, conditional_columns)
     return 'Packages written successfully', 200

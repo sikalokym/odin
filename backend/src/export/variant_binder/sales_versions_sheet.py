@@ -51,8 +51,17 @@ def get_sheet(ws, sales_versions, title):
     ws['B2'].alignment = Alignment(horizontal='left', vertical='center')
     ws['B2'].font = Font(size=10, bold=True)
 
+    svn_with_features = df_sales_versions.SalesVersionName.unique().tolist()
+    last_svn = svn_with_features[-1] if len(svn_with_features) > 0 else None
+    last_sv = df_sales_versions[df_sales_versions.SalesVersionName == last_svn].SalesVersion.unique()[0]
+    svns_without_features = sales_versions[~sales_versions.SalesVersionName.isin(svn_with_features)]
+    combined_sv = ' / '.join([last_sv] + svns_without_features.SalesVersion.unique().tolist())
+    combuned_svn = ' / '.join([last_svn] + svns_without_features.SalesVersionName.unique().tolist())
+    
     prev_svn = []
     for (sv, svn), group in df_sales_versions.groupby(['SalesVersion', 'SalesVersionName'], observed=False):
+        sv = sv if sv != last_sv else combined_sv
+        svn = svn if svn != last_svn else combuned_svn
         group = group.drop(columns=['SalesVersion', 'SalesVersionName'])
         df_options = group.sort_values(by=['CustomCategory', 'CustomName'], ascending=True)
 
@@ -76,16 +85,6 @@ def get_sheet(ws, sales_versions, title):
                     cell.font = Font(bold=True)
                 prev_custom_category = current_custom_category
             ws.append([row['Code'], row['CustomName']])
-    
-    svns_without_features = sales_versions[~sales_versions.SalesVersionName.isin(prev_svn)]
-    ws.append([])
-    sv = '/ '.join(svns_without_features.SalesVersion.unique().tolist())
-    svn = ' / '.join(svns_without_features.SalesVersionName.unique().tolist())
-    svn_with_name = f"{svn} (Alle Austattungen sind oben aufgelistet)"
-    ws.append([sv, svn_with_name])
-    # format the row in gray
-    for cell in ws[len(ws["A"])]:
-        cell.fill = PatternFill(start_color='BFBFBF', end_color='BFBFBF', fill_type='solid')
     
     for col in range(1, 3):
         cell = ws.cell(row=ws.max_row, column=col)
@@ -116,8 +115,9 @@ def fetch_sales_version_data(df_sales_versions):
         conditions.append(f"PNOID = '{pno_ids[0]}'")
     else:
         conditions.append(f"PNOID in {tuple(pno_ids)}")
-    features_conditions = conditions.copy() + [f"Code not like 'X%'", "RuleName = 'S'"]
-    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Code', 'Reference', 'CustomName', 'CustomCategory'], conditions=features_conditions)
+    features_conditions = conditions.copy() + [f"Code not like 'X%'"]
+    df_pno_features_all = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Code', 'Reference', 'RuleName', 'CustomName', 'CustomCategory'], conditions=features_conditions)
+    df_pno_features = df_pno_features_all[df_pno_features_all['RuleName'].str.strip() == 'S'].drop(columns=['RuleName'])
     df_pno_custom_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'CFEAT'), columns=['PNOID', 'Code', 'CustomName', 'CustomCategory'], conditions=conditions)
     
     refs = df_pno_features['Reference'].apply(lambda x: x.strip().zfill(6)).unique().tolist()
@@ -126,7 +126,7 @@ def fetch_sales_version_data(df_sales_versions):
         ref_conds.append(f"RuleCode = '{refs[0]}'")
     else:
         ref_conds.append(f"RuleCode in {tuple(refs)}")
-    df_pno_pkgs = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PKG'), conditions=ref_conds)
+    df_pno_pkgs = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PKG'), conditions=conditions)
     if not df_pno_pkgs.empty:
         cus_conds = ['Price = 0']
         ids = df_pno_pkgs.ID.unique().tolist()
@@ -141,7 +141,10 @@ def fetch_sales_version_data(df_sales_versions):
             for code in df_pkg_full.RuleCode.unique():
                 feats = df_pno_features[df_pno_features['Reference'].str.strip().apply(lambda x: x.zfill(6)) == code]
                 if feats.empty:
-                    continue
+                    new_rows = df_pkg_full[df_pkg_full['RuleCode'] == code][['PNOID', 'RuleCode']]
+                    new_rows['Reference'] = new_rows['RuleCode'].apply(lambda x: x.lstrip('0'))
+                    df_merged_rows = new_rows[['PNOID', 'Reference']].merge(df_pno_features_all[['PNOID', 'Code', 'Reference', 'CustomName', 'CustomCategory']], on=['PNOID', 'Reference'], how='inner')
+                    df_pno_features = pd.concat([df_pno_features, df_merged_rows], ignore_index=True)
                 feat_pnos = feats.PNOID.unique().tolist()
                 should_pnos = df_pkg_full[(df_pkg_full['RuleCode'] == code) & (~df_pkg_full['PNOID'].isin(feat_pnos))].PNOID.unique().tolist()
                 if not should_pnos:
@@ -160,6 +163,7 @@ def fetch_sales_version_data(df_sales_versions):
     df_pno_features_sv = df_pno_features.merge(df_sales_versions[['ID', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='ID', how='inner')
     df_pno_features_sv['SalesVersion'] = pd.Categorical(df_pno_features_sv['SalesVersion'], sv_correct_order)
     df_pno_features_sv = df_pno_features_sv.sort_values(by='SalesVersion')
+
     df_pno_features_sv = df_pno_features_sv.drop_duplicates('Code', keep='first').drop(columns=['ID', 'PNOID'])
     
     df_pno_features_sv = df_pno_features_sv.dropna(subset=['CustomName'])
