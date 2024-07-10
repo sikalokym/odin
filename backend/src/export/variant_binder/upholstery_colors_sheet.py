@@ -5,30 +5,6 @@ import numpy as np
 from src.utils.db_utils import filter_df_by_timestamp, format_float_string
 from src.database.db_operations import DBOperations
 
-
-cell_values = {
-    'B': '•',
-    'U': 'o',
-    '=': 'o',
-    'C': 'o',
-    '': '-'
-}
-
-rule_texts = {
-    'UFO': 'Nicht in Verbindung mit der Option',
-    'UFU': 'Nicht in Verbindung mit dem Polster',
-    'UFC': 'Nicht in Verbindung mit der Farbe',
-    'URO': 'Nur in Verbindung mit der Option',
-    'URU': 'Nur in Verbindung mit dem Polster',
-    'URC': 'Nur in Verbindung mit der Farbe',
-    'CFO': 'Nicht in Verbindung mit der Option',
-    'CFU': 'Nicht in Verbindung mit dem Polster',
-    'CFC': 'Nicht in Verbindung mit der Farbe',
-    'CRO': 'Nur in Verbindung mit der Option',
-    'CRU': 'Nur in Verbindung mit dem Polster',
-    'CRC': 'Nur in Verbindung mit der Farbe'
-}
-
 all_border = Border(top=Side(style='thin', color='000000'),
                     bottom=Side(style='thin', color='000000'),
                     left=Side(style='thin', color='000000'),
@@ -36,7 +12,7 @@ all_border = Border(top=Side(style='thin', color='000000'),
 
 fill = PatternFill(start_color='000080', end_color='000080', fill_type='solid')
 
-def get_sheet(ws, sales_versions, title, time):
+def get_sheet(ws, sales_versions, title, time, cell_values, rule_texts):
     """
     Fetches options data and inserts it into the specified worksheet.
 
@@ -48,16 +24,16 @@ def get_sheet(ws, sales_versions, title, time):
     Returns:
         None
     """
-    df_upholstery = fetch_upholstery_data(sales_versions.copy(), time)
-    df_colors = fetch_color_data(sales_versions.copy(), time)
+    df_upholstery = fetch_upholstery_data(sales_versions.copy(), time, rule_texts)
+    df_colors = fetch_color_data(sales_versions.copy(), time, rule_texts)
 
     ws.column_dimensions['A'].width = 10
     ws.column_dimensions['B'].width = 65
 
-    insert_table(ws, sales_versions, title + ' - Polster', df_upholstery)
+    insert_table(ws, sales_versions, title + ' - Polster', df_upholstery, cell_values)
     mid_row = ws.max_row + 1
-    ws.append([])
-    insert_table(ws, sales_versions, title + ' - Außenfarben', df_colors)
+    ws.append([''])
+    insert_table(ws, sales_versions, title + ' - Außenfarben', df_colors, cell_values)
     
     for col in range(3, ws.max_column):
         ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = 20
@@ -73,7 +49,7 @@ def get_sheet(ws, sales_versions, title, time):
 
     ws.sheet_view.showGridLines = False
 
-def insert_table(ws, sales_versions, title, df_res):
+def insert_table(ws, sales_versions, title, df_res, cell_values):
 
     insert_title(ws, sales_versions, title)
     old_custom_category = -1
@@ -102,7 +78,7 @@ def insert_table(ws, sales_versions, title, df_res):
             ws.append([row['Code'], row['CustomName'], row['Price']] + svs + ['', row['Rules']])
             row_height = int(len(row['CustomName']) / 74) * 15 + 15
             ws.row_dimensions[ws.max_row].height = row_height
-            ws.append([])
+            ws.append([''])
         else:
             prices = row['Price'].split('/')
             if len(prices) > 1:
@@ -189,7 +165,7 @@ def insert_title(ws, sales_versions, title):
         cell.font = Font(name='Arial', size=10, bold=True, color='FFFFFF')
         cell.alignment = Alignment(horizontal='center', vertical='center',wrap_text=True)
 
-def fetch_color_data(sales_versions, time):
+def fetch_color_data(sales_versions, time, rule_texts):
     pno_ids = sales_versions.ID.unique().tolist()
     conditions = []
     if len(pno_ids) == 1:
@@ -263,7 +239,7 @@ def fetch_color_data(sales_versions, time):
     df_rules['FeatureCode'] = df_rules['FeatureCode'].str.strip()
     
     for rule, group in df_rules.groupby('RuleCode'):
-        group = group.groupby('ItemCode').agg({'FeatureCode': lambda x: rule_texts[rule] + ' ' + ', '.join(list(x))}).reset_index()
+        group = group.groupby('ItemCode').agg({'FeatureCode': lambda x: rule_texts.get(rule.lower(), rule) + ' ' + ', '.join(list(x))}).reset_index()
         group = group.rename(columns={'FeatureCode': rule})
         df_result = pd.merge(df_result, group, left_on='Code', right_on='ItemCode', how='left')
         df_result = df_result.drop(columns=['ItemCode'])
@@ -277,7 +253,7 @@ def fetch_color_data(sales_versions, time):
     df_result = df_result.fillna('')
     return df_result
 
-def fetch_upholstery_data(sales_versions, time):
+def fetch_upholstery_data(sales_versions, time, rule_texts):
     pno_ids = sales_versions.ID.unique().tolist()
     conditions = []
     if len(pno_ids) == 1:
@@ -297,11 +273,21 @@ def fetch_upholstery_data(sales_versions, time):
     
     # Load features that
     feat_conditions = conditions.copy() + ["Code LIKE 'NC%'"]
-    df_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Reference as Code', 'CustomName as DecorInlay'], conditions=feat_conditions)
-    df_features['Code'] = df_features['Code'].apply(lambda x: x.strip().split('(u)')[0])
-    feat_codes = df_pno_upholstery['Code'].unique().tolist()
-    df_features = df_features[df_features['Code'].isin(feat_codes)]
-    df_pno_upholstery = df_pno_upholstery.merge(df_features, on=['PNOID', 'Code'], how='left')
+    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Reference as Code', 'CustomName as DecorInlay'], conditions=feat_conditions)
+    df_pno_features['Code'] = df_pno_features['Code'].apply(lambda x: x.strip().split('(u)')[0])
+    
+    df_pno_features = df_pno_features[df_pno_features['Code'].isin(df_pno_upholstery['Code'].unique().tolist())]
+    
+    # Remove Options that have a subset of the relatable features
+    for ref in df_pno_features['Code'].unique():
+        local_group = df_pno_features[df_pno_features['Code'] == ref].groupby(['PNOID']).agg({'Code': lambda x: len(x)})
+        max_num_feats = local_group['Code'].max()
+        # Get sales versions with the maximum number of features
+        max_sales_versions = local_group[local_group['Code'] != max_num_feats].index.tolist()
+        if len(max_sales_versions):
+            df_pno_features = df_pno_features[~((df_pno_features['Code'] == ref) & (df_pno_features['PNOID'].isin(max_sales_versions)))]
+    
+    df_pno_upholstery = df_pno_upholstery.merge(df_pno_features, on=['PNOID', 'Code'], how='left')
     
     # Condition to check not NaN, not None, and not empty
     condition = df_pno_upholstery['DecorInlay'].notna() & (df_pno_upholstery['DecorInlay'] != '')
@@ -369,7 +355,7 @@ def fetch_upholstery_data(sales_versions, time):
     df_rules['FeatureCode'] = df_rules['FeatureCode'].str.strip()
     
     for rule, group in df_rules.groupby('RuleCode'):
-        group = group.groupby('ItemCode').agg({'FeatureCode': lambda x: rule_texts[rule] + ' ' + ', '.join(list(x))}).reset_index()
+        group = group.groupby('ItemCode').agg({'FeatureCode': lambda x: rule_texts.get(rule.lower(), rule) + ' ' + ', '.join(list(x))}).reset_index()
         group = group.rename(columns={'FeatureCode': rule})
         df_result = pd.merge(df_result, group, left_on='Code', right_on='ItemCode', how='left')
         df_result = df_result.drop(columns=['ItemCode'])

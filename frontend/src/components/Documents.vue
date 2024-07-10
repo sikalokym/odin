@@ -225,7 +225,7 @@ export default {
       sortedSalesVersions: [],
     }
   },
-  async created() {
+  created() {
     this.pnoStore.setModelYear('0');
     this.entitiesStore.setModelYear('0');
     this.selectedCountry = this.pnoStore.country;

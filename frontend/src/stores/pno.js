@@ -234,8 +234,9 @@ export const usePNOStore = defineStore({
       this.supported_countries = supported_countries;
       this.country = supported_countries[0] || '';
     },
-    async setCountry(newCountry) {
-        this.country = newCountry;
+    setCountry(newCountry) {
+      this.country = newCountry;
+      this.fetchAvailableModelYears();
     },
     setModelYear(newModelYear) {
       this.model_year = newModelYear;

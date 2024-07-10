@@ -422,8 +422,8 @@
         <tr>
           <th>Market Text</th>
           <th>Feature Category</th>
-          <th>Start Date</th>
-          <th>End Date</th>
+          <th>Start Date (YYYYWW)</th>
+          <th>End Date (YYYYWW)</th>
           <th></th>
         </tr>
       </thead>
@@ -432,9 +432,9 @@
           <td><input type="text" v-model="newEntry.CustomName" /></td>
           <td><input type="text" v-model="newEntry.CustomCategory" /></td>
           <td><input type="text" v-model="newEntry.StartDate"
-              pattern="\d{4}(0[1-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-3])" /></td>
+              pattern="\d{4}(0[1-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-2])" /></td>
           <td><input type="text" v-model="newEntry.EndDate"
-              pattern="\d{4}(0[1-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-3])" /></td>
+              pattern="\d{4}(0[1-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-2])" /></td>
         </tr>
       </tbody>
     </table>
@@ -1695,7 +1695,7 @@ export default {
   beforeDestroy() {
     this.$refs.mainContent.removeEventListener('scroll', this.handleScroll);
   },
-  async created() {
+  created() {
     this.pnoStore.setModelYear('0');
     this.entitiesStore.setModelYear('0');
     this.selectedCountry = this.pnoStore.country;
@@ -2110,7 +2110,7 @@ export default {
         this.exportInProgress = false;
       }, 10000);
     },
-    async reset() {
+    reset() {
       this.model_year = '0';
       this.model = '';
       this.engine = '';
@@ -2128,9 +2128,9 @@ export default {
       this.newdiscount = [];
       this.newcustomlocaloption = [];
       this.searchTerm = '';
-      await this.pnoStore.setModelYear('0');
+      this.pnoStore.setModelYear('0');
     },
-    async displaytablereset() {
+    displaytablereset() {
       this.model_year = '0';
       this.model = '';
       this.engine = '';
@@ -2147,7 +2147,7 @@ export default {
       this.newdiscount = [];
       this.newcustomlocaloption = [];
       this.searchTerm = '';
-      await this.pnoStore.setModelYear('0');
+      this.pnoStore.setModelYear('0');
     },
     // Non-PNO-specific updates
     pushUpdateModel(pno) {
@@ -2478,11 +2478,12 @@ export default {
       })
     },
     refreshCPAM() {
-      index.get('/ingest/cpam');
+      index.get(`/${this.pnoStore.country.Code}/ingest/cpam`);
     },
-    async changeCountry(newCountry) {
-      await this.pnoStore.setCountry(newCountry);
-      await this.entitiesStore.setCountry(newCountry);
+    changeCountry(newCountry) {
+      this.pnoStore.setCountry(newCountry);
+      this.entitiesStore.setCountry(newCountry);
+      this.displaytablereset();
     },
 
     scrollToTop() {

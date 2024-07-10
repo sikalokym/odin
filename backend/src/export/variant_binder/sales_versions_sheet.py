@@ -11,7 +11,7 @@ all_border = Border(top=Side(style='thin', color='000000'),
 
 fill = PatternFill(start_color='000080', end_color='000080', fill_type='solid')
 
-def get_sheet(ws, sales_versions, title):
+def get_sheet(ws, sales_versions, title, config):
     """
     Fetches options data and inserts it into the specified worksheet.
 
@@ -26,8 +26,8 @@ def get_sheet(ws, sales_versions, title):
     df_sales_versions = fetch_sales_version_data(sales_versions)
 
     # Write the headers
-    ws['A1'] = title
-    ws.append(['Feature Code (Reference)', 'Serienausstattung'])
+    ws['A1'] = f'{title} - {config["title"]}'
+    ws.append([config['code_column'], config['description_column']])
     ws['A1'].font = Font(size=16, bold=True)
     ws.merge_cells('A1:B1')
     ws['A1'].alignment = Alignment(horizontal='center')
@@ -66,7 +66,8 @@ def get_sheet(ws, sales_versions, title):
         df_options = group.sort_values(by=['CustomCategory', 'CustomName'], ascending=True)
 
         # Write the data to the worksheet
-        svn_with_name = f"{svn} (zusätzlich bzw. abweichend zu {prev_svn[-1]})" if len(prev_svn) > 0 else svn
+        prev_sv_text = prev_svn[-1] if len(prev_svn) > 0 else None
+        svn_with_name = f"{svn} {config['category_dependency'].replace('{prev_sv}', prev_sv_text)})" if len(prev_svn) > 0 else svn
         if svn not in prev_svn:
             prev_svn.append(svn)
         ws.append([''])
@@ -155,6 +156,11 @@ def fetch_sales_version_data(df_sales_versions):
                     df_pno_features = pd.concat([df_pno_features, temple_row], ignore_index=True)
     
     # Code should have (reference) appendend to it, if Reference is not null and not empty
+    df_pno_features['Code'] = df_pno_features['Code'].str.strip()
+    df_pno_features = df_pno_features.groupby(['Code', 'PNOID']).agg({
+        'Reference': lambda x: ', '.join([y for y in set(x) if y != '' and y is not None]),
+        'CustomName': 'first',
+        'CustomCategory': 'first'}).reset_index()
     df_pno_features['Code'] = df_pno_features.apply(lambda x: f"{x['Code']} ({x['Reference']})" if x['Reference'] else x['Code'], axis=1)
     df_pno_features = df_pno_features.drop(columns=['Reference'])
     df_pno_features = pd.concat([df_pno_features, df_pno_custom_features])

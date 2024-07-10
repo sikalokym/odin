@@ -13,14 +13,7 @@ all_border = Border(top=Side(style='thin', color='000000'),
 
 fill = PatternFill(start_color='000080', end_color='000080', fill_type='solid')
 
-cell_values = {
-    'S': '•',
-    'B': 'o',
-    'E': 'o',
-    '': '-'
-}
-
-def get_sheet(ws, sales_versions, title, time):
+def get_sheet(ws, sales_versions, title, time, cell_values, config):
     """
     Fetches options data and inserts it into the specified worksheet.
 
@@ -32,7 +25,7 @@ def get_sheet(ws, sales_versions, title, time):
     Returns:
         None
     """
-    prepare_sheet(ws, sales_versions, title)
+    prepare_sheet(ws, sales_versions, title, config)
     df_packages = fetch_package_data(sales_versions, time)
     
     for (code, title), group in df_packages.groupby(['Code', 'Title']):
@@ -41,7 +34,7 @@ def get_sheet(ws, sales_versions, title, time):
                 return ''
             if 'B' in group[x].values:
                 return group[group[x] == 'B']['Price'].values[0]
-            elif all(value == 'S' for value in group[x].values):
+            elif not group[x].dropna().empty and group[x].dropna().loc[(group[x] != 'S') & (group[x] != 'E')].empty:
                 return 'S'
             else:
                 return ''
@@ -52,14 +45,6 @@ def get_sheet(ws, sales_versions, title, time):
         group = group.groupby('RuleCode').first().reset_index()
         
         df_options = group.sort_values(by='RuleCode', ascending=True)
-
-        # Note: The logic gere works in some cases, but not in all. It is better to keep the original data as is. Discuss with the team.
-        # check if any column has a NaN value, then set all values of that column to empty string
-        # for col in df_options.columns:
-        #     if col in ['RuleCode', 'RuleBase', 'CustomName']:
-        #         continue
-        #     if df_options[col].isnull().values.any():
-        #         df_options[col] = ''
         df_options = df_options.fillna('')
 
         # Write the data to the worksheet
@@ -73,7 +58,7 @@ def get_sheet(ws, sales_versions, title, time):
             ws.append([code, title, 'Serie'] + sales_versions['PKGPrice'].map(lambda x: cell_values['B'] if len(x) and x[0].isnumeric() else cell_values.get(x, x)).tolist())
             ws.append(['', '', ''])
         else:
-            ws.append([code, title, 'Abhängig von der Serienausstattung'] + sales_versions['PKGPrice'].apply(lambda x: x.split('/')[0] if len(x) and x[0].isnumeric() else cell_values.get(x, x)).tolist())
+            ws.append([code, title, config['PACKAGES_SHEET']['MULTI_PRICE']] + sales_versions['PKGPrice'].apply(lambda x: x.split('/')[0] if len(x) and x[0].isnumeric() else cell_values.get(x, x)).tolist())
             ws.append(['', '', ''] + sales_versions['PKGPrice'].apply(lambda x: x.split('/')[1] if len(x.split('/')) != 1 else '').tolist())
         
         for col in range(1, len(sales_versions) + 4):
@@ -111,13 +96,17 @@ def get_sheet(ws, sales_versions, title, time):
                     cell.border = all_border
     format_sheet(ws, len(sales_versions) + 4)
 
-def prepare_sheet(ws, df_sales_versions, title):
+def prepare_sheet(ws, df_sales_versions, title, config):
     ws.sheet_view.showGridLines = False
     ws.freeze_panes = ws['A2']
-    ws['A1'] = f'{title} - Pakete'
-    ws['C1'] = 'EUR inkl. 19 % MwSt.\n EUR ohne MwSt.'
-    ws['A2'] = 'Code (ab Werk)\n + VCG Paket'
-    ws['B2'] = 'Beschreibung'
+    ws['A1'] = f'{title} - ' + config['PACKAGES_SHEET']["TITLE"]
+    ws['C1'] = config['DEFAULT']['TAX']
+    ws['A2'] = config['PACKAGES_SHEET']['CODE_COLUMN']
+    ws['B2'] = config['PACKAGES_SHEET']['DESCRIPTION_COLUMN']
+    
+    # Put a thin border around the content of A2 and B2
+    ws['A2'].border = all_border
+    ws['B2'].border = all_border
     
     ws.merge_cells('A1:B1')
     df_sales_versions = df_sales_versions.reset_index(drop=True)
@@ -140,14 +129,12 @@ def prepare_sheet(ws, df_sales_versions, title):
     ws['A1'].font = Font(name='Arial', size=16, bold=True, color="FFFFFF")
     ws['A1'].alignment = Alignment(horizontal='left', vertical='center')
     
-    for col in range(3, 20):
-        cell = ws.cell(row=1, column=col)
-        cell.font = Font(name='Arial', size=10, bold=True, color='FFFFFF')
-        cell.alignment = Alignment(horizontal='center', vertical='center',wrap_text=True)
-
     for col in range(1,max_c+1):
         cell = ws.cell(row=1, column=col)
         cell.fill = fill
+        if col > 2:
+            cell.font = Font(name='Arial', size=10, bold=True, color='FFFFFF')
+            cell.alignment = Alignment(horizontal='center', vertical='center',wrap_text=True)
     
     # Formatting of second row
     ws['A2'].alignment = Alignment(horizontal='center', vertical='center',wrap_text=True)
@@ -174,20 +161,34 @@ def fetch_package_data(sales_versions, time):
         conditions.append(f"PNOID = '{pno_ids[0]}'")
     else:
         conditions.append(f"PNOID in {tuple(pno_ids)}")
+    # pno_package_conditions = conditions.copy() + ["Code = 'P0030'", "PNOID = '182CCF22-DF5A-4129-BE82-2643373A42CA'"]
     pno_package_conditions = conditions.copy() + ["Code not like 'PA%'"]
     sales_versions = sales_versions.rename(columns={'ID': 'TmpCode'})
     df_pno_package = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PKG'), columns=['ID', 'PNOID', 'Code', 'Title', 'RuleCode', 'RuleName', 'RuleBase', 'StartDate', 'EndDate'], conditions=pno_package_conditions)
     df_pno_package = filter_df_by_timestamp(df_pno_package, time)
     df_pno_package = df_pno_package.drop(columns=['StartDate', 'EndDate'])
     df_pno_package['RuleCode'] = df_pno_package['RuleCode'].apply(lambda x: str(x).lstrip('0') if str(x).isdigit() else x)
-
+    
     rule_codes = df_pno_package['RuleCode'].unique().tolist()
+    # rule_codes += [f"{x}  " for x in rule_codes]
+    # rule_codes += [f"{x}(u)" for x in rule_codes]
     pno_features_conditions = conditions.copy()
     if len(rule_codes) == 1:
         pno_features_conditions.append(f"Reference = '{rule_codes[0]}'")
     else:
         pno_features_conditions.append(f"Reference in {tuple(rule_codes)}")
-    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Reference as RuleCode', 'RuleName', 'CustomName'], conditions=pno_features_conditions)
+    df_pno_features_all = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Code as FeatCode', 'Reference as RuleCode', 'RuleName', 'CustomName', 'StartDate'], conditions=pno_features_conditions)
+    df_pno_features_all = df_pno_features_all.sort_values(by='StartDate', ascending=False)
+    df_pno_features = df_pno_features_all.drop_duplicates(subset=['PNOID', 'FeatCode', 'RuleCode'], keep='first').drop(columns=['FeatCode', 'StartDate'])
+    
+    # Remove Options that have a subset of the relatable features
+    for ref in df_pno_features['RuleCode'].unique():
+        local_group = df_pno_features[df_pno_features['RuleCode'] == ref].groupby(['PNOID']).agg({'RuleName': lambda x: len(x)})
+        max_num_feats = local_group['RuleName'].max()
+        # Get sales versions with the maximum number of features
+        max_sales_versions = local_group[local_group['RuleName'] != max_num_feats].index.tolist()
+        if len(max_sales_versions):
+            df_pno_features = df_pno_features[~((df_pno_features['RuleCode'] == ref) & (df_pno_features['PNOID'].isin(max_sales_versions)))]
     
     uph_codes = list(set(rule_codes) - set(df_pno_features.RuleCode.unique().tolist()))
     df_pkg_uph = pd.DataFrame()
@@ -205,11 +206,12 @@ def fetch_package_data(sales_versions, time):
             uph_features_conditions.append(f"RelationID = '{rel_ids[0]}'")
         else:
             uph_features_conditions.append(f"RelationID in {tuple(rel_ids)}")
+        
         df_uph_relations = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'UPH_Custom'), columns=['RelationID', 'CustomName'], conditions=uph_features_conditions)
         df_uph = df_uph.merge(df_uph_relations, left_on='ID', right_on='RelationID', how='left')
         df_uph = df_uph.drop(columns=['ID', 'RelationID'])
         df_pkg_uph = df_uph.merge(df_pno_package[['PNOID', 'RuleCode', 'RuleName']], on=['PNOID', 'RuleCode'], how='left', suffixes=('_uph', '_package'))
-        df_pkg_uph = df_pkg_uph.dropna(subset=['RuleName']).drop_duplicates(subset=['RuleCode', 'RuleName'])
+        df_pkg_uph = df_pkg_uph.dropna(subset=['RuleName']).drop_duplicates(subset=['PNOID', 'RuleCode', 'RuleName'])
         df_pkg_uph['CustomName'] = df_pkg_uph['CustomName'].fillna('')
     
     df_merged = df_pno_features.merge(df_pno_package[['PNOID', 'RuleCode', 'RuleName']], on=['PNOID', 'RuleCode'], how='left', suffixes=('_features', '_package'))
@@ -219,6 +221,21 @@ def fetch_package_data(sales_versions, time):
     
     df_merged = pd.concat([df_merged, df_pkg_uph], ignore_index=True)
     merged_df_with_features = df_merged.merge(df_pno_package, on=['PNOID', 'RuleCode'], how='left')
+    merged_df_with_features['RuleBase'] = merged_df_with_features['RuleBase'].fillna('')
+    df_filled = pd.DataFrame()
+    for rule_code, rule_base, pkg_id, pkg_code, pkg_title in merged_df_with_features[['RuleCode', 'RuleBase', 'ID', 'Code', 'Title']].dropna(subset=['Code']).drop_duplicates().values:
+        df_tmp = merged_df_with_features[(merged_df_with_features['RuleCode'] == rule_code) & (pd.isna(merged_df_with_features['Code']))].copy()
+        if df_tmp.empty:
+            continue
+        df_tmp['ID'] = pkg_id
+        df_tmp['Code'] = pkg_code
+        df_tmp['Title'] = pkg_title
+        df_tmp['RuleBase'] = rule_base
+        df_filled = pd.concat([df_filled, df_tmp], ignore_index=True)
+    
+    merged_df_with_features = merged_df_with_features.dropna(subset=['Code'])
+    merged_df_with_features = pd.concat([merged_df_with_features, df_filled], ignore_index=True)
+    
     df_pno_package_with_sv = merged_df_with_features.merge(sales_versions[['TmpCode', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='TmpCode', how='inner')
     df_pno_package_with_sv =df_pno_package_with_sv.drop(columns=['TmpCode', 'PNOID']).drop_duplicates()
     
@@ -228,7 +245,7 @@ def fetch_package_data(sales_versions, time):
         pno_package_price_conditions.append(f"RelationID = '{package_ids[0]}'")
     else:
         pno_package_price_conditions.append(f"RelationID in {tuple(package_ids)}")
-
+    
     df_pno_package_price = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'PKG_Custom'), columns=['RelationID', 'Price', 'PriceBeforeTax', 'CustomName as PCustomName'], conditions=pno_package_price_conditions)
     if df_pno_package_price.empty:
         df_pno_package_with_sv['RelationID'] = None
@@ -238,57 +255,80 @@ def fetch_package_data(sales_versions, time):
     else:
         df_pno_package_price = df_pno_package_price.drop_duplicates()
         df_pno_package_with_sv = df_pno_package_with_sv.merge(df_pno_package_price, left_on='ID', right_on='RelationID', how='left')
-
-    df_pno_package_with_sv.loc[df_pno_package_with_sv['Price'] == 0, 'RuleName'] = 'S'
+    
+    df_pno_package_with_sv.loc[(df_pno_package_with_sv['Price'] == 0) & (df_pno_package_with_sv['RuleBase'] == ''), 'RuleName'] = 'S'
     new_rows = []
-    df = df_pno_package_with_sv.copy()
-
+    ids_to_remove = []
+    
+    for rule_code, pkg_code in df_pno_package_with_sv[['RuleCode', 'Code']].drop_duplicates().values:
+        if pd.isna(pkg_code):
+            continue
+        rule_text = ';\n'.join([x for x in df_pno_package_with_sv[(df_pno_package_with_sv['RuleCode'] == rule_code) & (df_pno_package_with_sv['Code'] == pkg_code)]['CustomName'].unique() if x])
+        df_pno_package_with_sv.loc[(df_pno_package_with_sv['RuleCode'] == rule_code) & (df_pno_package_with_sv['Code'] == pkg_code), 'CustomName'] = rule_text
+    
+    df_pno_package_with_sv.loc[df_pno_package_with_sv['RuleBase']!='', 'RuleName'] = 'E'
+    df = df_pno_package_with_sv
+    
     for rule_code in df['RuleCode'].unique():
         template_rows = df[(df['RuleCode'] == rule_code) & df['ID'].notna() & df['Code'].notna() & df['Title'].notna() & df['RuleBase'].notna()]
         should_sales_versions = df[(df['RuleCode'] == rule_code) & (df['RuleName'] == 'S')]['SalesVersion'].unique()
         for code in template_rows['Code'].unique():
-            unique_prices = template_rows[(template_rows['Code'] == code)]['Price'].unique()
-            unique_prices = [price for price in unique_prices if price is not None]
-            if not len(unique_prices):
-                unique_prices = ['']
-            for price in unique_prices:
-                conditions = df['Price'] == price if price != '' else df['Price'].isna()
-                not_available_sales_versions = [sv for sv in should_sales_versions if sv not in df[(df['RuleCode'] == rule_code) & (df['Code'] == code) & conditions]['SalesVersion'].unique()]
-                for sales_version in not_available_sales_versions:
-                    template_row = template_rows[(template_rows['Code'] == code) & (template_rows['Price'] == price)]
-                    if template_row.empty:
-                        continue
-                    template_row = template_row.iloc[0].to_dict()
-                    template_row.update({"SalesVersion": sales_version, "RuleName": 'S'})
-                    new_rows.append(template_row)
-
+            group = df [(df['RuleCode'] == rule_code) & (df['Code'] == code)]
+            available_svs = group['SalesVersion'].unique()
+            not_available_sales_versions = [sv for sv in should_sales_versions if sv not in available_svs]
+            for sales_version in not_available_sales_versions:
+                tmp_df = df[(df['RuleCode'] == rule_code) & (df['SalesVersion'] == sales_version)]
+                if tmp_df.empty:
+                    continue
+                if 'O' in tmp_df['RuleName'].unique():
+                    ids_to_remove += tmp_df.index.tolist()
+                    continue
+                merged_row = tmp_df.iloc[0].to_dict()
+                merged_row.update({'Code': code,
+                                   'Title': group['Title'].values[0],
+                                   'RuleBase': '',
+                                   'PCustomName': group['PCustomName'].values[0]})
+                
+                new_rows.append(merged_row)
+                ids_to_remove += tmp_df.index.tolist()
+    
     # Convert the list of dictionaries to a DataFrame
-    df_new_rows = pd.DataFrame(new_rows)
-
+    df_new_rows = pd.DataFrame(new_rows).drop_duplicates()
+    ids_to_remove = list(set(ids_to_remove))
+    df_pno_package_filtered = df_pno_package_with_sv.drop(ids_to_remove)
+    
     # Append new_rows to the DataFrame
-    df_pno_package_with_price = pd.concat([df_pno_package_with_sv, df_new_rows], ignore_index=True).dropna(subset=['ID'])
-    # if a rulecode has rulename S for some salesversion, then it is duplicated for all Codes, sales versions and Prices
-
-    # format prices to float using format_float_string
+    df_pno_package_with_price = pd.concat([df_pno_package_filtered, df_new_rows], ignore_index=True)
+    
+    # # Step 1: Group the DataFrame
+    # grouped = df_pno_package_with_price.groupby(['Code', 'SalesVersion', 'SalesVersionName']).agg({'RuleName': lambda x: set(x)})
+    
+    # # Step 2: Filter groups where all RuleName values are 'S'
+    # filtered_groups = grouped[grouped['RuleName'].apply(lambda x: x == {'S'})].index
+    
+    # # Step 3: Drop these groups from the original DataFrame
+    # filtered_groups = df[~df.set_index(['Code', 'SalesVersion', 'SalesVersionName']).index.isin(filtered_groups)]
+    
+    # Format prices to float using format_float_string
     df_pno_package_with_price['Price'] = df_pno_package_with_price['Price'].apply(format_float_string)
     df_pno_package_with_price['PriceBeforeTax'] = df_pno_package_with_price['PriceBeforeTax'].apply(format_float_string)
-
+    
     # Concatenate Price and PriceBeforeTax
     df_pno_package_with_price['Price'] = df_pno_package_with_price.apply(lambda x: f"{x['Price']}/{x['PriceBeforeTax']}" if x['RuleName'] != '%' else '%', axis=1)
-
+    
     # Title is custom name if available, else Title
     df_pno_package_with_price['Title'] = df_pno_package_with_price['PCustomName'].combine_first(df_pno_package_with_price['Title'])
     df_pno_package_with_price = df_pno_package_with_price.drop(columns=['ID', 'RelationID', 'PriceBeforeTax', 'PCustomName'])
-
+    
     # Create the pivot table
     pivot_df = df_pno_package_with_price.pivot_table(index=['Code', 'Price', 'RuleCode', 'RuleBase'], columns='SalesVersion', values='RuleName', aggfunc='first')
-
+    
     # Drop the now unneeded columns and duplicates
     df_pno_package_final = df_pno_package_with_price[['Code', 'Price', 'RuleCode', 'RuleBase', 'Title', 'CustomName']]
     df_pno_package_final = df_pno_package_final.drop_duplicates()
-
+    
     # Join the pivoted DataFrame with the original one. sort after code ascending
     df_result = df_pno_package_final.join(pivot_df, on=['Code', 'Price', 'RuleCode', 'RuleBase']).sort_values(by='Code')
     df_result['RuleCode'] = df_result['RuleCode'].apply(lambda x: x.zfill(6))
-
+    
     return df_result

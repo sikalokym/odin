@@ -2,24 +2,9 @@ from openpyxl.styles import Font, PatternFill, Border, Alignment, Side
 from openpyxl.utils import get_column_letter
 import pandas as pd
 
-from src.utils.db_utils import filter_df_by_timestamp, format_float_string
 from src.database.db_operations import DBOperations
+from src.utils.db_utils import format_float_string
 
-
-cell_values = {
-    'S': '•',
-    'O': 'o',
-    '': '-'
-}
-
-rule_texts = {
-    'OFO': 'Nicht in Verbindung mit der Option',
-    'OFU': 'Nicht in Verbindung mit dem Polster',
-    'OFC': 'Nicht in Verbindung mit der Farbe',
-    'ORO': 'Nur in Verbindung mit der Option',
-    'ORU': 'Nur in Verbindung mit dem Polster',
-    'ORC': 'Nur in Verbindung mit der Farbe'
-}
 
 #General formating of border lines & cell colours in excel spreadsheet
 all_border = Border(top=Side(style='thin', color='000000'),
@@ -31,7 +16,7 @@ white_border = Border(right=Side(style='thin', color="FFFFFF"))
 fill = PatternFill(start_color='000080', end_color='000080', fill_type='solid')
 white_fill = PatternFill(start_color='FFFFFF', end_color='FFFFFF', fill_type='solid')
 
-def get_sheet(ws, sales_versions, title, time):
+def get_sheet(ws, sales_versions, title, time, rad_category, rule_texts, cell_values, config):
     """
     Fetches options data and inserts it into the specified worksheet.
 
@@ -43,39 +28,34 @@ def get_sheet(ws, sales_versions, title, time):
     Returns:
         df_rad (DataFrame): The dataframe containing the tiers data for the next sheet.
     """
-
-    df_rad, df_res = fetch_options_data(sales_versions, time)
-
-    # Calculate the number of empty rows to append
-    num_empty_rows = 2 - len(ws['A'])
-
-    # Append empty rows
-    for _ in range(num_empty_rows):
-        ws.append([])
-
+    
+    df_rad, df_res = fetch_options_data(sales_versions, time, rad_category, rule_texts, config)
+    ws.append([''])
+    ws.append([''])
+    
     # insert data into the sheet ab row 3
     for _, row in df_res.iterrows():
         svs = [cell_values.get(row[sv], row[sv]) if sv in df_res.columns else '' for sv in sales_versions['SalesVersion']]
-        if row['Price'] == 'Pack Only'or row['Price'] == 'Serie':
+        if row['Price'] == config['OPTIONS_SHEET']['GRAYED_OUT_PRICE']or row['Price'] == config['DEFAULT']['SERIES']:
             ws.append([row['Code'], row['CustomName'], row['Price']] + svs + ['', row['CustomCategory'], row['Rules']])
-            row_height = int(len(row['CustomName']) / 74) * 15 + 15
+            row_height = int(len(row['CustomName']) / 65) * 15 + 15
             ws.row_dimensions[ws.max_row].height = row_height
-            ws.append([])
+            ws.append([''])
         else:
             prices = row['Price'].split('/')
             if len(prices) > 1:
                 ws.append([row['Code'], row['CustomName'], prices[0]] + svs + ['', row['CustomCategory'], row['Rules']])
                 ws.cell(row=ws.max_row, column=3).alignment = Alignment(horizontal='center', vertical='bottom')
-                row_height = int(len(row['CustomName']) / 74) * 15 + 15
+                row_height = int(len(row['CustomName']) / 65) * 15 + 15
                 ws.row_dimensions[ws.max_row].height = row_height
                 ws.append(['', '', prices[1]] + svs) 
                 ws.cell(row=ws.max_row, column=3).alignment = Alignment(horizontal='center', vertical='top')
     
-    prepare_sheet(ws, sales_versions, f'{title} - Optionen')
+    prepare_sheet(ws, sales_versions, f'{title} - {config["OPTIONS_SHEET"]["TITLE"]}', config)
 
     return df_rad
 
-def prepare_sheet(ws, df_sales_versions, title):
+def prepare_sheet(ws, df_sales_versions, title, config):
     # Finding of the last columns and rows with content for border lines
     ws.freeze_panes = ws['A2']
     max_c = ws.max_column
@@ -88,9 +68,14 @@ def prepare_sheet(ws, df_sales_versions, title):
     # Content of Row 1 & 2
     ws.merge_cells('A1:B1')
     ws['A1'] = title
-    ws['C1'] = 'EUR inkl. 19 % MwSt.\n EUR ohne MwSt.'
-    ws['A2'] = 'Code (ab Werk)\n + VCG Paket'
-    ws['B2'] = 'Beschreibung'
+    ws['C1'] = config['DEFAULT']['TAX']
+    ws['A2'] = config['PACKAGES_SHEET']['CODE_COLUMN']
+    ws['B2'] = config['PACKAGES_SHEET']['DESCRIPTION_COLUMN']
+    
+    # Put a thin border around the content of A2 and B2
+    ws['A2'].border = all_border
+    ws['B2'].border = all_border
+    
     df_sales_versions = df_sales_versions.reset_index(drop=True)
     for idx, row in df_sales_versions.iterrows():
         ws.cell(row=1, column=idx+4, value=f'{row["SalesVersionName"]}\nSV {row["SalesVersion"]}')
@@ -168,7 +153,7 @@ def prepare_sheet(ws, df_sales_versions, title):
 
     for col in range(1, max_c + 1):
         cell = ws.cell(row=max_r, column=col)
-        cell.border = Border(bottom=Side(style='medium'),
+        cell.border = Border(bottom=Side(style='thin'),
                             left=Side(style='thin'))
 
     top_right_cell = ws.cell(row=3, column=max_c)
@@ -187,12 +172,12 @@ def prepare_sheet(ws, df_sales_versions, title):
 
     # Formatting of "Pack Only" options
     for row in range(3, max_r + 1):  
-        if ws.cell(row=row, column=3).value == "Pack Only" or ws.cell(row=row, column=ws.max_column-1).value == "Intern":
+        if ws.cell(row=row, column=3).value == config['OPTIONS_SHEET']['GRAYED_OUT_PRICE'] or ws.cell(row=row, column=ws.max_column-1).value == config['OPTIONS_SHEET']['GRAYED_OUT_CATEGORY']:
             ws.cell(row=row, column=3).alignment = Alignment(horizontal='center', vertical='center')
             for col in range(1, max_c + 1):
                 ws.cell(row=row, column=col).font = Font(color="A6A6A6", bold = False)
                 ws.merge_cells(start_row=row, end_row=row + 1, start_column=3, end_column=3)
-        elif ws.cell(row=row, column=3).value == "Serie":
+        elif ws.cell(row=row, column=3).value == config['DEFAULT']['SERIES']:
             ws.merge_cells(start_row=row, end_row=row+1, start_column=3, end_column=3)
             ws.cell(row=row, column=3).alignment = Alignment(horizontal='center', vertical='center')
 
@@ -229,11 +214,10 @@ def prepare_sheet(ws, df_sales_versions, title):
                                                             right=Side(style='thin'))
 
     # Formatting of extra section
-    ws.cell(row=1, column=max_c -1).value = "Kategorie"
+    ws.cell(row=1, column=max_c -1).value = config['OPTIONS_SHEET']['CATEGORY_COLUMN']
     ws.column_dimensions[get_column_letter(max_c-1)].width = 25
 
     # copy the merge range in column A to the new column
-
     for row in range(3, max_r + 1):
         cell = ws.cell(row=row, column=max_c-1)
         cell.border = Border(bottom=Side(style='thin'),
@@ -242,7 +226,7 @@ def prepare_sheet(ws, df_sales_versions, title):
                             right=Side(style='thin'))
     
     # Formatting of extra section
-    ws.cell(row=1, column=max_c).value = "Bemerkungen"
+    ws.cell(row=1, column=max_c).value = config['OPTIONS_SHEET']['NOTES']
     ws.column_dimensions[get_column_letter(max_c)].width = 25
 
     for row in range(3, max_r + 1):
@@ -254,9 +238,9 @@ def prepare_sheet(ws, df_sales_versions, title):
     
     ws.sheet_view.showGridLines = False
 
-def fetch_options_data(sales_versions, time):
+def fetch_options_data(sales_versions, time, rad_category, rule_texts, config):
     pno_ids = sales_versions.ID.unique().tolist()
-    conditions = []
+    conditions = [f"StartDate <= {time}", f"EndDate >= {time}"]
     if len(pno_ids) == 1:
         conditions.append(f"PNOID = '{pno_ids[0]}'")
     else:
@@ -265,7 +249,6 @@ def fetch_options_data(sales_versions, time):
     df_pno_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'OPT'), columns=['ID', 'PNOID', 'Code', 'RuleName', 'StartDate', 'EndDate'], conditions=opt_conds)
     if df_pno_options.empty:
         return pd.DataFrame(), pd.DataFrame()
-    df_pno_options = filter_df_by_timestamp(df_pno_options, time)
     df_pno_options = df_pno_options.drop(columns=['StartDate', 'EndDate'])
     df_pno_options = df_pno_options.drop_duplicates()
     rel_codes = df_pno_options.ID.unique().tolist()
@@ -279,24 +262,48 @@ def fetch_options_data(sales_versions, time):
     df_pno_options_with_price = df_pno_options.merge(df_pno_option_price, left_on='ID', right_on='RelationID', how='left')
     df_pno_options_with_price['OptCode'] = df_pno_options_with_price['Code'].apply(lambda x: x.lstrip('0') if x.isnumeric() else x)
     opt_codes = df_pno_options_with_price['OptCode'].unique().tolist()
-    pno_features_conditions = conditions.copy() + ["Reference != ''"]
+    pno_features_conditions = conditions.copy() + ["Reference != ''", f"((CustomCategory = '{config['TIRES_SHEET']['TITLE']}' AND CustomName != '' AND CustomName IS NOT NULL) OR (CustomCategory != '{config['TIRES_SHEET']['TITLE']}'))"] #  + ["Reference != ''"]
+    pno_rad_conditions = conditions.copy() + [f"CustomCategory = '{config['TIRES_SHEET']['TITLE']}'", "RuleName = 'S'", "CustomName != ''"]
     if len(opt_codes) == 1:
         pno_features_conditions.append(f"Reference = '{opt_codes[0]}'")
+        pno_rad_conditions.append(f"Reference != '{opt_codes[0]}'")
     else:
         pno_features_conditions.append(f"Reference in {tuple(opt_codes)}")
-    df_pno_features = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Reference', 'RuleName as FeatRule', 'CustomName as FeatName', 'CustomCategory'], conditions=pno_features_conditions)
-    df_pno_features = df_pno_features.drop_duplicates()
+        pno_rad_conditions.append(f"Reference not in {tuple(opt_codes)}")
+    
+    df_pno_features_all = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Code', 'Reference', 'RuleName as FeatRule', 'CustomName as FeatName', 'CustomCategory', 'StartDate'], conditions=pno_features_conditions)
+    
+    df_pno_features_all = df_pno_features_all.sort_values(by='StartDate', ascending=False)
+    df_pno_features = df_pno_features_all.drop_duplicates(subset=['PNOID', 'Code', 'Reference'], keep='first').drop(columns=['StartDate'])
+    
+    df_rad_unreferenced = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Code as Reference', 'RuleName', 'CustomName', 'CustomCategory'], conditions=pno_rad_conditions)
+    df_rad_with_sv = df_rad_unreferenced.merge(sales_versions, left_on='PNOID', right_on='ID', how='left').drop(columns=['PNOID', 'ID'])
+    df_rad_with_sv['Price'] = config['DEFAULT']['SERIES']
+    
+    # Remove Options that have a subset of the relatable features
+    for ref in df_pno_features['Reference'].unique():
+        local_group = df_pno_features[df_pno_features['Reference'] == ref].groupby(['PNOID']).agg({'FeatRule': lambda x: len(x)})
+        max_num_feats = local_group['FeatRule'].max()
+        if max_num_feats == 1:
+            continue
+        # Get sales versions with the maximum number of features
+        max_sales_versions = local_group[local_group['FeatRule'] != max_num_feats].index.tolist()
+        if len(max_sales_versions):
+            df_pno_features = df_pno_features[~((df_pno_features['Reference'] == ref) & (df_pno_features['PNOID'].isin(max_sales_versions)))]
 
     df_pno_options_with_feat_ref = df_pno_options_with_price[~df_pno_options_with_price['RelationID'].isna()].copy()
     df_pno_options_without_feat_ref = df_pno_options_with_price[df_pno_options_with_price['RelationID'].isna()].copy()
     df_pno_options_without_feat_ref.loc[:, 'Reference'] = df_pno_options_without_feat_ref['Code']
+    
     pno_ids_to_drop = df_pno_options_without_feat_ref[df_pno_options_without_feat_ref['RuleName'] == '%'][['PNOID', 'Reference']].drop_duplicates()
-    # remove leading zeros from the Reference column
+    
+    # Remove leading zeros from the Reference column
     pno_ids_to_drop['Reference'] = pno_ids_to_drop['Reference'].apply(lambda x: x.lstrip('0'))
     df_pno_options_feat_merged = df_pno_features.merge(df_pno_options_with_feat_ref, 
                                       how='left',
                                       left_on=['PNOID', 'Reference'],
                                       right_on=['PNOID', 'OptCode'])
+    
     # Drop the rows with the same PNOID and Reference as the ones in pno_ids_to_drop
     df_pno_options_feat_merged = df_pno_options_feat_merged[~df_pno_options_feat_merged[['PNOID', 'Reference']].apply(tuple, axis=1).isin(pno_ids_to_drop.apply(tuple, axis=1))]
     
@@ -304,8 +311,15 @@ def fetch_options_data(sales_versions, time):
     
     sales_versions = sales_versions.rename(columns={'ID': 'TmpCode'})
     df_pno_options_merged = df_pno_options_merged.merge(sales_versions[['TmpCode', 'SalesVersion', 'SalesVersionName']], left_on='PNOID', right_on='TmpCode', how='left')
-    df_pno_options_merged['CustomName'] = df_pno_options_merged['CustomName'].combine_first(df_pno_options_merged['FeatName'])
-    df_pno_options_merged['RuleName'] = df_pno_options_merged['RuleName'].combine_first(df_pno_options_merged['FeatRule'])
+    
+    # Replace NaN or empty string in 'CustomName' with values from 'FeatName'
+    missing_or_empty_custom_name = df_pno_options_merged['CustomName'].isna() | (df_pno_options_merged['CustomName'] == '')
+    df_pno_options_merged.loc[missing_or_empty_custom_name, 'CustomName'] = df_pno_options_merged.loc[missing_or_empty_custom_name, 'FeatName']
+
+    # Replace NaN or empty string in 'RuleName' with values from 'FeatRule'
+    missing_or_empty_rule_name = df_pno_options_merged['RuleName'].isna() | (df_pno_options_merged['RuleName'] == '')
+    df_pno_options_merged.loc[missing_or_empty_rule_name, 'RuleName'] = df_pno_options_merged.loc[missing_or_empty_rule_name, 'FeatRule']
+    
     df_pno_options_merged = df_pno_options_merged.drop(columns=['PNOID', 'OptCode', 'Code', 'RelationID', 'ID', 'TmpCode', 'FeatRule', 'FeatName']).drop_duplicates()
     
     # Append zeros to the reference column
@@ -317,17 +331,17 @@ def fetch_options_data(sales_versions, time):
             rows = df_pno_options_merged[(df_pno_options_merged['Reference'] == row['Reference']) & (df_pno_options_merged['RuleName'] != 'P')]
             # If there are no other rows with the same code, return 'Pack Only'
             if rows.empty:
-                return ['Pack Only']
+                return [config['OPTIONS_SHEET']['GRAYED_OUT_PRICE']]
             # return a list of all prices
             if not rows['RuleName'].str.contains('O').any():
-                return ['Pack Only']
+                return [config['OPTIONS_SHEET']['GRAYED_OUT_PRICE']]
         
         elif row['RuleName'] == '%':
             # Get all rows with the same code that are not '%'
             rows = df_pno_options_merged[(df_pno_options_merged['Reference'] == row['Reference']) & (df_pno_options_merged['RuleName'] != '%')]
             # If there are no other rows with the same code, return 'Serie'
             if rows.empty:
-                return ['Serie']
+                return [config['DEFAULT']['SERIES']]
 
             return ['/'.join([f"{r['Price']}/{r['PriceBeforeTax']}" for _, r in rows.iterrows()])]
         
@@ -337,10 +351,10 @@ def fetch_options_data(sales_versions, time):
             # If there are no other rows with the same code, return 'Serie'
             if rows.empty:
                 # Should not happen since this would be a feature and not an option
-                return ['Serie']
+                return [config['DEFAULT']['SERIES']]
             
             if not rows['RuleName'].str.contains('O').any():
-                return ['Pack Only']
+                return [config['OPTIONS_SHEET']['GRAYED_OUT_PRICE']]
             
             rows = rows.drop_duplicates(subset=['Price', 'PriceBeforeTax'])
             
@@ -368,27 +382,29 @@ def fetch_options_data(sales_versions, time):
     
     # Merge the aggregated columns back to the original dataframe
     df_merged = df_pno_options_merged.merge(aggregated, on=['Reference', 'Price'])
-
+    
     # group by Reference, Price, RuleName, SalesVersion and SalesVersionName and aggregate the CustomName column by concatinating the values with a newline separator if they differ and not null nan or empty and the CustomCategory column by concatinating the values with a comma separator if they differ
     df_pno_options_merged = df_merged.groupby(['Reference', 'Price', 'RuleName', 'SalesVersion', 'SalesVersionName']).agg({'CustomName': 'first', 'CustomCategory': 'first'}).reset_index()
     
+    df_pno_options_merged = pd.concat([df_pno_options_merged, df_rad_with_sv], ignore_index=True)
+    
     # Create the pivot table
     pivot_df = df_pno_options_merged.pivot_table(index=['Reference', 'Price'], columns='SalesVersion', values='RuleName', aggfunc='first')
-
+    
     # Drop the now unneeded columns and duplicates
     df_pno_options_merged = df_pno_options_merged.drop(['RuleName', 'SalesVersion', 'SalesVersionName'], axis=1)
     df_pno_options_merged = df_pno_options_merged.drop_duplicates(['Reference', 'Price', 'CustomCategory'], keep='first')
     
     # Join the pivoted DataFrame with the original one. sort after code ascending
     df_result = df_pno_options_merged.join(pivot_df, on=['Reference', 'Price']).sort_values(by='Reference')
-
+    
     # rename Reference to Code
     df_result = df_result.rename(columns={'Reference': 'Code'})
-
+    
     # fill df_res columns for sv in sales_versions['SalesVersion'] with '-' if nan
     for sv in sales_versions['SalesVersion']:
         df_result[sv] = df_result[sv].fillna('-')
-
+    
     # get the df with the rules for the options
     opt_codes = df_result['Code'].unique().tolist()
     rules_conditions = conditions.copy() + ["RuleCode LIKE 'O%'"]
@@ -401,17 +417,17 @@ def fetch_options_data(sales_versions, time):
     
     df_result['Rules'] = ''
     if df_rules.empty:
-        df_rader = df_result[df_result['CustomCategory'] == 'Räder']
-        df_result = df_result[df_result['CustomCategory'] != 'Räder']
+        df_rader = df_result[df_result['CustomCategory'] == config['TIRES_SHEET']['TITLE']]
+        df_result = df_result[df_result['CustomCategory'] != config['TIRES_SHEET']['TITLE']]
         
         return df_rader, df_result
-
+    
     # strip the whitespace from the ItemCode and FeatureCode columns
     df_rules['ItemCode'] = df_rules['ItemCode'].str.strip()
     df_rules['FeatureCode'] = df_rules['FeatureCode'].str.strip()
     
     for rule, group in df_rules.groupby('RuleCode'):
-        group = group.groupby('ItemCode').agg({'FeatureCode': lambda x: rule_texts[rule] + ' ' + ', '.join(list(x))}).reset_index()
+        group = group.groupby('ItemCode').agg({'FeatureCode': lambda x: rule_texts.get(rule.lower(), rule) + ' ' + ', '.join(list(x))}).reset_index()
         group = group.rename(columns={'FeatureCode': rule})
         df_result = pd.merge(df_result, group, left_on='Code', right_on='ItemCode', how='left')
         df_result = df_result.drop(columns=['ItemCode'])
@@ -422,7 +438,7 @@ def fetch_options_data(sales_versions, time):
     # remove the first new line separator
     df_result['Rules'] = df_result['Rules'].apply(lambda x: x[1:] if x.startswith('\n') else x)
     # split the df after the CustomCategory column where it is equal Räder and return the two dataframes
-    df_rader = df_result[df_result['CustomCategory'] == 'Räder']
-    df_result = df_result[df_result['CustomCategory'] != 'Räder']
+    df_rader = df_result[df_result['CustomCategory'] == rad_category]
+    df_result = df_result[df_result['CustomCategory'] != rad_category]
     
     return df_rader, df_result

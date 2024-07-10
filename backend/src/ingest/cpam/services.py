@@ -149,7 +149,7 @@ def fetch_cpam_data(year, car_type, country_code, sw):
     market_feat_auth.to_csv(f"{folder}/market_feat_auth.csv")
     ###############################################################################################################################################################################################################
     
-    logger.info('Data fetched', extra={'country_code': country_code})
+    logger.info(f'Data fetched for car type: {car_type} in year: {year} for country: {country_code}', extra={'country_code': country_code})
 
 def preprocess_cpam_data(year, car_type, country_code):
     folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/{year}/{car_type}/raw"
@@ -201,7 +201,7 @@ def preprocess_cpam_data(year, car_type, country_code):
     unauthorized_features.to_csv(f"{folder}/unauthorized_features.csv")
     ###############################################################################################################################################################################################################
     
-    logger.info('Data processed', extra={'country_code': country_code})
+    logger.info(f'Data processed for car type: {car_type} in year: {year} for country: {country_code}', extra={'country_code': country_code})
 
 def ingest_cpam_data(year, car_type, country_code):
     folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/{year}/{car_type}/processed"
@@ -223,7 +223,7 @@ def ingest_cpam_data(year, car_type, country_code):
     unauthorized_authorizations = pd.read_csv(f"{folder}/unauthorized_authorizations.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
     # unauthorized_dictionaries = pd.read_csv(f"{folder}/unauthorized_dictionaries.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
     # unauthorized_dependencies = pd.read_csv(f"{folder}/unauthorized_dependencies.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
-    unauthorized_features = pd.read_csv(f"{folder}/unauthorized_features.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
+    # unauthorized_features = pd.read_csv(f"{folder}/unauthorized_features.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).reset_index(drop=True)
     ###############################################################################################################################################################################################################
     
     if not authorized_dictionaries.empty:
@@ -249,8 +249,7 @@ def ingest_cpam_data(year, car_type, country_code):
     # if not unauthorized_dictionaries.empty:
     #     DBOperations.instance.drop_entity(unauthorized_dictionaries, country_code)
     
-    logger.info('Data insertion completed', extra={'country_code': country_code})
-
+    logger.info(f'Data insertion completed for car type: {car_type} in year: {year} for country: {country_code}', extra={'country_code': country_code})
 
 cache = TTLCache(maxsize=100, ttl=60)
 

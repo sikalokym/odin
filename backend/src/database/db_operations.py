@@ -174,6 +174,9 @@ class DBOperations:
             except Exception as e:
                 self.logger.error(f"Failed to insert data with fast_executemany: {e}")
                 # try again without fast_executemany
+                
+                self.create_temp_staging_table(target_table_name, columns)
+                
                 cursor.fast_executemany = False
                 try:
                     cursor.executemany(sql, params)
@@ -330,7 +333,7 @@ class DBOperations:
         conditions = [' OR '.join(df_pno['Condition'].tolist())]
         
         df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=conditions)
-    
+        
         if df_pnos.empty:
             self.logger.warning("No existing PNOs found. It doesn't make sense to proceed without PNOs")
             return
@@ -602,6 +605,11 @@ class DBOperations:
             df_inserted['CustomName'] = ''
             self.upsert_data_from_df(df_inserted, self.config.get('RELATIONS', 'PKG_Custom'), ['RelationID', 'CustomName', 'StartDate', 'EndDate'], ['RelationID'])
             return
+        df_relation = df_relation[df_relation['CustomName'] != ''].dropna(subset=['CustomName'])
+        if df_relation.empty:
+            self.logger.warning('No custom names found for the packages')
+            return
+        
         df_relation = df_relation.drop(['StartDate', 'EndDate'], axis=1)
         df_inserted = df_inserted.merge(df_relation, on=['RelationID'], how='left')
         

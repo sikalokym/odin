@@ -20,7 +20,7 @@ export const useEntitiesStore = defineStore({
         model_year_import: new Date().getFullYear() + 1,
     }),
     actions: {
-        async setCountry(newCountry) {
+        setCountry(newCountry) {
             this.country = newCountry;
         },
         setModelYear(newModelYear) {

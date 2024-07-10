@@ -107,6 +107,7 @@ def extract_variant_binder(country, model, engines_types, time, pno_ids=None, sv
     except Exception as e:
         DBOperations.instance.logger.error(f"Error creating sheet: {e}", extra={'country': country})
 
+    wb.active = wb.index(ws_1)
     model_year = get_model_year_from_date(time)
     time = str(time)
     vb_title = f"{title.replace(' ', '')}_VB_{engines_types}_{model_year}_{time[:4]}w{time[4:]}.xlsx"
@@ -257,7 +258,7 @@ def get_valid_engines(country, engine_cat, time):
         df_engines['EngineType'] = ''
         return df_engines.groupby('EngineType').agg({'Code': list, 'CustomName': list, 'Performance': list, 'ID': list}).reset_index()
     
-    df_engines = df_engines[df_engines['EngineCategory'] == engine_cat]
+    df_engines = df_engines[df_engines['EngineCategory'].str.lower().str.strip() == engine_cat.lower().strip()]
     if df_engines.empty:
         DBOperations.instance.logger.info(f"No engines found for the given engine category {engine_cat}")
         return None
