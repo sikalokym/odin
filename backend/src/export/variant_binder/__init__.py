@@ -46,7 +46,7 @@ def extract_variant_binder_pnos(country, model, engines_types, time):
     
 def extract_variant_binder(country, model, engines_types, time, pno_ids=None, sv_order=None):
     config = configparser.ConfigParser()
-    config.read(f'config/variant_binder/{country}_TEST.cfg', encoding='utf-8')
+    config.read(f'config/variant_binder/{country}.cfg', encoding='utf-8')
     cell_values = dict()
     for x in config['CELL_VALUES']:
         symbols = config['CELL_VALUES'][x].split(',')
@@ -134,7 +134,7 @@ def extract_variant_binder(country, model, engines_types, time, pno_ids=None, sv
 
 def _extract_variant_binder(country, model, engines_types, time, pno_ids=None, sv_order=None):
     config = configparser.ConfigParser()
-    config.read(f'config/variant_binder/{country}_TEST.cfg', encoding='utf-8')
+    config.read(f'config/variant_binder/{country}.cfg', encoding='utf-8')
     cell_values = dict()
     for x in config['CELL_VALUES']:
         symbols = config['CELL_VALUES'][x].split(',')
@@ -172,25 +172,25 @@ def _extract_variant_binder(country, model, engines_types, time, pno_ids=None, s
     if valid_pnos.empty or sales_versions.empty or valid_engines.empty:
         DBOperations.instance.logger.warning(f"No data found for model {model} and engine category {engines_types} at time {time}", extra={'country': country})
         return None
-    # ws_1 = wb.create_sheet(config['PRICES_SHEET']['TITLE'])
-    # gb_ids = prices_sheet.get_sheet(ws_1, valid_pnos, sales_versions.copy(), title, time, valid_engines, country, config['DEFAULT']['TAX'], dict(config['PRICES_SHEET']))
-    # ws_2 = wb.create_sheet(config['FEATURES_SHEET']['TITLE'])
-    # sales_versions_sheet.get_sheet(ws_2, sales_versions.copy(), title, dict(config['FEATURES_SHEET']))
+    ws_1 = wb.create_sheet(config['PRICES_SHEET']['TITLE'])
+    gb_ids = prices_sheet.get_sheet(ws_1, valid_pnos, sales_versions.copy(), title, time, valid_engines, country, config['DEFAULT']['TAX'], dict(config['PRICES_SHEET']))
+    ws_2 = wb.create_sheet(config['FEATURES_SHEET']['TITLE'])
+    sales_versions_sheet.get_sheet(ws_2, sales_versions.copy(), title, dict(config['FEATURES_SHEET']))
     ws_3 = wb.create_sheet(config['PACKAGES_SHEET']['TITLE'])
     packages_sheet.get_sheet(ws_3, sales_versions.copy(), title, time, cell_values, config)
-    # ws_4 = wb.create_sheet(config['UPHOLSTERY_COLORS_SHEET']['TITLE'])
-    # upholstery_colors_sheet.get_sheet(ws_4, sales_versions.copy(), title, time, uph_col_cell_values, rule_texts, config)
-    # ws_5 = wb.create_sheet(config['OPTIONS_SHEET']['TITLE'])
-    # df_rad = options_sheet.get_sheet(ws_5, sales_versions.copy(), title, time, config['TIRES_SHEET']['TITLE'], rule_texts, cell_values, config)
-    # if not df_rad.empty:
-    #     ws_6 = wb.create_sheet(config['TIRES_SHEET']['TITLE'])
-    #     tiers_sheet.get_sheet(ws_6, sales_versions.copy(), title, df_rad, cell_values, config)
-    # ws_7 = wb.create_sheet(config['CHANGES_SHEET']['TITLE'], 0)
-    # entities_ids_dict = {'Typ': [model_id], 'SV': sales_versions.ID.unique().tolist(), 'En': valid_engines.ID.explode().unique().tolist(), 'G': gb_ids}
-    # err = change_log.get_sheet(ws_7, entities_ids_dict, valid_pnos.ID.unique().tolist(), title, time, country)
-    # if err:
-    #     raise Exception('No data found for change log')
-    # wb.active = wb.index(ws_1)
+    ws_4 = wb.create_sheet(config['UPHOLSTERY_COLORS_SHEET']['TITLE'])
+    upholstery_colors_sheet.get_sheet(ws_4, sales_versions.copy(), title, time, uph_col_cell_values, rule_texts, config)
+    ws_5 = wb.create_sheet(config['OPTIONS_SHEET']['TITLE'])
+    df_rad = options_sheet.get_sheet(ws_5, sales_versions.copy(), title, time, config['TIRES_SHEET']['TITLE'], rule_texts, cell_values, config)
+    if not df_rad.empty:
+        ws_6 = wb.create_sheet(config['TIRES_SHEET']['TITLE'])
+        tiers_sheet.get_sheet(ws_6, sales_versions.copy(), title, df_rad, cell_values, config)
+    ws_7 = wb.create_sheet(config['CHANGES_SHEET']['TITLE'], 0)
+    entities_ids_dict = {'Typ': [model_id], 'SV': sales_versions.ID.unique().tolist(), 'En': valid_engines.ID.explode().unique().tolist(), 'G': gb_ids}
+    err = change_log.get_sheet(ws_7, entities_ids_dict, valid_pnos.ID.unique().tolist(), title, time, country)
+    if err:
+        raise Exception('No data found for change log')
+    wb.active = wb.index(ws_1)
     model_year = get_model_year_from_date(time)
     time = str(time)
     vb_title = f"{title.replace(' ', '')}_VB_{engines_types}_{model_year}_{time[:4]}w{time[4:]}.xlsx"
