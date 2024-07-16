@@ -14,7 +14,7 @@ blr_border = Border(left=black_side, right=black_side, bottom=black_side)
 tlr_border = Border(left=black_side, right=black_side, top=black_side)
 
 
-def get_sheet(ws, df_valid_pnos, df_sales_versions, title, time, df_engines_types, country):
+def get_sheet(ws, df_valid_pnos, df_sales_versions, title, time, df_engines_types, country, text, config):
     """
     Generates a sheet with price data for different engine types.
 
@@ -32,8 +32,8 @@ def get_sheet(ws, df_valid_pnos, df_sales_versions, title, time, df_engines_type
     df_price, df_gb, df_en, gb_ids = fetch_vb_price_data(country, df_valid_pnos, time)
     
     max_code_length = df_engines_types['Code'].apply(lambda x: len(set(x))).max()
-    max_num_of_characters = df_en['CustomName'].apply(lambda x: len(x)).max()
-    prepare_sheet(ws, title, max_code_length)
+    max_num_of_characters = max(df_en['CustomName'].apply(lambda x: len(x)).max(), df_gb['CustomName'].apply(lambda x: len(x)).max())
+    prepare_sheet(ws, title, max_code_length, config['title'])
     curr_row = 3
     for _, row in df_engines_types.iterrows():
         type = row['EngineType']
@@ -51,12 +51,12 @@ def get_sheet(ws, df_valid_pnos, df_sales_versions, title, time, df_engines_type
         en_group_prices = group.groupby('Engine').agg({'Price': 'mean'}).sort_values(by='Price', ascending=True).index.tolist()
         df_group_en['Code'] = pd.Categorical(df_group_en['Code'], en_group_prices)
         df_group_en = df_group_en.sort_values(by='Code')
-        curr_row = insert_table(ws, group, df_sales_versions, df_group_gb, df_group_en, curr_row, max_num_of_characters)
+        curr_row = insert_table(ws, group, df_sales_versions, df_group_gb, df_group_en, curr_row, max_num_of_characters, text, config)
         curr_row += 1
     
     return gb_ids
 
-def prepare_sheet(ws, title, max_code_length):
+def prepare_sheet(ws, title, max_code_length, price_title):
     ws.sheet_view.showGridLines = False
     ws.sheet_view.headingsVisible = False
     ws.freeze_panes = ws['A2']
@@ -65,7 +65,7 @@ def prepare_sheet(ws, title, max_code_length):
         ws.row_dimensions[i].height = 12
     ws.column_dimensions['A'].width = 45
     
-    create_title(ws, f'Volvo {title} - Preise', max_code_length)
+    create_title(ws, f'Volvo {title} - {price_title}', max_code_length)
 
 def create_title(ws, title, max_code_length):
     ws.row_dimensions[1].height = 40
@@ -83,12 +83,12 @@ def insert_engines_type_title(ws, type, curr_row):
     ws.cell(row=curr_row, column=1).font = Font(name='Arial', sz=18, bold=True)
     return curr_row + 1
 
-def insert_table(ws, df_price, df_sv, df_gb, df_en, curr_row, max_num_of_characters):
+def insert_table(ws, df_price, df_sv, df_gb, df_en, curr_row, max_num_of_characters, text, config):
     mwst_row = curr_row
     df = df_price.copy()
     prepend_string = df.Model.iloc[0] + ' SV '
     df_sv['FullCode'] = prepend_string + df_sv['SalesVersion']
-    insert_meta_column(ws, curr_row, df_sv)
+    insert_meta_column(ws, curr_row, df_sv, config)
     curr_row += 1
     ws.row_dimensions[curr_row].height = 24
 
@@ -102,17 +102,15 @@ def insert_table(ws, df_price, df_sv, df_gb, df_en, curr_row, max_num_of_charact
             values = get_price_column(group, df_sv)
             col = [en_name, gb_name, en_performance] + values + [en, gb]
             curr_col, curr_row_end = insert_column(ws, col, curr_row, curr_col, max_num_of_characters)
-    insert_mwst_line(ws, mwst_row, curr_col -1)
+    insert_mwst_line(ws, mwst_row, curr_col -1, text)
     for i in [mwst_row+1, mwst_row+2, mwst_row+3]:
         for j in range(1, curr_col):
             ws.cell(row=i, column=j).fill = PatternFill(start_color='bfbfbf', end_color='bfbfbf', fill_type='solid')
     return curr_row_end
 
-def insert_mwst_line(ws, curr_row, curr_col):
-    rich = CellRichText(
-        TextBlock(InlineFont(b=True), 'EUR inkl. 19% MwSt.'),
-        '\nEUR ohne MwSt.'
-    )
+def insert_mwst_line(ws, curr_row, curr_col, text):
+    text = text.split('\\n')
+    rich = text if len(text) == 1 else CellRichText(TextBlock(InlineFont(b=True), text[0]), ',\n'.join(text[1:]))
     ws.row_dimensions[curr_row].height = 28
     ws.merge_cells(start_row=curr_row, start_column=1, end_row=curr_row, end_column=curr_col)
     ws.cell(row=curr_row, column=1).value = rich
@@ -136,9 +134,8 @@ def get_price_column(group, df_sv):
             prices.append(format_float_string(price_before_tax))
     return prices
 
-def insert_meta_column(ws, curr_row, df_sales_version):
-
-    meta_fields = ['Motor', 'Getriebe', 'Leistung kW (PS)']
+def insert_meta_column(ws, curr_row, df_sales_version, config):
+    meta_fields = [config['engine'], config['gearbox'], config['performance']]
     ws.row_dimensions[curr_row].height = 24
     ws.row_dimensions[curr_row+1].height = 28
     ws.row_dimensions[curr_row+2].height = 12
@@ -158,9 +155,9 @@ def insert_meta_column(ws, curr_row, df_sales_version):
             ws.cell(row=curr_row, column=1).border = blr_border
         else:
             ws.cell(row=curr_row, column=1).border = Border(left=black_side, right=black_side)
-
-    footer_meta_tables = ['Motor-Codes', 'Getriebe-Codes']
-
+    
+    footer_meta_tables = [config['engine_codes'], config['gearbox_codes']]
+    
     for i, field in enumerate(footer_meta_tables):
         curr_row += 1
         ws.cell(row=curr_row, column=1, value=field)

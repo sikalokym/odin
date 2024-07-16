@@ -12,7 +12,7 @@ all_border = Border(top=Side(style='thin', color='000000'),
 
 fill = PatternFill(start_color='000080', end_color='000080', fill_type='solid')
 
-def get_sheet(ws, sales_versions, title, time, cell_values, rule_texts):
+def get_sheet(ws, sales_versions, title, time, cell_values, rule_texts, config):
     """
     Fetches options data and inserts it into the specified worksheet.
 
@@ -30,10 +30,10 @@ def get_sheet(ws, sales_versions, title, time, cell_values, rule_texts):
     ws.column_dimensions['A'].width = 10
     ws.column_dimensions['B'].width = 65
 
-    insert_table(ws, sales_versions, title + ' - Polster', df_upholstery, cell_values)
+    insert_table(ws, sales_versions, title + ' - ' + config['UPHOLSTERY_COLORS_SHEET']['UPHOLSTERY'], df_upholstery, cell_values, config['DEFAULT']['TAX'], config['UPHOLSTERY_COLORS_SHEET']['NOTES'])
     mid_row = ws.max_row + 1
     ws.append([''])
-    insert_table(ws, sales_versions, title + ' - Außenfarben', df_colors, cell_values)
+    insert_table(ws, sales_versions, title + ' - ' + config['UPHOLSTERY_COLORS_SHEET']['COLOR'], df_colors, cell_values, config['DEFAULT']['TAX'], config['UPHOLSTERY_COLORS_SHEET']['NOTES'])
     
     for col in range(3, ws.max_column):
         ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = 20
@@ -49,9 +49,9 @@ def get_sheet(ws, sales_versions, title, time, cell_values, rule_texts):
 
     ws.sheet_view.showGridLines = False
 
-def insert_table(ws, sales_versions, title, df_res, cell_values):
+def insert_table(ws, sales_versions, title, df_res, cell_values, tax, notes):
 
-    insert_title(ws, sales_versions, title)
+    insert_title(ws, sales_versions, title, tax, notes)
     old_custom_category = -1
     catgory_rows = []
     first_row = ws.max_row + 1
@@ -76,14 +76,14 @@ def insert_table(ws, sales_versions, title, df_res, cell_values):
                 svs.append('')
         if row['Price'] == 'Pack Only'or row['Price'] == 'Serie':
             ws.append([row['Code'], row['CustomName'], row['Price']] + svs + ['', row['Rules']])
-            row_height = int(len(row['CustomName']) / 74) * 15 + 15
+            row_height = int(len(row['CustomName']) / 65) * 15 + 15
             ws.row_dimensions[ws.max_row].height = row_height
             ws.append([''])
         else:
             prices = row['Price'].split('/')
             if len(prices) > 1:
                 ws.append([row['Code'], row['CustomName'], prices[0]] + svs + ['', row['Rules']])
-                row_height = int(len(row['CustomName']) / 74) * 15 + 15
+                row_height = int(len(row['CustomName']) / 65) * 15 + 15
                 ws.row_dimensions[ws.max_row].height = row_height
                 ws.cell(row=ws.max_row, column=3).alignment = Alignment(horizontal='center', vertical='bottom')
                 ws.append(['', '', prices[1]] + svs) 
@@ -151,10 +151,10 @@ def format_row(ws, row1, row2):
             ws.cell(row=row2, column=col).alignment = Alignment(horizontal='center', vertical='top')
             ws.cell(row=row2, column=col).border = Border(top=None, bottom=Side(style='thin', color='000000'), left=Side(style='thin', color='000000'), right=Side(style='thin', color='000000'))
 
-def insert_title(ws, sales_versions, title):
+def insert_title(ws, sales_versions, title, tax, notes):
 
     # Content of Row 1 & 2
-    ws.append([title, '', 'EUR inkl. 19 % MwSt.\n EUR ohne MwSt.'] + [f'{row["SalesVersionName"]}\nSV {row["SalesVersion"]}' for _, row in sales_versions.iterrows()] + ['', 'Bemerkungen'])
+    ws.append([title, '', tax] + [f'{row["SalesVersionName"]}\nSV {row["SalesVersion"]}' for _, row in sales_versions.iterrows()] + ['', notes])
     insert_row_index = ws.max_row
     ws.merge_cells(f'A{insert_row_index}:B{insert_row_index}')
     

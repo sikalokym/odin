@@ -7,10 +7,6 @@ from src.database.db_operations import DBOperations
 from src.ingest.visa_files.services import get_available_visa_files
 from src.utils.db_utils import format_float_string, get_column_map
 
-
-config = configparser.ConfigParser()
-config.read('config/sap_price_list.cfg')
-
 def extract_sap_price_list(country, code, date, model_year):
     
     conditions = [f"CountryCode = '{country}'", f"ModelYear = '{model_year}'"]
@@ -21,7 +17,7 @@ def extract_sap_price_list(country, code, date, model_year):
     df_channels = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'SC'), columns=['ID', 'Code', 'ChannelName', 'DateFrom', 'DateTo'], conditions=conditions)
     if df_channels.empty:
         return 'Invalid code' if code != 'All' else f'No Sales Channel with the code {code} found', 400
-
+    
     channel_ids = df_channels['ID'].tolist()
     rel_conditions = []
     if len(channel_ids) == 1:
@@ -35,7 +31,7 @@ def extract_sap_price_list(country, code, date, model_year):
         rel_conditions.append(f"DateTo >= '{date}'")
     
     df_local_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'CLO'), columns=['FeatureCode', 'FeatureRetailPrice', 'FeatureWholesalePrice', 'ChannelID', 'AffectedVisaFile', 'DateFrom', 'DateTo'], conditions=rel_conditions)
-
+    
     visa_columns = ['VisaFile', 'CarType', 'ModelYear', 'DateFrom as StartDate']
     df_visa = get_available_visa_files(country, model_year, visa_columns)
     if df_visa.empty:
@@ -65,11 +61,11 @@ def extract_sap_price_list(country, code, date, model_year):
     df_discounts = df_discounts[df_discounts['VisaFile'].isin(available_visa_files)]
     
     df_discounts = df_discounts.merge(df_visa[['VisaFile', 'Order']], left_on='VisaFile', right_on='VisaFile', suffixes=('_discount', '_visa'))
-
+    
     df_discounts = df_discounts.merge(df_channels, left_on='ChannelID', right_on='ID', suffixes=('_discount', '_channel'))
     df_discounts = df_discounts.drop(columns=['ID_channel', 'ID_discount'])
     df_discounts = df_discounts.rename(columns={'ChannelID': 'ID'})
-
+    
     today = pd.Timestamp.now().strftime('%Y.%m.%d')
     today = today[2:].replace('.', '')
     
@@ -106,6 +102,8 @@ def extract_sap_price_list(country, code, date, model_year):
     return zip_buffer
 
 def get_sap_price_list(visa_file, df_sales_channels, df_discount_options, model_year, country_code):
+    config = configparser.ConfigParser()
+    config.read(f'config/sap_price_list/{country_code}.cfg')
     df_visa = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=[f"CountryCode = '{country_code}'", f"VisaFile = '{visa_file}'", f"ModelYear = '{model_year}'"])
     df_visa = df_visa.drop(columns=['CountryCode', 'VisaFile', 'ID', 'LoadingDate'])
     c_map = get_column_map(reverse=True)

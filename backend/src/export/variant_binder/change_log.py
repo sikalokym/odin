@@ -8,17 +8,18 @@ def get_sheet(ws, entities_ids_dict, pnos_ids, title, time, country):
 
     time_str = str(time) + '0'
     date = pd.to_datetime(time_str, format='%Y%U%w').date()
-    conditions = [f"CountryCode = '{country}'", f"CAST(ChangeDate AS DATE) < '{date}'"]
+    # conditions = [f"CountryCode = '{country}'", f"CAST(ChangeDate AS DATE) < '{date}'"]
+    conditions = []
     or_conditions = []
     for table, ids in entities_ids_dict.items():
         table_name = DBOperations.instance.config.get('TABLES', table)
         if len(ids) == 0:
             continue
         elif len(ids) == 1:
-            or_conditions.append(f"ChangeTable = '{table_name}' AND ChangeCode = '{ids[0]}'")
+            or_conditions.append(f"ChangeCode = '{ids[0]}'")
         else:
-            or_conditions.append(f"ChangeTable = '{table_name}' AND ChangeCode IN {tuple(ids)}")
-    if len(or_conditions) != 0:
+            or_conditions.append(f"ChangeCode IN {tuple(ids)}")
+    if len(or_conditions):
         conditions.append('(' + ' OR '.join(or_conditions) + ')')
     
     df_change_log = DBOperations.instance.get_table_df(DBOperations.instance.config.get('DQ', 'CL'), conditions=conditions)
@@ -31,12 +32,15 @@ def get_sheet(ws, entities_ids_dict, pnos_ids, title, time, country):
         conditions.append(f"ChangeCode in {tuple(pnos_ids)}")
     or_conditions = [ f"ChangeTable = '{DBOperations.instance.config.get('AUTH', table)}'" for table in pno_tables]
     or_cond = '(' + ' OR '.join(or_conditions) + ')' if len(or_conditions) != 0 else ''
-    conditions.append(f"CAST(ChangeDate AS DATE) < '{date}'")
+    # conditions.append(f"CAST(ChangeDate AS DATE) < '{date}'")
     conditions.append(or_cond)
 
     df_pno_change_log = DBOperations.instance.get_table_df(DBOperations.instance.config.get('DQ', 'CL'), conditions=conditions)
 
     df_change_log = pd.concat([df_change_log, df_pno_change_log])
+    
+    # sort the dataframe by date
+    df_change_log = df_change_log.sort_values('ChangeDate', ascending=False) 
     
     # relations_tables = ['PNO_Custom', 'PNOColorCustom', 'PNOOptionsCustom', 'PNOUpholsteryCustom', 'PNOPackageCustom']
 
