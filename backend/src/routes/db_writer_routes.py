@@ -175,10 +175,14 @@ def write_customfeatures(country, model_year):
     if not data:
         return 'No data provided', 400
     
-    model = data['Model']
+    model = data.get('Model', None)
+    
+    pnos_conditions = [f"CountryCode = '{country}'"]
+    if model:
+        pnos_conditions.append(f"Model = '{model}'")
 
     # Create a DataFrame from the list of JSON objects
-    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'", f"Model = '{model}'"])
+    df_pnos = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'PNO'), ['ID', 'StartDate', 'EndDate'], conditions=pnos_conditions)
     df_pnos = filter_df_by_model_year(df_pnos, model_year)
     ids = df_pnos['ID'].tolist()
 
