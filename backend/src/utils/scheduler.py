@@ -10,12 +10,10 @@ from src.database.db_connection import DatabaseConnection
 from src.database.db_operations import DBOperations
 from src.utils.sql_logging_handler import logger
 
-
 def schedule_fetch_task():
     max_tries = 3
     for i in range(max_tries):
         try:
-            logger.info('Starting scheduled task to ingest CPAM data')
             DBOperations.create_instance(logger=logger)
             logger.info('Starting scheduled task to ingest CPAM data', extra={'country_code': 'All'})
             countries = get_supported_countries()
@@ -33,7 +31,6 @@ def schedule_preprocess_task():
     max_tries = 3
     for i in range(max_tries):
         try:
-            logger.info('Starting scheduled task to ingest CPAM data')
             DBOperations.create_instance(logger=logger)
             logger.info('Starting scheduled task to ingest CPAM data', extra={'country_code': 'All'})
             countries = get_supported_countries()
@@ -51,7 +48,6 @@ def schedule_ingest_task():
     max_tries = 3
     for i in range(max_tries):
         try:
-            logger.info('Starting scheduled task to ingest CPAM data')
             DBOperations.create_instance(logger=logger)
             logger.info('Starting scheduled task to ingest CPAM data', extra={'country_code': 'All'})
             countries = get_supported_countries()
@@ -69,7 +65,7 @@ config.read('config/cpam.cfg')
 
 env_var_name = config.get('REFRESH_DATE', 'ENV_VAR_NAME')
 separator = config.get('REFRESH_DATE', 'ENV_VAR_NAME_SEPARATOR')
-date = os.getenv('env_var_name', f'mon{separator}4')
+date = os.getenv(env_var_name, f'mon{separator}4')
 
 try:
     day, hour = date.split(separator)
@@ -78,14 +74,7 @@ except Exception as e:
     logger.error(f"Failed to parse the refresh date: {e}", extra={'country_code': 'All'})
     day, hour = 'mon', 4
 
-def test():
-    print('test')
-    import datetime
-    print(datetime.datetime.now())
-
 cpam_scheduler = BackgroundScheduler(daemon=True, timezone=utc)
 cpam_scheduler.add_job(schedule_fetch_task, 'cron', day_of_week=day, hour=hour, minute=2)
 cpam_scheduler.add_job(schedule_fetch_task, 'cron', day_of_week=day, hour=hour+12, minute=30)
-
-# Shut down the scheduler when exiting the app
 atexit.register(lambda: cpam_scheduler.shutdown())

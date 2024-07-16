@@ -11,8 +11,9 @@ from src.routes.exporter_routes import bp_exporter
 from src.routes.settings_routes import bp_settings
 from src.utils.sql_logging_handler import logger
 from src.routes.ingest_routes import bp_ingest
-import src.utils.scheduler as scheduler
+from src.utils.scheduler import cpam_scheduler
 
+cpam_scheduler.start()
 
 app = Flask(__name__)
 CORS(app)
@@ -77,5 +78,4 @@ def welcome():
     return render_template_string(WELCOME_PAGE_TEMPLATE, rules=rules)
 
 if __name__ == "__main__":
-    scheduler.cpam_scheduler.start()
-    app.run(debug=True, port=5000, use_reloader=False)
+    app.run(debug=False, port=5000, use_reloader=False)
