@@ -3,6 +3,7 @@ from zipfile import ZipFile
 import pandas as pd
 import datetime
 import time
+import os
 
 from src.ingest.cpam.services import fetch_all_cpam_data, fetch_cpam_data, ingest_all_cpam_data, ingest_cpam_data, process_all_cpam_data
 from src.export.variant_binder import _extract_variant_binder, extract_variant_binder, extract_variant_binder_pnos
@@ -22,44 +23,35 @@ DBOperations.create_instance(test=0, logger=logger)
 if __name__ == "__main__":
     current_time = pd.Timestamp.now()
     country = '232'
-    fetch_all_cpam_data('231')
-    # ingest_all_cpam_data('231', year='', start_model_year='2021')
-    # ingest_all_cpam_data('231', year='2021')
-    # scheduled_task()
-    # ingest_cpam_data('2025', '256', '231')
-    # import os
-    # folder = f"{os.getcwd()}/dist/cpam_data/231/"
-    # for sub_folder in os.listdir(folder):
-    #     new_folder = folder + sub_folder + '/'
-    #     if not os.path.isdir(new_folder):
-    #         continue
-    #     print(f'Processing Year: {sub_folder}')
-    #     for subsub_folder in os.listdir(new_folder):
-    #         if not os.path.isdir(new_folder + subsub_folder):
-    #             continue
-    #         print(f'Processing Car Type: {subsub_folder}')
-    #         # fetch_cpam_data('2026', '539', '231', '')
-    #         # break
-    #         fetch_cpam_data(sub_folder, subsub_folder, '231', '')
-    # refresh_all_cpam_data('231')
-    # conditions = [f"CountryCode = '231'", f"ModelYear = '2025'", f"CarType = '246'"]
+    
+    #### refresh all visa file prices for a country
+    # conditions = [f"CountryCode = '{country}'", f"ModelYear = '2025'", f"CarType = '246'"]
     # df_raw = DBOperations.instance.get_table_df(DBOperations.instance.config.get('RELATIONS', 'RAW_VISA'), conditions=conditions)
     # df_processed = preprocess.process_visa_df(df_raw)
-    # df_processed.insert(7, 'CountryCode', '231')
-    # ingest_visa_data('231', df_processed)
-    # ingest_visa_data('231', None)
-    # ingest_all_cpam_data('231')
-    # _extract_variant_binder('231', '539', "All", 202502)
-    # _extract_variant_binder('231', '246', "All", 202422)
-    # _extract_variant_binder('231', '246', "Plug-in Hybrid", 202423)
-    # _extract_variant_binder('231', '235', "Plug-in Hybrid", 202418)
-    # main()
-    # DBOperations.instance.consolidate_translations('231')
-    # zip_buffer = extract_sap_price_list('231', 'All', None, '2025')
+    # df_processed.insert(7, 'CountryCode', country)
+    # ingest_visa_data(country, df_processed)
+    # ingest_visa_data(country, None)
+    # ingest_all_cpam_data(country)
+    
+    #### extract variant binders of many car types in a country
+    # _extract_variant_binder(country, '539', "All", 202502)
+    # _extract_variant_binder(country, '246', "All", 202422)
+    # _extract_variant_binder(country, '246', "Plug-in Hybrid", 202423)
+    # _extract_variant_binder(country, '235', "Plug-in Hybrid", 202418)
+    
+    #### fetch, process and ingest all cpam data for a country
+    # fetch_all_cpam_data(country, start_model_year=2021)
+    # print(f'Execution time: {pd.Timestamp.now() - current_time}')
+    # process_all_cpam_data(country, 2021)
+    # print(f'Execution time: {pd.Timestamp.now() - current_time}')
+    # ingest_all_cpam_data(country, 2021)
+    
+    #### consolidate translations though all available years for a country
+    # DBOperations.instance.consolidate_translations(country)
+    
+    #### extract sap price list for a country given a sales channel and a model year
+    # zip_buffer = extract_sap_price_list(country, 'All', None, '2025')
     # with ZipFile(zip_buffer) as zf:
     #     zf.extractall('dist/sap_price_list_main_test')
-    i = 10
-    while i:
-        time.sleep(10)
-        i -= 1
+    
     print(f'Execution time: {pd.Timestamp.now() - current_time}')

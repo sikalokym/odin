@@ -110,7 +110,7 @@ def insert_table(ws, df_price, df_sv, df_gb, df_en, curr_row, max_num_of_charact
 
 def insert_mwst_line(ws, curr_row, curr_col, text):
     text = text.split('\\n')
-    rich = text if len(text) == 1 else CellRichText(TextBlock(InlineFont(b=True), text[0]), ',\n'.join(text[1:]))
+    rich = text[0] if len(text) == 1 else CellRichText(TextBlock(InlineFont(b=True), text[0]), ',\n'.join(text[1:]))
     ws.row_dimensions[curr_row].height = 28
     ws.merge_cells(start_row=curr_row, start_column=1, end_row=curr_row, end_column=curr_col)
     ws.cell(row=curr_row, column=1).value = rich

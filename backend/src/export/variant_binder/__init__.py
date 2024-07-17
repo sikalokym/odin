@@ -135,6 +135,7 @@ def extract_variant_binder(country, model, engines_types, time, pno_ids=None, sv
 def _extract_variant_binder(country, model, engines_types, time, pno_ids=None, sv_order=None):
     config = configparser.ConfigParser()
     config.read(f'config/variant_binder/{country}.cfg', encoding='utf-8')
+    # config.read(f'config/variant_binder/template.cfg', encoding='utf-8')
     cell_values = dict()
     for x in config['CELL_VALUES']:
         symbols = config['CELL_VALUES'][x].split(',')
@@ -195,11 +196,6 @@ def _extract_variant_binder(country, model, engines_types, time, pno_ids=None, s
     time = str(time)
     vb_title = f"{title.replace(' ', '')}_VB_{engines_types}_{model_year}_{time[:4]}w{time[4:]}.xlsx"
     wb.save(f"dist/vbs/{vb_title}")
-    output = BytesIO()
-    wb.save(output)
-    output.seek(0)
-    
-    return output, vb_title
 
 def get_model_name(country, model, time):
     models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), ['ID', 'MarketText', 'CustomName', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'", f"Code = '{model}'"])
