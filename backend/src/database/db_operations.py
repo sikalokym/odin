@@ -657,7 +657,7 @@ class DBOperations:
                 df_option, df_option_unpriced = utils.get_relation_ids(df_options, df_option_pnos_assigned)
                 self.upsert_data_from_df(df_option, self.config.get('RELATIONS', 'OPT_Custom'), relation_columns, conditional_columns)
                 utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
-                utils.log_df(df_option_unpriced, 'Option frpm VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
+                utils.log_df(df_option_unpriced, 'Option from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
 
             if not df_upholstery_pno_prices.empty:
                 df_upholstery_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_upholstery_pno_prices, is_relation=False)

@@ -262,15 +262,16 @@ def fetch_options_data(sales_versions, time, rad_category, rule_texts, config):
     df_pno_options_with_price = df_pno_options.merge(df_pno_option_price, left_on='ID', right_on='RelationID', how='left')
     df_pno_options_with_price['OptCode'] = df_pno_options_with_price['Code'].apply(lambda x: x.lstrip('0') if x.isnumeric() else x)
     opt_codes = df_pno_options_with_price['OptCode'].unique().tolist()
-    pno_features_conditions = conditions.copy() + ["Reference != ''", f"((CustomCategory = '{config['TIRES_SHEET']['TITLE']}' AND CustomName != '' AND CustomName IS NOT NULL) OR (CustomCategory != '{config['TIRES_SHEET']['TITLE']}'))"] #  + ["Reference != ''"]
-    pno_rad_conditions = conditions.copy() + [f"CustomCategory = '{config['TIRES_SHEET']['TITLE']}'", "RuleName = 'S'", "CustomName != ''"]
+    rad_title = config['TIRES_SHEET']['TITLE']
+    pno_features_conditions = conditions.copy() + ["Reference != ''", f"((CustomCategory = '{rad_title}' AND CustomName != '' AND CustomName IS NOT NULL) OR (CustomCategory != '{config['TIRES_SHEET']['TITLE']}') OR (CustomCategory IS NULL))"]
+    pno_rad_conditions = conditions.copy() + [f"CustomCategory = '{rad_title}'", "RuleName = 'S'", "CustomName != ''"]
     if len(opt_codes) == 1:
         pno_features_conditions.append(f"Reference = '{opt_codes[0]}'")
         pno_rad_conditions.append(f"Reference != '{opt_codes[0]}'")
     else:
         pno_features_conditions.append(f"Reference in {tuple(opt_codes)}")
         pno_rad_conditions.append(f"Reference not in {tuple(opt_codes)}")
-    
+
     df_pno_features_all = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'FEAT'), columns=['PNOID', 'Code', 'Reference', 'RuleName as FeatRule', 'CustomName as FeatName', 'CustomCategory', 'StartDate'], conditions=pno_features_conditions)
     
     df_pno_features_all = df_pno_features_all.sort_values(by='StartDate', ascending=False)

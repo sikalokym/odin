@@ -35,7 +35,7 @@ if __name__ == "__main__":
     
     #### extract variant binders of many car types in a country
     # _extract_variant_binder(country, '539', "All", 202502)
-    # _extract_variant_binder(country, '246', "All", 202422)
+    _extract_variant_binder(country, '246', "All", 202422)
     # _extract_variant_binder(country, '246', "Plug-in Hybrid", 202423)
     # _extract_variant_binder(country, '235', "Plug-in Hybrid", 202418)
     

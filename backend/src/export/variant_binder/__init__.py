@@ -1,6 +1,6 @@
-import configparser
 from openpyxl import Workbook
 from io import BytesIO
+import configparser
 import pandas as pd
 import numpy as np
 
@@ -88,12 +88,12 @@ def extract_variant_binder(country, model, engines_types, time, pno_ids=None, sv
         ws_1 = wb.create_sheet(config['PRICES_SHEET']['TITLE'])
         gb_ids = prices_sheet.get_sheet(ws_1, valid_pnos, sales_versions.copy(), title, time, valid_engines, country, config['DEFAULT']['TAX'], dict(config['PRICES_SHEET']))
     except Exception as e:
-        DBOperations.instance.logger.error(f"Error creating sheet: {e}", extra={'country': country})
+        DBOperations.instance.logger.error(f"Error creating sheet prices: {e}", extra={'country': country})
     try:
         ws_2 = wb.create_sheet(config['FEATURES_SHEET']['TITLE'])
         sales_versions_sheet.get_sheet(ws_2, sales_versions.copy(), title, dict(config['FEATURES_SHEET']))
     except Exception as e:
-        DBOperations.instance.logger.error(f"Error creating sheet: {e}", extra={'country': country})
+        DBOperations.instance.logger.error(f"Error creating sheet features: {e}", extra={'country': country})
     try:
         ws_3 = wb.create_sheet(config['PACKAGES_SHEET']['TITLE'])
         packages_sheet.get_sheet(ws_3, sales_versions.copy(), title, time, cell_values, config)
@@ -103,15 +103,19 @@ def extract_variant_binder(country, model, engines_types, time, pno_ids=None, sv
         ws_4 = wb.create_sheet(config['UPHOLSTERY_COLORS_SHEET']['TITLE'])
         upholstery_colors_sheet.get_sheet(ws_4, sales_versions.copy(), title, time, uph_col_cell_values, rule_texts, config)
     except Exception as e:
-        DBOperations.instance.logger.error(f"Error creating sheet: {e}", extra={'country': country})
+        DBOperations.instance.logger.error(f"Error creating sheet upholstery colors: {e}", extra={'country': country})
+    df_rad = None
     try:
         ws_5 = wb.create_sheet(config['OPTIONS_SHEET']['TITLE'])
         df_rad = options_sheet.get_sheet(ws_5, sales_versions.copy(), title, time, config['TIRES_SHEET']['TITLE'], rule_texts, cell_values, config)
-        if not df_rad.empty:
+    except Exception as e:
+        DBOperations.instance.logger.error(f"Error creating sheet options: {e}", extra={'country': country})
+    if df_rad and not df_rad.empty:
+        try:
             ws_6 = wb.create_sheet(config['TIRES_SHEET']['TITLE'])
             tiers_sheet.get_sheet(ws_6, sales_versions.copy(), title, df_rad, cell_values, config)
-    except Exception as e:
-        DBOperations.instance.logger.error(f"Error creating sheet: {e}", extra={'country': country})
+        except Exception as e:
+            DBOperations.instance.logger.error(f"Error creating sheet tires: {e}", extra={'country': country})
     try:
         ws_7 = wb.create_sheet(config['CHANGES_SHEET']['TITLE'], 0)
         entities_ids_dict = {'Typ': [model_id], 'SV': sales_versions.ID.unique().tolist(), 'En': valid_engines.ID.explode().unique().tolist(), 'G': gb_ids}
@@ -153,23 +157,19 @@ def _extract_variant_binder(country, model, engines_types, time, pno_ids=None, s
     default_sheet = wb.active
     wb.remove(default_sheet)
     
-    try:
-        valid_engines = get_valid_engines(country, engines_types, time)
-        valid_pnos = get_valid_pnos(country, model, time, valid_engines)
-        if pno_ids:
-            valid_pnos = valid_pnos[valid_pnos['ID'].isin(pno_ids)]
-        
-        sales_versions = get_sales_versions(country, valid_pnos, time)
-        if sv_order:
-            sales_versions['SalesVersion'] = pd.Categorical(sales_versions['SalesVersion'], categories=sv_order, ordered=True)
-            sales_versions = sales_versions.sort_values('SalesVersion')
-            sales_versions['SalesVersion'] = sales_versions['SalesVersion'].astype(str)
-        sales_versions = sales_versions[['ID', 'SalesVersion', 'SalesVersionName']].drop_duplicates(subset='SalesVersion')
-        title, model_id = get_model_name(country, model, time)
-    except Exception as e:
-        DBOperations.instance.logger.error(f"Error getting VB Data: {e}", extra={'country': country})
-        raise Exception(f"Error getting VB Data: {e}")
+    valid_engines = get_valid_engines(country, engines_types, time)
+    valid_pnos = get_valid_pnos(country, model, time, valid_engines)
+    if pno_ids:
+        valid_pnos = valid_pnos[valid_pnos['ID'].isin(pno_ids)]
     
+    sales_versions = get_sales_versions(country, valid_pnos, time)
+    if sv_order:
+        sales_versions['SalesVersion'] = pd.Categorical(sales_versions['SalesVersion'], categories=sv_order, ordered=True)
+        sales_versions = sales_versions.sort_values('SalesVersion')
+        sales_versions['SalesVersion'] = sales_versions['SalesVersion'].astype(str)
+    sales_versions = sales_versions[['ID', 'SalesVersion', 'SalesVersionName']].drop_duplicates(subset='SalesVersion')
+    title, model_id = get_model_name(country, model, time)
+ 
     if valid_pnos.empty or sales_versions.empty or valid_engines.empty:
         DBOperations.instance.logger.warning(f"No data found for model {model} and engine category {engines_types} at time {time}", extra={'country': country})
         return None

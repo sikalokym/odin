@@ -51,6 +51,8 @@ def get_sheet(ws, sales_versions, title, config):
     ws['B2'].alignment = Alignment(horizontal='left', vertical='center')
     ws['B2'].font = Font(size=10, bold=True)
 
+    if df_sales_versions.empty:
+        return
     svn_with_features = df_sales_versions.SalesVersionName.unique().tolist()
     last_svn = svn_with_features[-1] if len(svn_with_features) > 0 else None
     last_sv = df_sales_versions[df_sales_versions.SalesVersionName == last_svn].SalesVersion.unique()[0]

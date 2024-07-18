@@ -27,7 +27,7 @@ def fetch_all_cpam_data(country_code, year=None, start_model_year=''):
             return
         else:
             all_years = all_years['Years']
-    sw = config.get('SETTINGS', 'START_WEEK')
+    sw = config.get('SETTINGS', '')
     for year in all_years:
         for car in cpam.get_car_types(year, country_code)['DataRows']:
             print(f'Fetching car type: {car["Type"]}')
@@ -233,8 +233,8 @@ def ingest_cpam_data(year, car_type, country_code):
     if authorized_authorizations.empty:
         return
     df_pnos = DBOperations.instance.collect_auth(authorized_authorizations, country_code)
-    # if df_pnos.empty:
-    #     return
+    if df_pnos.empty:
+        return
     # if not unauthorized_features.empty:
     #     DBOperations.instance.drop_feature(unauthorized_features, df_pnos)
     # # if not unauthorized_dependencies.empty:
