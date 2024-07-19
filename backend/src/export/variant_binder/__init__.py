@@ -86,7 +86,7 @@ def extract_variant_binder(country, model, engines_types, time, pno_ids=None, sv
         return None
     try:
         ws_1 = wb.create_sheet(config['PRICES_SHEET']['TITLE'])
-        gb_ids = prices_sheet.get_sheet(ws_1, valid_pnos, sales_versions.copy(), title, time, valid_engines, country, config['DEFAULT']['TAX'], dict(config['PRICES_SHEET']))
+        gb_ids = prices_sheet.get_sheet(ws_1, valid_pnos, sales_versions.copy(), title, time, valid_engines, country, config['DEFAULT']['TAX'].replace('\\n', '\n'), dict(config['PRICES_SHEET']))
     except Exception as e:
         DBOperations.instance.logger.error(f"Error creating sheet prices: {e}", extra={'country': country})
     try:
@@ -183,9 +183,9 @@ def _extract_variant_binder(country, model, engines_types, time, pno_ids=None, s
     upholstery_colors_sheet.get_sheet(ws_4, sales_versions.copy(), title, time, uph_col_cell_values, rule_texts, config)
     ws_5 = wb.create_sheet(config['OPTIONS_SHEET']['TITLE'])
     df_rad = options_sheet.get_sheet(ws_5, sales_versions.copy(), title, time, config['TIRES_SHEET']['TITLE'], rule_texts, cell_values, config)
-    if not df_rad.empty:
-        ws_6 = wb.create_sheet(config['TIRES_SHEET']['TITLE'])
-        tiers_sheet.get_sheet(ws_6, sales_versions.copy(), title, df_rad, cell_values, config)
+    ws_6 = wb.create_sheet(config['TIRES_SHEET']['TITLE'])
+    tiers_sheet.get_sheet(ws_6, sales_versions.copy(), title, df_rad, cell_values, config)
+    # if not df_rad.empty:
     ws_7 = wb.create_sheet(config['CHANGES_SHEET']['TITLE'], 0)
     entities_ids_dict = {'Typ': [model_id], 'SV': sales_versions.ID.unique().tolist(), 'En': valid_engines.ID.explode().unique().tolist(), 'G': gb_ids}
     err = change_log.get_sheet(ws_7, entities_ids_dict, valid_pnos.ID.unique().tolist(), title, time, country)

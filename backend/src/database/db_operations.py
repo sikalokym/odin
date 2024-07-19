@@ -615,7 +615,7 @@ class DBOperations:
         
         df_inserted['CustomName'] = df_inserted.groupby('Code').apply(utils.fill_custom_name).reset_index(drop=True)
         self.upsert_data_from_df(df_inserted, self.config.get('RELATIONS', 'PKG_Custom'), ['RelationID', 'CustomName', 'StartDate', 'EndDate'], ['RelationID'])
-
+    
     def assign_prices_from_visa_dataframe(self, country_code, df_visa):
         if df_visa.empty:
             self.logger.info("No VISA data found")
@@ -634,7 +634,8 @@ class DBOperations:
             
             relation_columns = ['RelationID', 'StartDate', 'EndDate', 'Price', 'PriceBeforeTax']
             conditional_columns = ['RelationID']
-
+            
+            # This can be optimized by adding conditions to get_table_df instead of fetching all the data for each country
             if not df_pno_prices.empty:
                 df_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_pno_prices, is_relation=True)
                 df_pnos_assigned = df_pnos_assigned.drop_duplicates(subset=['RelationID', 'StartDate'], keep='last')
@@ -647,25 +648,25 @@ class DBOperations:
                 df_colors = self.get_table_df(self.config.get('AUTH', 'COL'))
                 df_color, df_color_unpriced = utils.get_relation_ids(df_colors, df_color_pnos_assigned)
                 self.upsert_data_from_df(df_color, self.config.get('RELATIONS', 'COL_Custom'), relation_columns, conditional_columns)
-                utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
+                utils.log_df(df_pnos_unassigned, 'PNO of a Color in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
                 utils.log_df(df_color_unpriced, 'Color from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
-
+            
             if not df_option_pno_prices.empty:
                 df_option_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_option_pno_prices, is_relation=False)
                 df_option_pnos_assigned = df_option_pnos_assigned.drop_duplicates(subset=['PNOID', 'Code', 'StartDate'], keep='last')
                 df_options = self.get_table_df(self.config.get('AUTH', 'OPT'))
                 df_option, df_option_unpriced = utils.get_relation_ids(df_options, df_option_pnos_assigned)
                 self.upsert_data_from_df(df_option, self.config.get('RELATIONS', 'OPT_Custom'), relation_columns, conditional_columns)
-                utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
+                utils.log_df(df_pnos_unassigned, 'PNO of an Option in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
                 utils.log_df(df_option_unpriced, 'Option from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
-
+            
             if not df_upholstery_pno_prices.empty:
                 df_upholstery_pnos_assigned, df_pnos_unassigned = utils.get_pno_ids_from_variants(df_pnos, df_upholstery_pno_prices, is_relation=False)
                 df_upholstery_pnos_assigned = df_upholstery_pnos_assigned.drop_duplicates(subset=['PNOID', 'Code', 'StartDate'], keep='last')
                 df_upholsteries = self.get_table_df(self.config.get('AUTH', 'UPH'))
                 df_upholstery, df_upholstery_unpriced = utils.get_relation_ids(df_upholsteries, df_upholstery_pnos_assigned)
                 self.upsert_data_from_df(df_upholstery, self.config.get('RELATIONS', 'UPH_Custom'), relation_columns, conditional_columns)
-                utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
+                utils.log_df(df_pnos_unassigned, 'PNO of an Upholstery in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
                 utils.log_df(df_upholstery_unpriced, 'Upholstery from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
             
             if not df_package_pno_prices.empty:
@@ -674,9 +675,9 @@ class DBOperations:
                 df_packages = self.get_table_df(self.config.get('AUTH', 'PKG'))
                 df_package, df_package_unpriced = utils.get_relation_ids(df_packages, df_package_pnos_assigned)
                 self.upsert_data_from_df(df_package, self.config.get('RELATIONS', 'PKG_Custom'), relation_columns, conditional_columns)
-                utils.log_df(df_pnos_unassigned, 'PNO in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
+                utils.log_df(df_pnos_unassigned, 'PNO of a Package in VISA File did not match CPAM PNOs:', self.logger.warning, country_code=country_code)
                 utils.log_df(df_package_unpriced, 'Package from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
-
+    
     def consolidate_translations(self, country_code):
         df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f"CountryCode='{country_code}'"])
         if df_pnos.empty:
@@ -717,7 +718,7 @@ class DBOperations:
             
             # Drop where CustomName is empty or null
             df_merge_translation_source = df_merge[(~df_merge['CustomName'].isnull()) & (df_merge['CustomName'] != '')]
-
+            
             df_merge = df_merge.drop(['ID', 'CustomName'], axis=1)
             
             # Group by code and get the custom name, if only one non empty custom name is found.

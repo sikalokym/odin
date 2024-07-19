@@ -100,7 +100,7 @@ def prepare_sheet(ws, df_sales_versions, title, config):
     ws.sheet_view.showGridLines = False
     ws.freeze_panes = ws['A2']
     ws['A1'] = f'{title} - ' + config['PACKAGES_SHEET']["TITLE"]
-    ws['C1'] = config['DEFAULT']['TAX']
+    ws['C1'] = config['DEFAULT']['TAX'].replace('\\n', '\n')
     ws['A2'] = config['PACKAGES_SHEET']['CODE_COLUMN']
     ws['B2'] = config['PACKAGES_SHEET']['DESCRIPTION_COLUMN']
     

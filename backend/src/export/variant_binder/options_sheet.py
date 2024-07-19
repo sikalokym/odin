@@ -68,7 +68,7 @@ def prepare_sheet(ws, df_sales_versions, title, config):
     # Content of Row 1 & 2
     ws.merge_cells('A1:B1')
     ws['A1'] = title
-    ws['C1'] = config['DEFAULT']['TAX']
+    ws['C1'] = config['DEFAULT']['TAX'].replace('\\n', '\n')
     ws['A2'] = config['PACKAGES_SHEET']['CODE_COLUMN']
     ws['B2'] = config['PACKAGES_SHEET']['DESCRIPTION_COLUMN']
     
@@ -79,33 +79,35 @@ def prepare_sheet(ws, df_sales_versions, title, config):
     df_sales_versions = df_sales_versions.reset_index(drop=True)
     for idx, row in df_sales_versions.iterrows():
         ws.cell(row=1, column=idx+4, value=f'{row["SalesVersionName"]}\nSV {row["SalesVersion"]}')
-
-
+    
+    max_c = ws.max_column
+    max_r = ws.max_row
+    
     #Definition of column widths & row heights
     ws.column_dimensions['A'].width = 11
     ws.column_dimensions['B'].width = 65
     for col in range(3, max_c + 1):
         ws.column_dimensions[get_column_letter(col)].width = 25
-
+    
     ws.row_dimensions[1].height = 45
     ws.row_dimensions[2].height = 43
-
+    
     # Formatting of first row
     ws['A1'].font = Font(name='Arial', size=16, bold=True, color="FFFFFF")
     ws['A1'].alignment = Alignment(horizontal='left', vertical='center')
-
+    
     for col in range(3, max_c+1):
         cell = ws.cell(row=1, column=col)
         cell.font = Font(name='Arial', size=10, bold=True, color='FFFFFF')
         cell.alignment = Alignment(horizontal='center', vertical='center',wrap_text=True)
-
+    
     for col in range(1,max_c+1):
         cell = ws.cell(row=1, column=col)
         if col != max_c-2:
             cell.fill = fill
         else:
             cell.fill = white_fill
- 
+    
     # Formatting of second row
     ws['A2'].alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
     ws['A2'].font = Font(size=10, bold=True)
@@ -139,37 +141,36 @@ def prepare_sheet(ws, df_sales_versions, title, config):
            ws.cell(row=row-1, column=3).border = Border(bottom=Side(style='thin'),
                                                         right=Side(style='thin'),
                                                         left=Side(style='thin'))
-           
+    
     # Setting of border lines context sensitive around data
     for col in range(1, max_c + 1):
         cell = ws.cell(row=3, column=col)
         cell.border = Border(top=Side(style='medium'),
                             right=Side(style='thin'))
-
+    
     for row in range(2, max_r + 1):
         cell = ws.cell(row=row, column=max_c)
         cell.border = Border(right=Side(style='thin'),
                             bottom=Side(style='thin'))
-
+    
     for col in range(1, max_c + 1):
         cell = ws.cell(row=max_r, column=col)
         cell.border = Border(bottom=Side(style='thin'),
                             left=Side(style='thin'))
-
+    
     top_right_cell = ws.cell(row=3, column=max_c)
     bottom_right_cell = ws.cell(row=max_r, column=max_c)
-
+    
     top_right_cell.border = Border(right=Side(style='medium'),
                                         bottom=Side(style='thin'),
                                         top=Side(style='medium'),
                                         left=Side(style='thin'))
-
+    
     bottom_right_cell.border = Border(right=Side(style='medium'),
                                         bottom=Side(style='medium'),
                                         top=Side(style='thin'),
                                         left=Side(style='thin'))
-
-
+    
     # Formatting of "Pack Only" options
     for row in range(3, max_r + 1):  
         if ws.cell(row=row, column=3).value == config['OPTIONS_SHEET']['GRAYED_OUT_PRICE'] or ws.cell(row=row, column=ws.max_column-1).value == config['OPTIONS_SHEET']['GRAYED_OUT_CATEGORY']:

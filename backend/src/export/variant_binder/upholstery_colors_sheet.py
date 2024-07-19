@@ -30,10 +30,10 @@ def get_sheet(ws, sales_versions, title, time, cell_values, rule_texts, config):
     ws.column_dimensions['A'].width = 10
     ws.column_dimensions['B'].width = 65
 
-    insert_table(ws, sales_versions, title + ' - ' + config['UPHOLSTERY_COLORS_SHEET']['UPHOLSTERY'], df_upholstery, cell_values, config['DEFAULT']['TAX'], config['UPHOLSTERY_COLORS_SHEET']['NOTES'])
+    insert_table(ws, sales_versions, title + ' - ' + config['UPHOLSTERY_COLORS_SHEET']['UPHOLSTERY'], df_upholstery, cell_values, config['DEFAULT']['TAX'].replace('\\n', '\n'), config['UPHOLSTERY_COLORS_SHEET']['NOTES'])
     mid_row = ws.max_row + 1
     ws.append([''])
-    insert_table(ws, sales_versions, title + ' - ' + config['UPHOLSTERY_COLORS_SHEET']['COLOR'], df_colors, cell_values, config['DEFAULT']['TAX'], config['UPHOLSTERY_COLORS_SHEET']['NOTES'])
+    insert_table(ws, sales_versions, title + ' - ' + config['UPHOLSTERY_COLORS_SHEET']['COLOR'], df_colors, cell_values, config['DEFAULT']['TAX'].replace('\\n', '\n'), config['UPHOLSTERY_COLORS_SHEET']['NOTES'])
     
     for col in range(3, ws.max_column):
         ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = 20
