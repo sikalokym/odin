@@ -110,7 +110,7 @@ def extract_variant_binder(country, model, engines_types, time, pno_ids=None, sv
         df_rad = options_sheet.get_sheet(ws_5, sales_versions.copy(), title, time, config['TIRES_SHEET']['TITLE'], rule_texts, cell_values, config)
     except Exception as e:
         DBOperations.instance.logger.error(f"Error creating sheet options: {e}", extra={'country': country})
-    if df_rad and not df_rad.empty:
+    if df_rad is not None:
         try:
             ws_6 = wb.create_sheet(config['TIRES_SHEET']['TITLE'])
             tiers_sheet.get_sheet(ws_6, sales_versions.copy(), title, df_rad, cell_values, config)
@@ -174,7 +174,7 @@ def _extract_variant_binder(country, model, engines_types, time, pno_ids=None, s
         DBOperations.instance.logger.warning(f"No data found for model {model} and engine category {engines_types} at time {time}", extra={'country': country})
         return None
     ws_1 = wb.create_sheet(config['PRICES_SHEET']['TITLE'])
-    gb_ids = prices_sheet.get_sheet(ws_1, valid_pnos, sales_versions.copy(), title, time, valid_engines, country, config['DEFAULT']['TAX'], dict(config['PRICES_SHEET']))
+    gb_ids = prices_sheet.get_sheet(ws_1, valid_pnos, sales_versions.copy(), title, time, valid_engines, country, config['DEFAULT']['TAX'].replace('\\n', '\n'), dict(config['PRICES_SHEET']))
     ws_2 = wb.create_sheet(config['FEATURES_SHEET']['TITLE'])
     sales_versions_sheet.get_sheet(ws_2, sales_versions.copy(), title, dict(config['FEATURES_SHEET']))
     ws_3 = wb.create_sheet(config['PACKAGES_SHEET']['TITLE'])
