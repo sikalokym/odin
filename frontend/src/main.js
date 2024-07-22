@@ -6,6 +6,7 @@ import router from './router'
 import { initializeMsal } from './authConfig';
 import { ensureAuthenticated } from './authService';
 
+// Author: Hassan Wahba
 
 const pinia = createPinia()
 
