@@ -13,6 +13,8 @@ from src.utils.sql_logging_handler import logger
 from src.routes.ingest_routes import bp_ingest
 from src.utils.scheduler import cpam_scheduler
 
+# @author Hassan Wahba
+
 cpam_scheduler.start()
 
 app = Flask(__name__)

@@ -1,3 +1,5 @@
+-- @author Hassan Wahba
+
 -- Drop triggers for the first batch of tables
 DROP TRIGGER IF EXISTS [dbo].[trg_Model_InsertUpdate];
 DROP TRIGGER IF EXISTS [dbo].[trg_SalesVersion_InsertUpdate];

@@ -1,6 +1,7 @@
 from src.database.db_operations import DBOperations
 from src.utils.db_utils import get_model_year_from_date
 
+# @author Hassan Wahba
 
 def get_engine_cats(country, model_year, model):
     conditions = [f"CountryCode = '{country}'"]

@@ -10,6 +10,8 @@ from src.database.db_connection import DatabaseConnection
 from src.database.db_operations import DBOperations
 from src.utils.sql_logging_handler import logger
 
+# @author Hassan Wahba
+
 def schedule_fetch_task():
     max_tries = 3
     for i in range(max_tries):
@@ -17,7 +19,7 @@ def schedule_fetch_task():
             DBOperations.create_instance(logger=logger)
             logger.info('Starting scheduled task to ingest CPAM data', extra={'country_code': 'All'})
             countries = get_supported_countries()
-            for country in countries:
+            for country in countries.Code.values:
                 fetch_all_cpam_data(country)
             DatabaseConnection.close_connection()
             break
@@ -35,7 +37,7 @@ def schedule_preprocess_task():
             logger.info('Starting scheduled task to ingest CPAM data', extra={'country_code': 'All'})
             countries = get_supported_countries()
             current_year = datetime.datetime.now().year
-            for country in countries:
+            for country in countries.Code.values:
                 process_all_cpam_data(country, current_year)
             DatabaseConnection.close_connection()
         except Exception as e:
@@ -52,7 +54,7 @@ def schedule_ingest_task():
             logger.info('Starting scheduled task to ingest CPAM data', extra={'country_code': 'All'})
             countries = get_supported_countries()
             current_year = datetime.datetime.now().year
-            for country in countries:
+            for country in countries.Code.values:
                 ingest_all_cpam_data(country, start_model_year=current_year)
             DatabaseConnection.close_connection()
         except Exception as e:
@@ -75,7 +77,7 @@ except Exception as e:
     day, hour = 0, 4
 
 cpam_scheduler = BackgroundScheduler(daemon=True, timezone=utc)
-cpam_scheduler.add_job(schedule_fetch_task, 'cron', day_of_week=day, hour=hour, minute=2)
-cpam_scheduler.add_job(schedule_fetch_task, 'cron', day_of_week=day, hour=hour+12, minute=30)
+cpam_scheduler.add_job(schedule_fetch_task, 'cron', hour=hour, minute=3)
+cpam_scheduler.add_job(schedule_fetch_task, 'cron', hour=hour+12, minute=30)
 
 atexit.register(lambda: cpam_scheduler.shutdown())

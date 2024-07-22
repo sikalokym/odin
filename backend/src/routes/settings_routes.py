@@ -4,6 +4,7 @@ from src.ingest.cpam.services import get_supported_countries
 from src.utils.db_utils import get_model_year_from_date
 from src.database.db_operations import DBOperations
 
+# @author Hassan Wahba
 
 bp_settings = Blueprint('settings', __name__, url_prefix='/api/setup')
 

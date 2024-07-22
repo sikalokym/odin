@@ -1,3 +1,5 @@
+// Author: Hassan Wahba
+
 import Axios from 'axios';
 
 let ENDPOINT = '/api';

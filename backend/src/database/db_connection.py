@@ -3,6 +3,8 @@ import logging
 import pyodbc
 import os
 
+# @author Hassan Wahba
+
 class DatabaseConnection:
     logger = logging.getLogger(__name__)
     connection = None

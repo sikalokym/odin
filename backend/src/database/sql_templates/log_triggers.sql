@@ -1,3 +1,6 @@
+-- @author Hassan Wahba
+-- Open Points: Add triggeres to custom tables
+
 -- Declare a variable to hold your dynamic SQL
 DECLARE @sql NVARCHAR(MAX);
 

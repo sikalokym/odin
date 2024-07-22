@@ -7,8 +7,16 @@ CREATE TABLE SupportedCountry (
 
 -- Insert a new row into the SupportedCountry table
 -- INSERT INTO SupportedCountry (Code, CountryName)
--- VALUES ('231', 'Germany');
--- VALUES ('232', 'Switzerland');
+-- VALUES 
+-- ('212', 'Belgium'),
+-- ('213', 'France'),
+-- ('219', 'Ireland'),
+-- ('221', 'United Kingdom'),
+-- ('223', 'Italy'),
+-- ('224', 'Spain'),
+-- ('231', 'Germany'),
+-- ('232', 'Switzerland'),
+-- ('233', 'Austria');
 
 -- Create the Model table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Model')

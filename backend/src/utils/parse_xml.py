@@ -1,5 +1,7 @@
 from lxml import etree
 
+# @author Hassan Wahba
+
 def parse_xml(xml_data, template):
     """
     Parse the given XML data using the provided template.

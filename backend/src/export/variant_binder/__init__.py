@@ -8,6 +8,7 @@ from src.export.variant_binder import prices_sheet, options_sheet, upholstery_co
 from src.utils.db_utils import filter_df_by_timestamp, filter_model_year_by_translation, get_model_year_from_date
 from src.database.db_operations import DBOperations
 
+# @author Hassan Wahba
 
 def extract_variant_binder_pnos(country, model, engines_types, time):
     try:
@@ -185,7 +186,6 @@ def _extract_variant_binder(country, model, engines_types, time, pno_ids=None, s
     df_rad = options_sheet.get_sheet(ws_5, sales_versions.copy(), title, time, config['TIRES_SHEET']['TITLE'], rule_texts, cell_values, config)
     ws_6 = wb.create_sheet(config['TIRES_SHEET']['TITLE'])
     tiers_sheet.get_sheet(ws_6, sales_versions.copy(), title, df_rad, cell_values, config)
-    # if not df_rad.empty:
     ws_7 = wb.create_sheet(config['CHANGES_SHEET']['TITLE'], 0)
     entities_ids_dict = {'Typ': [model_id], 'SV': sales_versions.ID.unique().tolist(), 'En': valid_engines.ID.explode().unique().tolist(), 'G': gb_ids}
     err = change_log.get_sheet(ws_7, entities_ids_dict, valid_pnos.ID.unique().tolist(), title, time, country)
@@ -200,7 +200,7 @@ def _extract_variant_binder(country, model, engines_types, time, pno_ids=None, s
 def get_model_name(country, model, time):
     models = DBOperations.instance.get_table_df(DBOperations.instance.config.get('TABLES', 'Typ'), ['ID', 'MarketText', 'CustomName', 'StartDate', 'EndDate'], conditions=[f"CountryCode = '{country}'", f"Code = '{model}'"])
 
-    # filter models where StartDate and End Data wrap the current time for the given model
+    # Filter models where StartDate and End Data wrap the current time for the given model
     df_model = filter_df_by_timestamp(models, time)
 
     first_row = df_model.iloc[0].copy()

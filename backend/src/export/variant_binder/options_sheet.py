@@ -5,6 +5,7 @@ import pandas as pd
 from src.database.db_operations import DBOperations
 from src.utils.db_utils import format_float_string
 
+# @author Hassan Wahba
 
 #General formating of border lines & cell colours in excel spreadsheet
 all_border = Border(top=Side(style='thin', color='000000'),

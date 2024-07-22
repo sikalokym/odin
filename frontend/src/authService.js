@@ -1,3 +1,5 @@
+// Author: Hassan Wahba
+
 import msalInstance from './authConfig';
 import { useAuthStore } from './stores/auth';
 
@@ -89,7 +91,7 @@ export async function fetchAllGroups(tokenResponse) {
 
 export const parseGroupNames = (groups) => {
     return groups.map(group => {
-        const match = group.match(/odin-(\w+)-(\w+)/);
+        const match = group.match(/odin-([\w-]+)-(\w+)/);
         return match ? { country: match[1], role: match[2] } : null;
     }).filter(Boolean);
 };

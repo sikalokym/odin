@@ -7,6 +7,7 @@ import pandas as pd
 from src.utils.db_utils import filter_df_by_timestamp, format_float_string
 from src.database.db_operations import DBOperations
 
+# @author Hassan Wahba
 
 black_side = Side(color='000000', border_style='thin')
 all_border = Border(left=black_side, right=black_side, bottom=black_side, top=black_side)

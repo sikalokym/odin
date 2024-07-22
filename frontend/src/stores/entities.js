@@ -1,3 +1,5 @@
+// Author: Hassan Wahba
+
 import { defineStore } from 'pinia'
 import index from '../api/index.js'
 

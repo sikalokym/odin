@@ -11,6 +11,7 @@ from src.utils.sql_logging_handler import logger
 import src.ingest.cpam.api as cpam
 import src.utils.db_utils as utils
 
+# @author Hassan Wahba
 
 config = configparser.ConfigParser()
 config.read('config/cpam.cfg')
@@ -27,7 +28,7 @@ def fetch_all_cpam_data(country_code, year=None, start_model_year=''):
             return
         else:
             all_years = all_years['Years']
-    sw = config.get('SETTINGS', '')
+    sw = ''
     for year in all_years:
         for car in cpam.get_car_types(year, country_code)['DataRows']:
             print(f'Fetching car type: {car["Type"]}')

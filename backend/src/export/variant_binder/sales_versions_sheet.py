@@ -3,6 +3,7 @@ import pandas as pd
 
 from src.database.db_operations import DBOperations
 
+# @author Hassan Wahba
 
 all_border = Border(top=Side(style='thin', color='000000'),
                     bottom=Side(style='thin', color='000000'),

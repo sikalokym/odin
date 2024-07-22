@@ -4,6 +4,8 @@ import os
 
 from src.database.db_operations import DBOperations
 
+# @author Hassan Wahba
+
 class SQLLoggingHandler(logging.Handler):
     def __init__(self):
         super().__init__()

@@ -7,6 +7,8 @@ from src.database.db_operations import DBOperations
 from src.ingest.visa_files.services import get_available_visa_files
 from src.utils.db_utils import format_float_string, get_column_map
 
+# @author Hassan Wahba
+
 def extract_sap_price_list(country, code, date, model_year):
     
     conditions = [f"CountryCode = '{country}'", f"ModelYear = '{model_year}'"]

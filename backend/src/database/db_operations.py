@@ -8,6 +8,7 @@ import time
 from src.database.db_connection import DatabaseConnection
 import src.utils.db_utils as utils
 
+# @author Hassan Wahba
 
 class DBOperations:
     instance = None

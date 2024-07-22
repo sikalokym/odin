@@ -1,3 +1,5 @@
+// Author: Hassan Wahba
+
 import { PublicClientApplication } from '@azure/msal-browser';
 
 let redirectUri = '';

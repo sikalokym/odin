@@ -2,6 +2,8 @@ from openpyxl.styles import PatternFill, Border, Alignment, Side
 
 import src.export.variant_binder.options_sheet as options_sheet
 
+# @author Hassan Wahba
+
 #General formating of border lines & cell colours in excel spreadsheet
 all_border = Border(top=Side(style='thin', color='000000'),
                     bottom=Side(style='thin', color='000000'),
