@@ -7,11 +7,11 @@ import os
 
 from src.ingest.cpam.services import fetch_all_cpam_data, fetch_cpam_data, get_supported_countries, ingest_all_cpam_data, ingest_cpam_data, process_all_cpam_data
 from src.export.variant_binder import _extract_variant_binder, extract_variant_binder, extract_variant_binder_pnos
+from src.utils.scheduler import schedule_fetch_task, schedule_ingest_task
 from src.export.sap_price_list import extract_sap_price_list
 from src.ingest.visa_files.services import ingest_visa_data
 from src.routes.ingest_routes import refresh_all_cpam_data
 from src.database.db_operations import DBOperations
-from src.utils.scheduler import schedule_fetch_task, schedule_ingest_task
 from src.utils.sql_logging_handler import logger
 from src.ingest.visa_files import preprocess
 import src.utils.db_utils as utils
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     # ingest_visa_data(country, df_processed)
     # ingest_visa_data(country, None)
     # ingest_all_cpam_data(country)
-    # ingest_all_cpam_data('231', start_model_year=2024)
+    # ingest_all_cpam_data(country, start_model_year=2024)
     # ingest_cpam_data(2025, '246', country)
     
     #### extract variant binders of many car types in a country
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     
     #### fetch, process and ingest all cpam data for a country
     # fetch_all_cpam_data(country, start_model_year=2021)
-    # fetch_cpam_data(2024, '225', '219', '')
+    # fetch_cpam_data(2024, '246', country, '')
     # print(f'Execution time: {pd.Timestamp.now() - current_time}')
     # process_all_cpam_data(country, 2021)
     # print(f'Execution time: {pd.Timestamp.now() - current_time}')
@@ -57,5 +57,5 @@ if __name__ == "__main__":
     # zip_buffer = extract_sap_price_list(country, 'All', None, '2025')
     # with ZipFile(zip_buffer) as zf:
     #     zf.extractall('dist/sap_price_list_main_test')
-    schedule_ingest_task()
+    # schedule_ingest_task()
     print(f'Execution time: {pd.Timestamp.now() - current_time}')

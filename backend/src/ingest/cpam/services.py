@@ -101,27 +101,19 @@ def ingest_all_cpam_data(country_code, start_model_year=0):
 def fetch_cpam_data(year, car_type, country_code, sw):
     """
     Ingests CPAM data for a specific year, car type, spec market, MAF, and SW.
-
+    
     Args:
         year (int): The year of the data.
         car_type (str): The type of car.
         country_code (str): The specific market.
         maf (str): The MAF value.
         sw (str): The SW value.
-
+    
     Raises:
         ValueError: If the year or car type is invalid.
     """
     
     logger.info(f'Fetching data car type: {car_type} for year: {year}', extra={'country_code': country_code})
-    
-    folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/{year}/{car_type}/raw"
-    # Create the folder if it doesn't exist
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-        print(f'Folder {folder} does not exist, creating...')
-    else:
-        return
     
     global_dict_auth = utils.df_from_datarows(cpam.get_dictionary(year, car_type, country_code, '', sw).get('DataRows', None))
     market_dict_auth = utils.df_from_datarows(cpam.get_dictionary(year, car_type, country_code, 'm', sw).get('DataRows', None))
@@ -152,13 +144,6 @@ def fetch_cpam_data(year, car_type, country_code, sw):
     global_feat_auth = utils.df_from_datarows(cpam.get_features(year, car_type, country_code, '', sw).get('DataRows', None), ['Code', 'Special', 'Reference'])
     market_feat_auth = utils.df_from_datarows(cpam.get_features(year, car_type, country_code, 'm', sw).get('DataRows', None), ['Code', 'Special', 'Reference'])
     
-    
-    folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/{year}/{car_type}/raw"
-    # Create the folder if it doesn't exist
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-    
-        
     folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/{year}/{car_type}/raw"
     # Create the folder if it doesn't exist
     if not os.path.exists(folder):
@@ -185,14 +170,6 @@ def preprocess_cpam_data(year, car_type, country_code):
         logger.error(f'Folder {folder} does not exist', extra={'country_code': country_code})
         return
     
-    target_folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/{year}/{car_type}/processed"
-    # Create the folder if it doesn't exist
-    if not os.path.exists(target_folder):
-        print(f'Folder {target_folder} does not exist, creating...')
-        os.makedirs(target_folder)
-    else:
-        return
-    
     def cast_start_and_enddate_to_int(df):
         if df.empty:
             return df
@@ -212,13 +189,17 @@ def preprocess_cpam_data(year, car_type, country_code):
     global_feat_auth = pd.read_csv(f"{folder}/global_feat_auth.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).fillna('').reset_index(drop=True)
     market_feat_auth = pd.read_csv(f"{folder}/market_feat_auth.csv", index_col=0, dtype=str).pipe(cast_start_and_enddate_to_int).fillna('').reset_index(drop=True)
     ###############################################################################################################################################################################################################
-    
     logger.info(f'Processing car type: {car_type} for year: {year} in folder: {folder}', extra={'country_code': country_code})
     authorized_dictionaries, unauthorized_dictionaries = get_authorization_status(global_dict_auth, market_dict_auth)
     authorized_authorizations, unauthorized_authorizations = get_authorization_status(global_authorization_auth, market_authorization_auth, authorized_pnos)
     authorized_dependencies, unauthorized_dependencies = get_authorization_status(global_dependency_auth, market_dependency_auth, authorized_pnos)
     authorized_features, unauthorized_features = get_authorization_status(global_feat_auth, market_feat_auth, authorized_pnos)
-    
+    ###############################################################################################################################################################################################################
+    target_folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/{year}/{car_type}/processed"
+    # Create the folder if it doesn't exist
+    if not os.path.exists(target_folder):
+        print(f'Folder {target_folder} does not exist, creating...')
+        os.makedirs(target_folder)
     ###############################################################################################################################################################################################################
     authorized_dictionaries.to_csv(f"{target_folder}/authorized_dictionaries.csv")
     unauthorized_dictionaries.to_csv(f"{target_folder}/unauthorized_dictionaries.csv")
@@ -239,6 +220,7 @@ def ingest_cpam_data(year, car_type, country_code):
     if not os.path.exists(folder):
         logger.error(f'Folder {folder} does not exist', extra={'country_code': country_code})
         return
+    
     def cast_start_and_enddate_to_int(df):
         if df.empty:
             return df
@@ -263,9 +245,11 @@ def ingest_cpam_data(year, car_type, country_code):
         DBOperations.instance.drop_auth(unauthorized_authorizations, country_code)
     if authorized_authorizations.empty:
         return
+    
     df_pnos = DBOperations.instance.collect_auth(authorized_authorizations, country_code)
     if df_pnos.empty:
         return
+    
     # if not unauthorized_features.empty:
     #     DBOperations.instance.drop_feature(unauthorized_features, df_pnos)
     # # if not unauthorized_dependencies.empty:

@@ -379,7 +379,12 @@ class DBOperations:
             df_relation = df_relation.drop(['StartDate', 'EndDate'], axis=1)
             df_inserted = df_inserted.merge(df_relation, on=['RelationID'], how='left')
             
-            df_inserted['CustomName'] = df_inserted.groupby('Code').apply(utils.fill_custom_name).reset_index(drop=False).CustomName
+            # Apply the fill_custom_name function and reset the index
+            df_temp = df_inserted.groupby('Code').apply(utils.fill_custom_name).reset_index(level=0, drop=False)
+
+            # Update the CustomName column in the original DataFrame using the index from df_temp
+            df_inserted.loc[df_temp.index, 'CustomName'] = df_temp['CustomName']
+            
             self.upsert_data_from_df(df_inserted, self.config.get('RELATIONS', f'{data_type}_Custom'), ['RelationID', 'CustomName', 'StartDate', 'EndDate'], ['RelationID'])
         
         return df_pnos
@@ -628,7 +633,12 @@ class DBOperations:
         df_relation = df_relation.drop(['StartDate', 'EndDate'], axis=1)
         df_inserted = df_inserted.merge(df_relation, on=['RelationID'], how='left')
         
-        df_inserted['CustomName'] = df_inserted.groupby('Code').apply(utils.fill_custom_name).reset_index(drop=False).CustomName
+        # Apply the fill_custom_name function and reset the index
+        df_temp = df_inserted.groupby('Code').apply(utils.fill_custom_name).reset_index(level=0, drop=False)
+
+        # Update the CustomName column in the original DataFrame using the index from df_temp
+        df_inserted.loc[df_temp.index, 'CustomName'] = df_temp['CustomName']
+        
         self.upsert_data_from_df(df_inserted, self.config.get('RELATIONS', 'PKG_Custom'), ['RelationID', 'CustomName', 'StartDate', 'EndDate'], ['RelationID'])
     
     def assign_prices_from_visa_dataframe(self, country_code, df_visa):

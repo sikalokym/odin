@@ -57,8 +57,10 @@ def insert_table(ws, sales_versions, title, df_res, cell_values, tax, notes):
     old_custom_category = -1
     catgory_rows = []
     first_row = ws.max_row + 1
+    row_height_factor = 15
     for _, row in df_res.iterrows():
         if 'CustomCategory' in df_res.columns and row['CustomCategory'] != old_custom_category:
+            row_height_factor = 25
             add_custom_category(ws, row['CustomCategory'])
             old_custom_category = row['CustomCategory']
             catgory_rows.append(ws.max_row)
@@ -78,14 +80,14 @@ def insert_table(ws, sales_versions, title, df_res, cell_values, tax, notes):
                 svs.append('')
         if row['Price'] == 'Pack Only'or row['Price'] == 'Serie':
             ws.append([row['Code'], row['CustomName'], row['Price']] + svs + ['', row['Rules']])
-            row_height = int(len(row['CustomName']) / 65) * 15 + 15
+            row_height = int(len(row['CustomName']) / 65) * 15 + row_height_factor
             ws.row_dimensions[ws.max_row].height = row_height
             ws.append([''])
         else:
             prices = row['Price'].split('/')
             if len(prices) > 1:
                 ws.append([row['Code'], row['CustomName'], prices[0]] + svs + ['', row['Rules']])
-                row_height = int(len(row['CustomName']) / 65) * 15 + 15
+                row_height = int(len(row['CustomName']) / 65) * 15 + row_height_factor
                 ws.row_dimensions[ws.max_row].height = row_height
                 ws.cell(row=ws.max_row, column=3).alignment = Alignment(horizontal='center', vertical='bottom')
                 ws.append(['', '', prices[1]] + svs) 

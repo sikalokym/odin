@@ -1,3 +1,4 @@
+import threading
 from flask import Blueprint, request, jsonify
 import datetime
 
@@ -12,7 +13,35 @@ bp_ingest = Blueprint('ingest', __name__, url_prefix='/api/<country>/ingest')
 
 @bp_ingest.route('/cpam', methods=['GET'])
 def refresh_all_cpam_data(country):
-    logger.info('Refreshing CPAM Data')
+    def process_cpam_data(country, year):
+        logger.info('Refreshing CPAM Data')
+        max_tries = 3
+        for i in range(max_tries):
+            try:
+                fetch_all_cpam_data(country, start_model_year=year)
+                break
+            except Exception as e:
+                logger.error(f"Failed to fetch CPAM data: {e}", extra={'country': country})
+                if i == max_tries - 1:
+                    break
+        for i in range(max_tries):
+            try:
+                process_all_cpam_data(country, start_model_year=int(year))
+                break
+            except Exception as e:
+                logger.error(f"Failed to process CPAM data: {e}", extra={'country': country})
+                if i == max_tries - 1:
+                    break
+        for i in range(max_tries):
+            try:
+                ingest_all_cpam_data(country, start_model_year=int(year))
+                break
+            except Exception as e:
+                logger.error(f"Failed to ingest CPAM data: {e}", extra={'country': country})
+                if i == max_tries - 1:
+                    break
+        DBOperations.instance.logger.info('CPAM Data Refreshed', extra={'country': country})
+    
     year = request.args.get('year', None)
     if year is None or not year.isdigit():
         logger.info('No year provided, refreshing current year and future years')
@@ -20,33 +49,11 @@ def refresh_all_cpam_data(country):
         year = datetime.datetime.now().year
         if this_week > 16:
             year +=1
-    max_tries = 3
-    for i in range(max_tries):
-        try:
-            fetch_all_cpam_data(country, start_model_year=year)
-            break
-        except Exception as e:
-            logger.error(f"Failed to fetch CPAM data: {e}", extra={'country': country})
-            if i == max_tries - 1:
-                break
-    for i in range(max_tries):
-        try:
-            process_all_cpam_data(country, start_model_year=int(year))
-            break
-        except Exception as e:
-            logger.error(f"Failed to process CPAM data: {e}", extra={'country': country})
-            if i == max_tries - 1:
-                break
-    for i in range(max_tries):
-        try:
-            ingest_all_cpam_data(country, start_model_year=int(year))
-            break
-        except Exception as e:
-            logger.error(f"Failed to ingest CPAM data: {e}", extra={'country': country})
-            if i == max_tries - 1:
-                break
     
-    DBOperations.instance.logger.info('CPAM Data Refreshed', extra={'country': country})
+    # Start the processing in a separate thread
+    threading.Thread(target=process_cpam_data, args=(country, year)).start()
+
+    # Send an initial response to the frontend
     return 'Ingestion Over', 200
 
 @bp_ingest.route('/visa', methods=['GET'])
