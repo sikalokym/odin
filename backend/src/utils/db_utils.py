@@ -196,6 +196,8 @@ def df_from_datarows(datarows, dr_columns=None):
         df = df_from_datarows(datarows, dr_columns)
         print(df)
     """
+    if len(datarows) == 0:
+        return pd.DataFrame()
     if dr_columns is None:
         return pd.DataFrame(datarows)
 

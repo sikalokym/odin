@@ -55,6 +55,7 @@ def process_all_cpam_data(country_code, start_model_year=0):
                 preprocess_cpam_data(sub_folder, subsub_folder, country_code)
             except Exception as e:
                 logger.error(f'Error processing car type {subsub_folder}: {e}', extra={'country_code': country_code})
+    
     logger.debug('CPAM data preprocessing completed', extra={'country_code': country_code})
 
 def ingest_all_cpam_data(country_code, start_model_year=0):
@@ -113,6 +114,15 @@ def fetch_cpam_data(year, car_type, country_code, sw):
     """
     
     logger.info(f'Fetching data car type: {car_type} for year: {year}', extra={'country_code': country_code})
+    
+    folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/{year}/{car_type}/raw"
+    # Create the folder if it doesn't exist
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+        print(f'Folder {folder} does not exist, creating...')
+    else:
+        return
+    
     global_dict_auth = utils.df_from_datarows(cpam.get_dictionary(year, car_type, country_code, '', sw).get('DataRows', None))
     market_dict_auth = utils.df_from_datarows(cpam.get_dictionary(year, car_type, country_code, 'm', sw).get('DataRows', None))
     
@@ -126,12 +136,29 @@ def fetch_cpam_data(year, car_type, country_code, sw):
     
     authorized_packages = utils.df_from_package_datarows(cpam.get_packages(year, car_type, country_code, 'm', sw).get('PackageDataRows', None))
     
-    global_dependency_auth = utils.df_from_datarows(cpam.get_dependency_rules(year, car_type, country_code, '', sw).get('DataRows', None), ['RuleCode', 'ItemCode', 'FeatureCode']).explode('FeatureCode')
-    market_dependency_auth = utils.df_from_datarows(cpam.get_dependency_rules(year, car_type, country_code, 'm', sw).get('DataRows', None), ['RuleCode', 'ItemCode', 'FeatureCode']).explode('FeatureCode')
+    global_dependency_auth = utils.df_from_datarows(cpam.get_dependency_rules(year, car_type, country_code, '', sw).get('DataRows', None), ['RuleCode', 'ItemCode', 'FeatureCode'])
+    market_dependency_auth = utils.df_from_datarows(cpam.get_dependency_rules(year, car_type, country_code, 'm', sw).get('DataRows', None), ['RuleCode', 'ItemCode', 'FeatureCode'])
+    
+    if global_dependency_auth.empty:
+        logger.warn('No dependency data found for the global market', extra={'country_code': country_code})
+    else:
+        global_dependency_auth = global_dependency_auth.explode('FeatureCode')
+    
+    if market_dependency_auth.empty:
+        logger.warn('No dependency data found for the market', extra={'country_code': country_code})
+    else:
+        market_dependency_auth = market_dependency_auth.explode('FeatureCode')
     
     global_feat_auth = utils.df_from_datarows(cpam.get_features(year, car_type, country_code, '', sw).get('DataRows', None), ['Code', 'Special', 'Reference'])
     market_feat_auth = utils.df_from_datarows(cpam.get_features(year, car_type, country_code, 'm', sw).get('DataRows', None), ['Code', 'Special', 'Reference'])
     
+    
+    folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/{year}/{car_type}/raw"
+    # Create the folder if it doesn't exist
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    
+        
     folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/{year}/{car_type}/raw"
     # Create the folder if it doesn't exist
     if not os.path.exists(folder):
@@ -156,6 +183,14 @@ def preprocess_cpam_data(year, car_type, country_code):
     folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/{year}/{car_type}/raw"
     if not os.path.exists(folder):
         logger.error(f'Folder {folder} does not exist', extra={'country_code': country_code})
+        return
+    
+    target_folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/{year}/{car_type}/processed"
+    # Create the folder if it doesn't exist
+    if not os.path.exists(target_folder):
+        print(f'Folder {target_folder} does not exist, creating...')
+        os.makedirs(target_folder)
+    else:
         return
     
     def cast_start_and_enddate_to_int(df):
@@ -184,22 +219,17 @@ def preprocess_cpam_data(year, car_type, country_code):
     authorized_dependencies, unauthorized_dependencies = get_authorization_status(global_dependency_auth, market_dependency_auth, authorized_pnos)
     authorized_features, unauthorized_features = get_authorization_status(global_feat_auth, market_feat_auth, authorized_pnos)
     
-    folder = f"{os.getcwd()}/dist/cpam_data/{country_code}/{year}/{car_type}/processed"
-    # Create the folder if it doesn't exist
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-    
     ###############################################################################################################################################################################################################
-    authorized_dictionaries.to_csv(f"{folder}/authorized_dictionaries.csv")
-    unauthorized_dictionaries.to_csv(f"{folder}/unauthorized_dictionaries.csv")
-    authorized_authorizations.to_csv(f"{folder}/authorized_authorizations.csv")
-    unauthorized_authorizations.to_csv(f"{folder}/unauthorized_authorizations.csv")
-    authorized_packages.to_csv(f"{folder}/authorized_packages.csv")
-    authorized_dependencies.to_csv(f"{folder}/authorized_dependencies.csv")
-    unauthorized_dependencies.to_csv(f"{folder}/unauthorized_dependencies.csv")
-    # (de-)auth needs further discussions and work cause references have commas
-    market_feat_auth.to_csv(f"{folder}/authorized_features.csv")
-    unauthorized_features.to_csv(f"{folder}/unauthorized_features.csv")
+    authorized_dictionaries.to_csv(f"{target_folder}/authorized_dictionaries.csv")
+    unauthorized_dictionaries.to_csv(f"{target_folder}/unauthorized_dictionaries.csv")
+    authorized_authorizations.to_csv(f"{target_folder}/authorized_authorizations.csv")
+    unauthorized_authorizations.to_csv(f"{target_folder}/unauthorized_authorizations.csv")
+    authorized_packages.to_csv(f"{target_folder}/authorized_packages.csv")
+    authorized_dependencies.to_csv(f"{target_folder}/authorized_dependencies.csv")
+    unauthorized_dependencies.to_csv(f"{target_folder}/unauthorized_dependencies.csv")
+    # (de-)auth needs further discussions and work cause references have commas and pluses
+    market_feat_auth.to_csv(f"{target_folder}/authorized_features.csv")
+    unauthorized_features.to_csv(f"{target_folder}/unauthorized_features.csv")
     ###############################################################################################################################################################################################################
     
     logger.info(f'Data processed for car type: {car_type} in year: {year} for country: {country_code}', extra={'country_code': country_code})

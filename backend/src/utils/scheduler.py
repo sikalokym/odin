@@ -17,7 +17,7 @@ def schedule_fetch_task():
     for i in range(max_tries):
         try:
             DBOperations.create_instance(logger=logger)
-            logger.info('Starting scheduled task to ingest CPAM data', extra={'country_code': 'All'})
+            logger.info('Starting scheduled task to fetch CPAM data', extra={'country_code': 'All'})
             countries = get_supported_countries()
             for country in countries.Code.values:
                 fetch_all_cpam_data(country)
@@ -34,7 +34,7 @@ def schedule_preprocess_task():
     for i in range(max_tries):
         try:
             DBOperations.create_instance(logger=logger)
-            logger.info('Starting scheduled task to ingest CPAM data', extra={'country_code': 'All'})
+            logger.info('Starting scheduled task to process CPAM data', extra={'country_code': 'All'})
             countries = get_supported_countries()
             current_year = datetime.datetime.now().year
             for country in countries.Code.values:

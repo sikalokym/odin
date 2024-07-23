@@ -13,7 +13,7 @@ bp_ingest = Blueprint('ingest', __name__, url_prefix='/api/<country>/ingest')
 @bp_ingest.route('/cpam', methods=['GET'])
 def refresh_all_cpam_data(country):
     logger.info('Refreshing CPAM Data')
-    year= request.args.get('year', None)
+    year = request.args.get('year', None)
     if year is None or not year.isdigit():
         logger.info('No year provided, refreshing current year and future years')
         this_week = datetime.datetime.now().isocalendar()[1]
@@ -31,7 +31,7 @@ def refresh_all_cpam_data(country):
                 break
     for i in range(max_tries):
         try:
-            process_all_cpam_data(country, start_model_year=year)
+            process_all_cpam_data(country, start_model_year=int(year))
             break
         except Exception as e:
             logger.error(f"Failed to process CPAM data: {e}", extra={'country': country})
@@ -39,7 +39,7 @@ def refresh_all_cpam_data(country):
                 break
     for i in range(max_tries):
         try:
-            ingest_all_cpam_data(country, start_model_year=year)
+            ingest_all_cpam_data(country, start_model_year=int(year))
             break
         except Exception as e:
             logger.error(f"Failed to ingest CPAM data: {e}", extra={'country': country})

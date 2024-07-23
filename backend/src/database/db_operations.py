@@ -72,7 +72,9 @@ class DBOperations:
                 columns = [column.strip() for column in columns.split(',')]
                 if columns == ['*']:
                     return pd.DataFrame([])
+                
                 return pd.DataFrame([], columns=columns)
+            
             columns = [column[0] for column in data[0].cursor_description]
             data = [list(row) for row in data]
             df = pd.DataFrame(data, columns=columns)
@@ -89,9 +91,11 @@ class DBOperations:
                     if not data:
                         columns_list = [column.strip() for column in columns.split(',')]
                         return pd.DataFrame([], columns=columns_list if columns_list != ['*'] else [])
+                    
                     df_columns = [column[0] for column in data[0].cursor_description]
                     df_data = [list(row) for row in data]
                     return pd.DataFrame(df_data, columns=df_columns)
+                
             except Exception as e:
                 self.logger.error(f'Attempt failed with error: {e}', exc_info=True)
                 self.logger.error(f'Query: SELECT {columns} FROM {table_name} WHERE {conditions};')
@@ -108,6 +112,7 @@ class DBOperations:
         if df.empty:
             self.logger.warning('No data to insert')
             return
+        
         self.create_temp_staging_table(table_name, columns)
         self.insert_data_into_staging(table_name, df, columns, conditional_columns)
         self.merge_data_from_staging(table_name, columns, conditional_columns)
@@ -338,6 +343,7 @@ class DBOperations:
         if df_pnos.empty:
             self.logger.warning("No existing PNOs found. It doesn't make sense to proceed without PNOs")
             return
+        
         df_pnos = df_pnos.drop('CountryCode', axis=1)
         
         df_assigned, df_unassigned = utils.get_pno_ids_from_variants(df_pnos, df)
@@ -373,7 +379,7 @@ class DBOperations:
             df_relation = df_relation.drop(['StartDate', 'EndDate'], axis=1)
             df_inserted = df_inserted.merge(df_relation, on=['RelationID'], how='left')
             
-            df_inserted['CustomName'] = df_inserted.groupby('Code').apply(utils.fill_custom_name).reset_index(drop=True)
+            df_inserted['CustomName'] = df_inserted.groupby('Code').apply(utils.fill_custom_name).reset_index(drop=False).CustomName
             self.upsert_data_from_df(df_inserted, self.config.get('RELATIONS', f'{data_type}_Custom'), ['RelationID', 'CustomName', 'StartDate', 'EndDate'], ['RelationID'])
         
         return df_pnos
@@ -382,6 +388,7 @@ class DBOperations:
         if not ids:
             self.logger.info('No IDs to delete')
             return
+        
         condition = ''
         if len(ids) == 1:
             condition = f"{id_column} = '{ids[0]}'"
@@ -396,6 +403,7 @@ class DBOperations:
         if not ids:
             self.logger.info('No IDs to delete')
             return
+        
         condition = ''
         if len(ids) == 1:
             condition = f"{id_column} = '{ids[0]}'"
@@ -412,7 +420,9 @@ class DBOperations:
                 year = utils.get_model_year_from_date(end_date_value)
                 if curr_year != year:
                     return end_date_value
+                
                 return min(end_date_value, end_date)
+            
             return end_date
         
         df['EndDate'] = df['EndDate'].map(decide_end_date)
@@ -434,6 +444,7 @@ class DBOperations:
         if df_pnos.empty:
             self.logger.warning("No existing PNOs found. It doesn't make sense to proceed without PNOs")
             return
+        
         df_pnos = df_pnos.drop('CountryCode', axis=1)
         
         df, _ = utils.get_pno_ids_from_variants(df_pnos, df_unauth)
@@ -467,6 +478,7 @@ class DBOperations:
         pnoids = df_pno['PNOID'].unique().tolist()
         if not pnoids:
             return
+        
         conds = [f"PNOID = '{pnoids[0]}'"] if len(pnoids) == 1 else [f"PNOID IN {tuple(pnoids)}"]
         
         self.delete_ids_from_table(self.config.get('AUTH', 'FEAT'), pnoids, 'PNOID')
@@ -486,6 +498,7 @@ class DBOperations:
         pno_conds = [f"ID = '{pnoids[0]}'"] if len(pnoids) == 1 else [f"ID IN {tuple(pnoids)}"]
         if tmp_df.empty:
             return
+        
         self.delete_ids_from_table(self.config.get('RELATIONS', 'PNO_Custom'), pnoids, 'RelationID')
         self.delete_ids_from_table(self.config.get('AUTH', 'PNO'), pnoids, 'ID')
 
@@ -606,6 +619,7 @@ class DBOperations:
             df_inserted['CustomName'] = ''
             self.upsert_data_from_df(df_inserted, self.config.get('RELATIONS', 'PKG_Custom'), ['RelationID', 'CustomName', 'StartDate', 'EndDate'], ['RelationID'])
             return
+        
         df_relation = df_relation[df_relation['CustomName'] != ''].dropna(subset=['CustomName'])
         if df_relation.empty:
             self.logger.warning('No custom names found for the packages')
@@ -614,13 +628,14 @@ class DBOperations:
         df_relation = df_relation.drop(['StartDate', 'EndDate'], axis=1)
         df_inserted = df_inserted.merge(df_relation, on=['RelationID'], how='left')
         
-        df_inserted['CustomName'] = df_inserted.groupby('Code').apply(utils.fill_custom_name).reset_index(drop=True)
+        df_inserted['CustomName'] = df_inserted.groupby('Code').apply(utils.fill_custom_name).reset_index(drop=False).CustomName
         self.upsert_data_from_df(df_inserted, self.config.get('RELATIONS', 'PKG_Custom'), ['RelationID', 'CustomName', 'StartDate', 'EndDate'], ['RelationID'])
     
     def assign_prices_from_visa_dataframe(self, country_code, df_visa):
         if df_visa.empty:
             self.logger.info("No VISA data found")
             return
+        
         df_all_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f"CountryCode='{country_code}'"])
         df_all_pnos = df_all_pnos.drop('CountryCode', axis=1)
         for model_year in df_visa['ModelYear'].unique():
@@ -680,10 +695,11 @@ class DBOperations:
                 utils.log_df(df_package_unpriced, 'Package from VISA file did not find an authorized match in CPAM: ', self.logger.warning, country_code=country_code)
     
     def consolidate_translations(self, country_code):
-        df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), conditions=[f"CountryCode='{country_code}'"])
+        df_pnos = self.get_table_df(self.config.get('AUTH', 'PNO'), columns=['ID'], conditions=[f"CountryCode='{country_code}'"])
         if df_pnos.empty:
             self.logger.warning("No existing PNOs found. No translations to consolidate", extra={'country_code': country_code})
             return
+        
         pno_ids = df_pnos['ID'].unique().tolist()
         conds = []
         if len(pno_ids) == 1:
@@ -715,11 +731,11 @@ class DBOperations:
                 self.logger.warning(f"No empty translations in {table_name} were found", extra={'country_code': country_code})
                 continue
             
-            df_merge = df_all_translation.merge(df_codes, left_on='RelationID', right_on='ID', how='left')
+            df_merge = df_all_translation.merge(df_codes, left_on='RelationID', right_on='ID')
             
             # Drop where CustomName is empty or null
             df_merge_translation_source = df_merge[(~df_merge['CustomName'].isnull()) & (df_merge['CustomName'] != '')]
-            
+            df_merge = df_merge[df_merge['CustomName'].isna() | (df_merge['CustomName'] == '')]
             df_merge = df_merge.drop(['ID', 'CustomName'], axis=1)
             
             # Group by code and get the custom name, if only one non empty custom name is found.

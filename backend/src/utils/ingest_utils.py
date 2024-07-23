@@ -57,6 +57,8 @@ def is_valid_engine_category(engine_category, year, country_code, model):
     return engine_category.lower() in all_cats
 
 def get_authorization_status(global_auth, market_auth, pnos=None):
+    if global_auth.empty or market_auth.empty:
+        return pd.DataFrame(), pd.DataFrame()
     join_cols = market_auth.columns.tolist()
     merged_df = market_auth.merge(global_auth, on=join_cols, how='left', indicator=True)
     

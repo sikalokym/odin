@@ -579,7 +579,7 @@ def get_packages(country, model_year):
     if df_packages_custom.empty:
         df_pno_packages['CustomName'] = ''
     else:
-        df_pno_packages = df_pno_packages.merge(df_packages_custom, how='inner', left_on='ID', right_on='RelationID')
+        df_pno_packages = df_pno_packages.merge(df_packages_custom, left_on='ID', right_on='RelationID')
         df_pno_packages = df_pno_packages.drop(columns=['RelationID'])
     
     df_pno_packages['MarketText'] = df_pno_packages['Code'].map(df_packages.set_index('Code')['MarketText'])
@@ -623,8 +623,6 @@ def get_packages(country, model_year):
     
     return df_pno_packages.to_json(orient='records')
 
-import pandas as pd
-
 @bp_db_reader.route('/changelog', methods=['GET'])
 def get_changelog(country, model_year):
     conditions = [f"CountryCode = '{country}'"]
@@ -649,9 +647,7 @@ def get_changelog(country, model_year):
 
     # Merge df_pno_changelog with df_pnos to add the Model, Engine, SalesVersion, and Gearbox columns
     df_pno_changelog = pd.merge(df_pno_changelog, df_pnos, left_on='CHANGECODE', right_on='ID', how='left')
-
     
-
     # After merging df_pno_changelog with df_pnos
     # Remove "PNO" except when part of "PNOCustom", remove "Custom" if not "PNOCustom", and replace "PNOOptionsCustom" with "Options"
     df_pno_changelog['ChangeTable'] = df_pno_changelog['ChangeTable'].apply(
