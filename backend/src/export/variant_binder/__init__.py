@@ -117,20 +117,22 @@ def extract_variant_binder(country, model, engines_types, time, pno_ids=None, sv
             tiers_sheet.get_sheet(ws_6, sales_versions.copy(), title, df_rad, cell_values, config)
         except Exception as e:
             DBOperations.instance.logger.error(f"Error creating sheet tires: {e}", extra={'country': country})
-    try:
-        ws_7 = wb.create_sheet(config['CHANGES_SHEET']['TITLE'], 0)
-        entities_ids_dict = {'Typ': [model_id], 'SV': sales_versions.ID.unique().tolist(), 'En': valid_engines.ID.explode().unique().tolist(), 'G': gb_ids}
-        err = change_log.get_sheet(ws_7, entities_ids_dict, valid_pnos.ID.unique().tolist(), title, time, country)
-        if err:
-            raise Exception('No data found for change log')
-    except Exception as e:
-        DBOperations.instance.logger.error(f"Error creating sheet: {e}", extra={'country': country})
+    # changelog has too many entries
+    # try:
+    #     ws_7 = wb.create_sheet(config['CHANGES_SHEET']['TITLE'], 0)
+    #     entities_ids_dict = {'Typ': [model_id], 'SV': sales_versions.ID.unique().tolist(), 'En': valid_engines.ID.explode().unique().tolist(), 'G': gb_ids}
+    #     err = change_log.get_sheet(ws_7, entities_ids_dict, valid_pnos.ID.unique().tolist(), title, time, country)
+    #     if err:
+    #         raise Exception('No data found for change log')
+    # except Exception as e:
+    #     DBOperations.instance.logger.error(f"Error creating sheet: {e}", extra={'country': country})
 
     wb.active = wb.index(ws_1)
     model_year = get_model_year_from_date(time)
     time = str(time)
     vb_title = f"{title.replace(' ', '')}_VB_{engines_types}_{model_year}_{time[:4]}w{time[4:]}.xlsx"
     wb.save(f"dist/vbs/{vb_title}")
+    # wb.save(f"{vb_title}") # for testing
     output = BytesIO()
     wb.save(output)
     output.seek(0)
