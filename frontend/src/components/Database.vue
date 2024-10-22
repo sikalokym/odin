@@ -348,6 +348,9 @@
       </tbody>
     </table>
     <!-- Features Table -->
+    <!-- button to download the whole table -->
+    <!--button style="display:block;width:180px; height:50px; display: inline-block; margin-top: 50px;"
+    @click="exportFeatureTable">Export Feature Table</button-->
     <table v-if="displaytable === 'Features' && model_year !== '0' && !customFeatureTable">
       <thead v-if="model_year !== '0'">
         <tr>
@@ -387,7 +390,16 @@
               </div>
             </div>
           </th>
-          <th style="width: 10px">Action</th>
+          <th>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              Option
+              <div style="margin-left: 1ch;">
+                <span @click="sortTable('Options', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('Options', -1)" style="cursor: pointer;">↓</span>
+              </div>
+            </div>
+          </th>
+          <th style="width: 10px;">Action</th>
           <th></th>
         </tr>
       </thead>
@@ -404,11 +416,13 @@
             <span v-else>{{ pno.MarketText }}</span>
           </td>
           <td>
-            <input v-model="pno.CustomName" type="text" @input="pno.edited = true" @change="pushUpdateFeature(pno)" />
+            <textarea v-model="pno.CustomName" type="text" @input="pno.edited = true" @change="pushUpdateFeature(pno)" style="width: 100%; height: 60px; white-space: pre-wrap;">
+            </textarea>
           </td>
           <td>
-            <input v-model="pno.CustomCategory" type="text" @input="pno.edited = true"
-              @change="pushUpdateFeature(pno)" />
+            <textarea v-model="pno.CustomCategory" type="text" @input="pno.edited = true"
+              @change="pushUpdateFeature(pno)" style="width: 100%; height: 60px; white-space: pre-wrap;">
+            </textarea>
           </td>
           <td style="background-color: #f4f4f4;">
             <span v-if="pno.ID !== ''" @click="deleteCustomFeature(pno)" style="cursor: pointer; color: red;">[X]</span>
@@ -492,7 +506,7 @@
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">{{ pno.MarketText }}</td>
           <td>
             <input type="text" v-model="pno.CustomName" @input="pno.edited = true"
-              @change="pushUpdateColor(pno)" />
+              @change="pushUpdateColor(pno)"/>
           </td>
         </tr>
       </tbody>

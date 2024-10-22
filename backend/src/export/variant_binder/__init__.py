@@ -131,8 +131,8 @@ def extract_variant_binder(country, model, engines_types, time, pno_ids=None, sv
     model_year = get_model_year_from_date(time)
     time = str(time)
     vb_title = f"{title.replace(' ', '')}_VB_{engines_types}_{model_year}_{time[:4]}w{time[4:]}.xlsx"
-    wb.save(f"dist/vbs/{vb_title}")
-    # wb.save(f"{vb_title}") # for testing
+    # wb.save(f"dist/vbs/{vb_title}")
+    wb.save(f"{vb_title}") # for testing
     output = BytesIO()
     wb.save(output)
     output.seek(0)
