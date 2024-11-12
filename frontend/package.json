@@ -1,11 +1,12 @@
 {
-  "name": "Odin",
+  "name": "odin",
   "version": "1.0.0",
   "private": true,
   "author": {
     "name": "Hassan Wahba"
   },
   "scripts": {
+    "dev": "vite",
     "start": "node server.js",
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",

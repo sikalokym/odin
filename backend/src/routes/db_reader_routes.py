@@ -479,7 +479,7 @@ def get_features(country, model_year):
     # Query PNO features and custom features
     df_pno_features = DBOperations.instance.get_table_df(
         DBOperations.instance.config.get('AUTH', 'FEAT'),
-        columns=['PNOID', 'Code', 'CustomName', 'CustomCategory'],
+        columns=['PNOID', 'Code', 'CustomName', 'CustomCategory', 'Reference'],
         conditions=pno_conditions
     )
     df_pno_custom_features = DBOperations.instance.get_table_df(
@@ -494,9 +494,21 @@ def get_features(country, model_year):
     df_pno_features['MarketText'] = df_pno_features['Code'].map(df_features.set_index('Code')['MarketText'])
     df_pno_features['ID'] = df_pno_features['ID'].fillna('')
 
+    df_pno_options = DBOperations.instance.get_table_df(DBOperations.instance.config.get('AUTH', 'OPT'), columns=['ID', 'PNOID', 'Code as OptCodeStr'], conditions=pno_conditions)
+    df_pno_options = df_pno_options.drop_duplicates()
+    # remove (u) from the end of the reference if exists otherwise replace with drop
+    df_pno_options['OptCode'] = df_pno_options['OptCodeStr'].apply(lambda x: x.lstrip('0') if x.isnumeric() else x)
+
+    df_pno_features_merged = df_pno_features.merge(df_pno_options[['PNOID', 'OptCode', 'OptCodeStr']], 
+                                      how='left', 
+                                      left_on=['PNOID', 'Reference'],
+                                      right_on=['PNOID', 'OptCode'])
+    df_pno_features_merged.drop(['OptCode'], axis=1)
+    df_pno_features_merged['Code'] = df_pno_features_merged.apply(lambda row: row['Code'] + " (" + row['OptCodeStr'].strip() + ")" if pd.notnull(row['OptCodeStr']) else row['Code'], axis=1)
+
     # Create mappings
     pno_id_to_model = df_pnos.set_index('ID')['Model'].to_dict()
-    custom_name_to_pnoid = df_pno_features.groupby('CustomName')['PNOID'].apply(list).to_dict()
+    custom_name_to_pnoid = df_pno_features_merged.groupby('CustomName')['PNOID'].apply(list).to_dict()
 
     # Aggregate data
     def aggregate_custom_name(custom_names):
@@ -524,7 +536,7 @@ def get_features(country, model_year):
             return "Specific: " + res_str[:-2]
         return unique_names[0]
     
-    df_pno_features = df_pno_features.groupby('Code').agg({
+    df_pno_features_merged = df_pno_features_merged.groupby('Code').agg({
         'MarketText': 'first', 
         'CustomName': aggregate_custom_name,
         'CustomCategory': aggregate_custom_name, 
@@ -532,11 +544,11 @@ def get_features(country, model_year):
     }).reset_index()
 
     # Sort and remove duplicates
-    df_pno_features = df_pno_features.sort_values(by='Code', ascending=True)
-    df_pno_features = df_pno_features.drop_duplicates()
+    df_pno_features_merged = df_pno_features_merged.sort_values(by='Code', ascending=True)
+    df_pno_features_merged = df_pno_features_merged.drop_duplicates()
 
     # Return as JSON
-    return df_pno_features.to_json(orient='records')
+    return df_pno_features_merged.to_json(orient='records')
 
 @bp_db_reader.route('/packages', methods=['GET'])
 def get_packages(country, model_year):
