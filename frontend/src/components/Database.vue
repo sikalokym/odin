@@ -89,6 +89,9 @@
       <!-- Add Custom Feature -->
       <button v-if="displaytable === 'Features' && model_year !== '0' && !customFeatureTable" style="margin-right: 1ch;"
         @click="showCustomFeatureTable">Add custom feature</button>
+      <!-- Download features -->
+      <button id="dlfeatures" :disabled="this.exportInProgress" v-if="displaytable === 'Features' && model_year !== '0' && !customFeatureTable" style="margin-right: 1ch;"
+        @click="downloadFeatures">{{ dlfeaturesText }}</button>
       <!-- Import Sales Channels -->
       <button v-if="displaytable === 'Sales Channels' && model_year !== '0' && !importTable && !discountTable && !xCodesTable"
         @click="showImportTable()">Import Sales Channels</button>
@@ -348,7 +351,7 @@
       </tbody>
     </table>
     <!-- Features Table -->
-    <table v-if="displaytable === 'Features' && model_year !== '0' && !customFeatureTable">
+    <table id="feature" v-if="displaytable === 'Features' && model_year !== '0' && !customFeatureTable">
       <thead v-if="model_year !== '0'">
         <tr>
           <th>
@@ -1633,13 +1636,12 @@
   </main>
 </template>
 
-
-
 <script>
 import { usePNOStore } from '../stores/pno.js'
 import { useEntitiesStore } from '../stores/entities.js'
-import axios from '../api/index.js'
+// import axios from '../api/index.js'
 import index from '../api/index.js'
+import Axios from 'axios';
 import "vue-select/dist/vue-select.css"
 import vSelect from "vue-select"
 import VueDatePicker from '@vuepic/vue-datepicker';
@@ -1688,6 +1690,8 @@ export default {
         StartDate: '',
         EndDate: '',
       },
+      dlfeaturesText: 'Download features',
+      exportInProgress: false
     }
   },
   mounted() {
@@ -1990,6 +1994,31 @@ export default {
       const year = Date.getFullYear();
       return `${day}.${month}.${year}`;
     },
+    async downloadFeatures() {
+      this.dlfeaturesText = 'Downloading...'
+      this.exportInProgress = true
+      await Axios({
+      method: "get",
+      url: `${index.endpoint}/${this.selectedCountry.Code}/export/features?&model=${this.model}&engine=${this.engine}&sales_version=${this.salesversion}&gearbox=${this.gearbox}&model_year=${this.model_year}`,
+      responseType: "blob",
+      onDownloadProgress: (progressEvent) => {
+          let percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          this.percentCompleted = percentCompleted;
+      },
+      }).then((response) => {
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url
+      link.setAttribute('download', 'Features.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      this.dlfeaturesText = 'Download features'
+      this.exportInProgress = false
+    });
+    },
     async handleModelYearChange() {
       await this.refreshModelyear();
       this.fetchPnoSpecifics();
@@ -2101,7 +2130,7 @@ export default {
     async downloadVISAFile(pno) {
       const visaFile = encodeURIComponent(pno.VisaFile);
       const link = document.createElement('a');
-      let link_href = `${axios.endpoint}/${this.selectedCountry.Code}/export/visa?VisaFile=${visaFile}`;
+      let link_href = `${index.endpoint}/${this.selectedCountry.Code}/export/visa?VisaFile=${visaFile}`;
       link.href = link_href;
 
       link.setAttribute('download', 'VisaFile_.xlsx');

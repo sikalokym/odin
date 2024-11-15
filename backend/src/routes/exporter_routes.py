@@ -9,10 +9,28 @@ from src.export.sap_price_list import extract_sap_price_list
 from src.utils.ingest_utils import is_valid_engine_category
 from src.database.db_operations import DBOperations
 from src.utils.db_utils import get_column_map
+from src.export.database import features
 
 # @author Hassan Wahba
 
 bp_exporter = Blueprint('export', __name__, url_prefix='/api/<country>/export')
+
+@bp_exporter.route('/features', methods=['GET'])
+def download_features(country):
+    model = request.args.get('model')
+    engine = request.args.get('engine')
+    sales_version = request.args.get('sales_version')
+    gearbox = request.args.get('gearbox')
+    model_year = request.args.get('model_year')
+
+    output = features.extract_features(country=country,
+                                       model=model,
+                                       model_year=model_year,
+                                       engine=engine,
+                                       sales_version=sales_version,
+                                       gearbox=gearbox)
+    return send_file(output, download_name="Features.xlsx", as_attachment=True), 200    
+    
 
 @bp_exporter.route('/variant_binder/pnos', methods=['GET'])
 def variant_binder_pnos(country):
