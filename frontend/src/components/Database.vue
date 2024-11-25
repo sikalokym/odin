@@ -87,9 +87,12 @@
       <input v-if="displaytable !== '' && model_year !== '0' && !customFeatureTable && !importTable && !discountTable && !xCodesTable"
         v-model="searchTerm" type="text" placeholder="Filter" style="margin-right: 1ch;">
       <!-- Add Custom Feature -->
-      <button v-if="displaytable === 'Features' && model_year !== '0' && !customFeatureTable"
+      <button v-if="displaytable === 'Features' && model_year !== '0' && !customFeatureTable" style="margin-right: 1ch;"
         @click="showCustomFeatureTable">Add custom feature</button>
-        <!-- Import Sales Channels -->
+      <!-- Download features -->
+      <button id="dlfeatures" :disabled="this.exportInProgress" v-if="displaytable === 'Features' && model_year !== '0' && !customFeatureTable" style="margin-right: 1ch;"
+        @click="downloadFeatures">{{ dlfeaturesText }}</button>
+      <!-- Import Sales Channels -->
       <button v-if="displaytable === 'Sales Channels' && model_year !== '0' && !importTable && !discountTable && !xCodesTable"
         @click="showImportTable()">Import Sales Channels</button>
       <div v-if="displaytable === 'Sales Channels' && model_year !== '0' && importTable"><strong>[{{
@@ -348,15 +351,12 @@
       </tbody>
     </table>
     <!-- Features Table -->
-    <!-- button to download the whole table -->
-    <!--button style="display:block;width:180px; height:50px; display: inline-block; margin-top: 50px;"
-    @click="exportFeatureTable">Export Feature Table</button-->
-    <table v-if="displaytable === 'Features' && model_year !== '0' && !customFeatureTable">
+    <table id="feature" v-if="displaytable === 'Features' && model_year !== '0' && !customFeatureTable">
       <thead v-if="model_year !== '0'">
         <tr>
           <th>
             <div style="display: flex; justify-content: center; align-items: center;">
-              Feature
+              Feature (Option)
               <div style="margin-left: 1ch;">
                 <span @click="sortTable('Code', 1)" style="cursor: pointer;">↑</span>
                 <span @click="sortTable('Code', -1)" style="cursor: pointer;">↓</span>
@@ -390,17 +390,6 @@
               </div>
             </div>
           </th>
-          <th>
-            <div style="display: flex; justify-content: center; align-items: center;">
-              Option
-              <div style="margin-left: 1ch;">
-                <span @click="sortTable('Options', 1)" style="cursor: pointer;">↑</span>
-                <span @click="sortTable('Options', -1)" style="cursor: pointer;">↓</span>
-              </div>
-            </div>
-          </th>
-          <th style="width: 10px;">Action</th>
-          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -424,9 +413,10 @@
               @change="pushUpdateFeature(pno)" style="width: 100%; height: 60px; white-space: pre-wrap;">
             </textarea>
           </td>
-          <td style="background-color: #f4f4f4;">
-            <span v-if="pno.ID !== ''" @click="deleteCustomFeature(pno)" style="cursor: pointer; color: red;">[X]</span>
-          </td>
+          
+          <!-- <td style="background-color: #f4f4f4;"> -->
+          <!--  <span v-if="pno.ID !== ''" @click="deleteCustomFeature(pno)" style="cursor: pointer; color: red;">[X]</span> -->
+          <!-- </td> -->
         </tr>
       </tbody>
     </table>
@@ -1646,13 +1636,12 @@
   </main>
 </template>
 
-
-
 <script>
 import { usePNOStore } from '../stores/pno.js'
 import { useEntitiesStore } from '../stores/entities.js'
-import axios from '../api/index.js'
+// import axios from '../api/index.js'
 import index from '../api/index.js'
+import Axios from 'axios';
 import "vue-select/dist/vue-select.css"
 import vSelect from "vue-select"
 import VueDatePicker from '@vuepic/vue-datepicker';
@@ -1701,6 +1690,8 @@ export default {
         StartDate: '',
         EndDate: '',
       },
+      dlfeaturesText: 'Download features',
+      exportInProgress: false
     }
   },
   mounted() {
@@ -2003,6 +1994,31 @@ export default {
       const year = Date.getFullYear();
       return `${day}.${month}.${year}`;
     },
+    async downloadFeatures() {
+      this.dlfeaturesText = 'Downloading...'
+      this.exportInProgress = true
+      await Axios({
+      method: "get",
+      url: `${index.endpoint}/${this.selectedCountry.Code}/export/features?&model=${this.model}&engine=${this.engine}&sales_version=${this.salesversion}&gearbox=${this.gearbox}&model_year=${this.model_year}`,
+      responseType: "blob",
+      onDownloadProgress: (progressEvent) => {
+          let percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          this.percentCompleted = percentCompleted;
+      },
+      }).then((response) => {
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url
+      link.setAttribute('download', 'Features.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      this.dlfeaturesText = 'Download features'
+      this.exportInProgress = false
+    });
+    },
     async handleModelYearChange() {
       await this.refreshModelyear();
       this.fetchPnoSpecifics();
@@ -2114,7 +2130,7 @@ export default {
     async downloadVISAFile(pno) {
       const visaFile = encodeURIComponent(pno.VisaFile);
       const link = document.createElement('a');
-      let link_href = `${axios.endpoint}/${this.selectedCountry.Code}/export/visa?VisaFile=${visaFile}`;
+      let link_href = `${index.endpoint}/${this.selectedCountry.Code}/export/visa?VisaFile=${visaFile}`;
       link.href = link_href;
 
       link.setAttribute('download', 'VisaFile_.xlsx');
