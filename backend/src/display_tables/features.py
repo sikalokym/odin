@@ -28,6 +28,8 @@ def query_features(country: str, model: str, model_year: int, engine: str, sales
     ids = df_pnos['ID'].tolist()
     pno_conditions = [f"PNOID = '{ids[0]}'"] if len(ids) == 1 else [f"PNOID in {tuple(ids)}"]
 
+    # pno_conditions.append("startdate between 202417 and 202516")
+
     # Query features and filter by model year
     df_features = DBOperations.instance.get_table_df(
         DBOperations.instance.config.get('TABLES', 'FEA'),
@@ -67,8 +69,8 @@ def query_features(country: str, model: str, model_year: int, engine: str, sales
                                       left_on=['PNOID', 'Reference'],
                                       right_on=['PNOID', 'OptCode'])
     df_pno_features_merged.drop(['OptCode'], axis=1)
-    df_pno_features_merged['Code'] = df_pno_features_merged.apply(lambda row: row['Code'] + " (" + row['OptCodeStr'].strip() + ")" if pd.notnull(row['OptCodeStr']) else row['Code'], axis=1)
-
+    df_pno_features_merged['FtCode_OpCode'] = df_pno_features_merged.apply(lambda row: row['Code'] + " (" + row['OptCodeStr'].strip() + ")" if pd.notnull(row['OptCodeStr']) else row['Code'], axis=1)
+    
     # Create mappings
     pno_id_to_model = df_pnos.set_index('ID')['Model'].to_dict()
     custom_name_to_pnoid = df_pno_features_merged.groupby('CustomName')['PNOID'].apply(list).to_dict()
@@ -98,8 +100,8 @@ def query_features(country: str, model: str, model_year: int, engine: str, sales
                     
             return "Specific: " + res_str[:-2]
         return unique_names[0]
-    
-    df_pno_features_merged = df_pno_features_merged.groupby('Code').agg({
+
+    df_pno_features_merged = df_pno_features_merged.groupby(['Code', 'FtCode_OpCode']).agg({
         'MarketText': 'first', 
         'CustomName': aggregate_custom_name,
         'CustomCategory': aggregate_custom_name, 

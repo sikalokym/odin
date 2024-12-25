@@ -20,7 +20,7 @@ import src.utils.db_utils as utils
 
 # Load environment variables
 load_dotenv(override=True)
-DBOperations.create_instance(test=0, logger=logger)
+DBOperations.create_instance(logger=logger)
 
 if __name__ == "__main__":
     current_time = pd.Timestamp.now()

@@ -15,10 +15,10 @@ class DBOperations:
     cache = TTLCache(maxsize=100, ttl=60000)
 
     @classmethod
-    def create_instance(cls, logger=None, test=False):
+    def create_instance(cls, logger=None):
         config = configparser.ConfigParser()
         config.read('config/data_model.cfg')
-        conn = DatabaseConnection.get_db_connection(test=test)
+        conn = DatabaseConnection.get_db_connection()
         cls.instance = cls(conn, config, logger)
         return cls.instance
     

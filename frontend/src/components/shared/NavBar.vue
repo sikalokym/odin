@@ -3,6 +3,7 @@
     <div class="nav-logo">
       <img src="@/assets/odin_logo.png" alt="Logo">
       <span class="name">Overall Data Import Navigator</span>
+      <span class="env" v-if="d_env !== 'PROD'" >{{ this.d_env }} Environment</span>
     </div>
     <div class="brand-logo">
       <img src="@/assets/brand_logo.svg" alt="brand-logo">
@@ -19,8 +20,18 @@
 </template>
 
 <script>
+import index from '../../api/index.js'
+
 export default {
   name: 'NavBar',
+  data() {
+    return {
+      d_env: ''
+    }
+  },
+  created() {
+    this.d_env = `${index.env}`;
+  }
 };
 </script>
 
@@ -39,6 +50,13 @@ export default {
   margin-left: 1rem;
   top: 2.4rem;
   white-space: nowrap;
+}
+
+.env {
+    margin-left: 1rem;
+    color: red;
+    font-weight: bold;
+    width: 7rem;
 }
 
 .nav-logo {

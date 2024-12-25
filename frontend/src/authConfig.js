@@ -2,16 +2,11 @@
 
 import { PublicClientApplication } from '@azure/msal-browser';
 
-let redirectUri = '';
-if (process.env.NODE_ENV === 'development') {
-    redirectUri = 'http://localhost:8080';
-} else {
-    redirectUri = 'https://odin-portal.azurewebsites.net';
-}
+let redirectUri = window.location.origin;
 
 const msalConfig = {
     auth: {
-        clientId: 'c507abc7-3ac1-4fd8-8f62-461b88d61f48',
+        clientId: process.env.VUE_APP_CLIENT_ID,
         authority: 'https://login.microsoftonline.com/81fa766e-a349-4867-8bf4-ab35e250a08f',
         redirectUri: redirectUri,
     },

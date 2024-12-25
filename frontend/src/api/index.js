@@ -2,11 +2,13 @@
 
 import Axios from 'axios';
 
-let ENDPOINT = '/api';
+
+let ENV = process.env.VUE_APP_ENV
+let ENDPOINT = ""
 if (process.env.NODE_ENV === 'development') {
-	ENDPOINT = 'http://127.0.0.1:5000' + ENDPOINT;
+	ENDPOINT = 'http://127.0.0.1:5000' + '/api';
 } else {
-	ENDPOINT = 'https://pmt-portal-backend.azurewebsites.net' + ENDPOINT;
+	ENDPOINT = 'https://' + process.env.VUE_APP_BACKEND_HOSTNAME + '/api';
 }
 const MAX_RETRIES = 2;
 
@@ -33,4 +35,5 @@ export default {
 		return makeRequestWithRetry(Axios.delete, path, null, options);
 	},
 	endpoint: ENDPOINT,
+	env: ENV,
 };

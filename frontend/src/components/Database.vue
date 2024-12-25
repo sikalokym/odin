@@ -358,8 +358,8 @@
             <div style="display: flex; justify-content: center; align-items: center;">
               Feature (Option)
               <div style="margin-left: 1ch;">
-                <span @click="sortTable('Code', 1)" style="cursor: pointer;">↑</span>
-                <span @click="sortTable('Code', -1)" style="cursor: pointer;">↓</span>
+                <span @click="sortTable('OptCodeStr', 1)" style="cursor: pointer;">↑</span>
+                <span @click="sortTable('OptCodeStr', -1)" style="cursor: pointer;">↓</span>
               </div>
             </div>
           </th>
@@ -395,9 +395,9 @@
       <tbody>
         <tr v-for="pno in tableFeatures" :key="pno.id" :class="{ 'editing': pno.edited }">
           <td style="background-color: #f4f4f4;">
-            <input v-if="pno.ID !== ''" v-model="pno.Code" type="text" @input="pno.edited = true"
+            <input v-if="pno.ID !== ''" v-model="pno.FtCode_OpCode" type="text" @input="pno.edited = true"
               @change="pushUpdateFeature(pno)" />
-            <span v-else>{{ pno.Code }}</span>
+            <span v-else>{{ pno.FtCode_OpCode }}</span>
           </td>
           <td class="CPAMColumn" style="background-color: #f4f4f4; text-align: left;">
             <input v-if="pno.ID !== ''" v-model="pno.MarketText" type="text" @input="pno.edited = true"
