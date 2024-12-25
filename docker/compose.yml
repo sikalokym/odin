@@ -1,0 +1,63 @@
+services:
+  # database:
+  #   image: "odin_database"
+  #   build:
+  #     context: ..
+  #     dockerfile: docker/database/database.Dockerfile
+  #     secrets:
+  #       - sa_password
+  #   container_name: odin_database
+  #   ports:
+  #     - "1433:1433"
+  #   environment:
+  #     ACCEPT_EULA: Y
+  #     MSSQL_SA_PASSWORD_FILE: /run/secrets/sa_password
+  #     DOCKER_BUILDKIT: 1
+  #   secrets:
+  #     - sa_password
+  
+  backend:
+    image: "odin_backend"
+    build:
+      context: ..
+      dockerfile: docker/backend/backend.Dockerfile
+    container_name: odin_backend
+    ports:
+      - "5000:50505"
+    environment:
+      DB_CONNECTION_STRING: "Driver={ODBC Driver 18 for SQL Server};Server=odin-dev-mssql-server.database.windows.net;Database=odin-dev-mssql-database;Uid=pmt_db_service;Pwd=ec1vres@bd@tmp;Authentication=SqlPassword;Encrypt=no;TrustServerCertificate=no;Connection Timeout=60;"
+      # DB_CONNECTION_STRING: "DSN=MSSQLServerDatabase;Database=odin;Uid=sa;Encrypt=yes;Connection Timeout=30;"
+    volumes:
+      - ..\backend:/app
+    secrets:
+      - sa_password
+    entrypoint: [ "/usr/backend_start.sh" ]
+
+  frontend:
+    image: "odin_frontend"
+    build:
+      context: ..
+      dockerfile: docker/frontend/frontend.Dockerfile
+    container_name: odin_frontend
+    working_dir: /app
+    ports:
+      - "8080:8080"
+    environment:
+      VUE_APP_BACKEND_HOSTNAME: "127.0.0.1:5000"
+      VUE_APP_ENV: "LOCAL"
+    volumes:
+      - ..\frontend:/app
+    command: ["npm", "run", "serve"]
+    
+secrets:
+  sa_password:
+    file: ./database_admin
+
+
+# Manual run:
+# docker compose -f docker/compose.yml build --no-cache
+# docker compose -f docker/compose.yml up -d database
+# docker container run -it --name odin_backend_debug -v .\backend:/app --env DB_CONNECTION_STRING="DSN=MSSQLServerDatabase;Database=odin;Uid=sa;Pwd=Oracle1983$;Encrypt=yes;Connection Timeout=30;" --publish 5000:50505 --network docker_default odin_backend bash
+# docker container run -it --rm -p 8080:8080 --name odin_frontend_debug --network docker_default -v .\frontend:/app odin_frontend bash
+
+# docker container run -it --name odin_backend_debug -v .\backend:/app --env DB_CONNECTION_STRING="Driver={ODBC Driver 18 for SQL Server};Server=pmt-sql-server.database.windows.net;Database=odin-prod-mssql-database;Uid=pmt_db_service;Pwd=ec1vres@bd@tmp;Authentication=SqlPassword;Encrypt=no;TrustServerCertificate=no;Connection Timeout=60;" --publish 5000:50505 --network docker_default odin_backend bash

@@ -1,0 +1,29 @@
+variable "env" {
+    description = "Prod or Dev environment"
+    type = string
+    default = "dev"
+    validation {
+      condition = contains(["dev", "prod"], var.env)
+      error_message = "error env"
+    }
+}
+
+variable "purpose" {
+    description = "Purpose of use of the env: prod, dev, test, learn"
+    type = string
+    default = "dev"
+    validation {
+      condition = contains(["dev", "prod", "test", "learn"], var.purpose)
+      error_message = "error purpose"
+    }
+}
+
+variable "location" {
+  type = string
+  default = "West Europe"
+}
+
+variable "client_id" {
+  type = string
+  sensitive = true
+}
