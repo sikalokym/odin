@@ -57,7 +57,7 @@ secrets:
 # Manual run:
 # docker compose -f docker/compose.yml build --no-cache
 # docker compose -f docker/compose.yml up -d database
-# docker container run -it --name odin_backend_debug -v .\backend:/app --env DB_CONNECTION_STRING="DSN=MSSQLServerDatabase;Database=odin;Uid=sa;Pwd=Oracle1983$;Encrypt=yes;Connection Timeout=30;" --publish 5000:50505 --network docker_default odin_backend bash
+# docker container run -it --name odin_backend_debug -v .\backend:/app --env DB_CONNECTION_STRING="DSN=MSSQLServerDatabase;Database=odin;Uid=sa;Pwd=;Encrypt=yes;Connection Timeout=30;" --publish 5000:50505 --network docker_default odin_backend bash
 # docker container run -it --rm -p 8080:8080 --name odin_frontend_debug --network docker_default -v .\frontend:/app odin_frontend bash
 
-# docker container run -it --name odin_backend_debug -v .\backend:/app --env DB_CONNECTION_STRING="Driver={ODBC Driver 18 for SQL Server};Server=pmt-sql-server.database.windows.net;Database=odin-prod-mssql-database;Uid=pmt_db_service;Pwd=ec1vres@bd@tmp;Authentication=SqlPassword;Encrypt=no;TrustServerCertificate=no;Connection Timeout=60;" --publish 5000:50505 --network docker_default odin_backend bash
+# docker container run -it --name odin_backend_debug -v .\backend:/app --env DB_CONNECTION_STRING="Driver={ODBC Driver 18 for SQL Server};Server=;Database=;Uid=pmt_db_service;Pwd=;Authentication=SqlPassword;Encrypt=no;TrustServerCertificate=no;Connection Timeout=60;" --publish 5000:50505 --network docker_default odin_backend bash
