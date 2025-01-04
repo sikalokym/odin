@@ -63,7 +63,7 @@ module "backend_networking" {
 }
 
 resource "azurerm_linux_web_app" "odin_frontend_app" {
-    name = var.purpose != "" ? "odin-${var.purpose}-portal" : "odin-portal"
+    name = var.purpose != "prod" ? "odin-${var.purpose}-portal" : "odin-portal"
     location = var.location
     resource_group_name = var.resource_group_name
     service_plan_id = azurerm_service_plan.odin_service_plan.id
