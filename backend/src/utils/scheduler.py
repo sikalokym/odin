@@ -77,7 +77,7 @@ except Exception as e:
     day, hour = 0, 4
 
 cpam_scheduler = BackgroundScheduler(daemon=True, timezone=utc)
-cpam_scheduler.add_job(schedule_fetch_task, 'cron', hour=hour, minute=3)
-cpam_scheduler.add_job(schedule_fetch_task, 'cron', hour=hour+12, minute=30)
+# t1 = cpam_scheduler.add_job(schedule_fetch_task, 'cron', hour=hour, minute=3, id="task_1")
+cpam_scheduler.add_job(schedule_fetch_task, 'cron', hour=hour+12, minute=30, id="task_2")
 
 atexit.register(lambda: cpam_scheduler.shutdown())
