@@ -74,10 +74,9 @@ try:
     hour = int(hour)
 except Exception as e:
     logger.error(f"Failed to parse the refresh date: {e}", extra={'country_code': 'All'})
-    day, hour = 0, 4
+    day, hour = "mon", 4
 
 cpam_scheduler = BackgroundScheduler(daemon=True, timezone=utc)
-# t1 = cpam_scheduler.add_job(schedule_fetch_task, 'cron', hour=hour, minute=3, id="task_1")
-# cpam_scheduler.add_job(schedule_fetch_task, 'cron', hour=hour+12, minute=30, id="task_2")
+cpam_scheduler.add_job(schedule_fetch_task, 'cron', day_of_week=day, hour=hour, id="cpam_ingestion")
 
 atexit.register(lambda: cpam_scheduler.shutdown())

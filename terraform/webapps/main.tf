@@ -29,7 +29,7 @@ resource "azurerm_linux_web_app" "odin_backend_app" {
         "SQL_DB_UID": "pmt_db_service",
         "SQL_DB_PWD": "",
         "CPAM_API_URL": "https://se-qa-api.volvocars.biz/cpam/service/ProductDataGet",
-        "CPAM_REFRESH_DATE": "mon-4",
+        "CPAM_REFRESH_DATE": "mon-1",
         "CPAM_USER_KEY": "0ee7aafa944473221e76edd7f604290b"
 
     }
