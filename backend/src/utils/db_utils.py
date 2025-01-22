@@ -94,6 +94,7 @@ def split_df(df):
     df_color = df_color.drop(columns=['Options', 'Upholstery', 'Package'])
     df_color = df_color.rename(columns={'Color': 'Code'})
     df_color = clean_code_column(df_color)
+    df_color['Code'] = df_color['Code'].str.slice(stop=3)
     df_color = sort_df_empty_to_filled(df_color)
 
     # DataFrame where 'Option' column has a value
@@ -108,6 +109,7 @@ def split_df(df):
     df_upholstery = df_upholstery.drop(columns=['Color', 'Options', 'Package'])
     df_upholstery = df_upholstery.rename(columns={'Upholstery': 'Code'})
     df_upholstery = clean_code_column(df_upholstery)
+    df_upholstery['Code'] = df_upholstery['Code'].str.slice(stop=4)
     df_upholstery = sort_df_empty_to_filled(df_upholstery)
 
     # DataFrame where 'Package' column has a value
