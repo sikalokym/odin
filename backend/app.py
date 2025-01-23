@@ -9,6 +9,7 @@ from src.routes.db_reader_routes import bp_db_reader
 from src.routes.db_writer_routes import bp_db_writer
 from src.routes.exporter_routes import bp_exporter
 from src.routes.settings_routes import bp_settings
+from src.routes.scheduler_routes import bp_scheduler
 from src.utils.sql_logging_handler import logger
 from src.routes.ingest_routes import bp_ingest
 from src.utils.scheduler import cpam_scheduler
@@ -25,6 +26,7 @@ app.register_blueprint(bp_ingest)
 app.register_blueprint(bp_db_reader)
 app.register_blueprint(bp_db_writer)
 app.register_blueprint(bp_exporter)
+app.register_blueprint(bp_scheduler)
 
 # Template string for rendering the welcome page
 WELCOME_PAGE_TEMPLATE = """

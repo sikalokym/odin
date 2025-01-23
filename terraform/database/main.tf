@@ -39,7 +39,7 @@ resource "azurerm_mssql_database" "odin-mssql-database" {
     # license_type = "LicenseIncluded"
     storage_account_type = "Local"
     max_size_gb = local.max_size_gb[var.purpose]
-    auto_pause_delay_in_minutes = 60
+    # auto_pause_delay_in_minutes = 60
     sku_name = local.sku_name[var.purpose]
     depends_on = [
         azurerm_mssql_server.odin_mssql_server
