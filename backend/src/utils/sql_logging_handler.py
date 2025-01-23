@@ -6,6 +6,27 @@ from src.database.db_operations import DBOperations
 
 # @author Hassan Wahba
 
+class DispatchingFormatter:
+    """Dispatch formatter for logger and it's sub logger."""
+    def __init__(self, formatters, default_formatter):
+        self._formatters = formatters
+        self._default_formatter = default_formatter
+
+    def format(self, record):
+        # Search from record's logger up to it's parents:
+        logger = logging.getLogger(record.name)
+        while logger:
+            # Check if suitable formatter for current logger exists:
+            if logger.name in self._formatters:
+                formatter = self._formatters[logger.name]
+                break
+            else:
+                logger = logger.parent
+        else:
+            # If no formatter found, just use default:
+            formatter = self._default_formatter
+        return formatter.format(record)
+
 class SQLLoggingHandler(logging.Handler):
     def __init__(self):
         super().__init__()
@@ -42,23 +63,40 @@ class SQLLoggingHandler(logging.Handler):
         except Exception as e:
             print(f"Failed to log message to database: {e}")
 
-def setup_logger_config(logger):
-    # Create a handler that saves the logs to a file and saves them for 7 days
+if not os.path.exists('logs'):
+    os.makedirs('logs')
+fh_handler = logging.handlers.TimedRotatingFileHandler('logs/app.log', when='D', interval=1, backupCount=7)
+fh_handler.setLevel(logging.DEBUG)
+fh_handler.setFormatter(DispatchingFormatter(
+        {
+            'cpam-processing': logging.Formatter('%(asctime)s - %(levelname)s - %(country)s - %(year)s - %(message)s'),
+            'cpam-processing-cartype': logging.Formatter('%(asctime)s - %(levelname)s - %(country)s - %(year)s - %(cartype)s - %(message)s')
+        },
+        logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'),
+    )
+)
+fh_handler.setLevel(logging.DEBUG)
 
-    if not os.path.exists('logs'):
-        os.makedirs('logs')
-    new_handler = logging.handlers.TimedRotatingFileHandler('logs/app.log', when='D', interval=1, backupCount=7)
-    new_handler.setLevel(logging.DEBUG)
-    new_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-    logger.addHandler(new_handler)
+logging.getLogger().addHandler(fh_handler)
 
-    # Create a handler that saves the logs to a database
-    sql_handler = SQLLoggingHandler()
-    sql_handler.setLevel(logging.DEBUG)
-    logger.addHandler(sql_handler)
-    return logger
+# new_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(country_code)s - %(message)s'))
+
+# logger.addHandler(new_handler)
+
+# Create a handler that saves the logs to a databases
+# sql_handler = SQLLoggingHandler()
+# sql_handler.setLevel(logging.DEBUG)
+# logger.addHandler(sql_handler)
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger = setup_logger_config(logger)
+logger.setLevel(logging.INFO)
+
+cpam_processing_logger = logging.getLogger('cpam-processing')
+cpam_processing_logger.setLevel(logging.INFO)
+
+cpam_processing_cartype_logger = logging.getLogger('cpam-processing-cartype')
+cpam_processing_cartype_logger.setLevel(logging.INFO)
+
+
+# logger = setup_logger_config(logger)
