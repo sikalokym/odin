@@ -1,11 +1,13 @@
 import threading
 from flask import Blueprint, request, jsonify
 import datetime
+import logging
 
 from src.ingest.cpam.services import fetch_all_cpam_data, ingest_all_cpam_data, process_all_cpam_data
 from src.ingest.visa_files.services import ingest_visa_data, ingest_visa_file
 from src.database.db_operations import DBOperations
-from src.utils.sql_logging_handler import logger
+from src.utils.sql_logging_handler import logger, cpam_processing_logger
+
 
 # @author Hassan Wahba
 
@@ -13,15 +15,16 @@ bp_ingest = Blueprint('ingest', __name__, url_prefix='/api/<country>/ingest')
 
 @bp_ingest.route('/cpam', methods=['GET'])
 def refresh_all_cpam_data(country):
+    logger.info('Manuall Refreshing CPAM Data started.')
     def process_cpam_data(country, year):
-        logger.info('Refreshing CPAM Data')
-        max_tries = 3
+        # cpam_processing_logger.info('Refreshing CPAM Data', extra={'country': country, 'year': year})
+        max_tries = 3;
         for i in range(max_tries):
             try:
                 fetch_all_cpam_data(country, start_model_year=year)
                 break
             except Exception as e:
-                logger.error(f"Failed to fetch CPAM data: {e}", extra={'country': country})
+                cpam_processing_logger.error(f"Failed to fetch CPAM data: {e}", extra={'country': country, 'year': year})
                 if i == max_tries - 1:
                     break
         for i in range(max_tries):
@@ -29,7 +32,7 @@ def refresh_all_cpam_data(country):
                 process_all_cpam_data(country, start_model_year=int(year))
                 break
             except Exception as e:
-                logger.error(f"Failed to process CPAM data: {e}", extra={'country': country})
+                cpam_processing_logger.error(f"Failed to process CPAM data: {e}", extra={'country': country, 'year': year})
                 if i == max_tries - 1:
                     break
         for i in range(max_tries):
@@ -37,10 +40,10 @@ def refresh_all_cpam_data(country):
                 ingest_all_cpam_data(country, start_model_year=int(year))
                 break
             except Exception as e:
-                logger.error(f"Failed to ingest CPAM data: {e}", extra={'country': country})
+                cpam_processing_logger.error(f"Failed to ingest CPAM data: {e}", extra={'country': country, 'year': year})
                 if i == max_tries - 1:
                     break
-        DBOperations.instance.logger.info('CPAM Data Refreshed', extra={'country': country})
+        DBOperations.instance.logger.info('CPAM Data Refreshed', extra={'country': country, 'year': year})
     
     year = request.args.get('year', None)
     if year is None or not year.isdigit():

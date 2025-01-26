@@ -9,7 +9,12 @@ from src.utils.parse_xml import parse_xml
 
 # @author Hassan Wahba
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
+from src.utils.sql_logging_handler import (
+    logger,
+    cpam_processing_logger,
+    cpam_processing_cartype_logger
+)
 
 config = configparser.ConfigParser()
 config.read('config/cpam.cfg')
@@ -51,7 +56,7 @@ def get_model_years(spec_market, start_model_year=''):
     """
     logger.info('Fetching model years from CPAM')
     req = model_year_req_xml.format(CONSUMER, MODEL_YEAR, spec_market, start_model_year)
-    logger.debug(req)
+    # logger.debug(req)
     try:
         response = requests.post(API_URL, headers=HEADERS, data=req)
     except requests.exceptions.RequestException as e:
@@ -62,7 +67,7 @@ def get_model_years(spec_market, start_model_year=''):
         logger.error('Error fetching model years from CPAM')
         return []
     
-    logger.debug('Model years fetched from CPAM')
+    logger.info('Model years fetched from CPAM')
     return parse_xml(response.text, model_year_resp_template)
 
 def get_car_types(model_year, spec_market):
@@ -74,17 +79,17 @@ def get_car_types(model_year, spec_market):
     Returns:
         str: XML response from CPAM
     """
-    logger.info('Fetching car types from CPAM')
+    cpam_processing_logger.info('Fetching car types from CPAM', extra={'country': spec_market, 'year': model_year})
     req = car_types_req_xml.format(CONSUMER, CAR_TYPES, spec_market, model_year)
     logger.debug(req)
 
     response = requests.post(API_URL, headers=HEADERS, data=req)
 
     if response.status_code > 500:
-        logger.error('Error fetching car types from CPAM')
+        cpam_processing_logger.error('Error fetching car types from CPAM', extra={'country': spec_market, 'year': model_year})
         return []
     
-    logger.debug('Car types fetched from CPAM')
+    cpam_processing_logger.info('Car types fetched from CPAM', extra={'country': spec_market, 'year': model_year})
     return parse_xml(response.text, car_types_resp_template)
 
 def get_dictionary(model_year, car_type, spec_market, market_auth_flag='', start_week=''):
@@ -99,17 +104,17 @@ def get_dictionary(model_year, car_type, spec_market, market_auth_flag='', start
     Returns:
         str: XML response from CPAM
     """
-    logger.info('Fetching dictionary from CPAM')
+    cpam_processing_cartype_logger.info('Fetching dictionary from CPAM', extra={'country': spec_market, 'year': model_year, 'cartype': car_type})
     req = dictionary_req_xml.format(CONSUMER, DICTIONARY, spec_market, car_type, model_year, market_auth_flag, start_week)
-    logger.debug(req)
+    # logger.debug(req)
 
     response = requests.post(API_URL, headers=HEADERS, data=req)
     
     if response.status_code > 500:
-        logger.error('Error fetching dictionary from CPAM')
+        cpam_processing_cartype_logger.error('Error fetching dictionary from CPAM', extra={'country': spec_market, 'year': model_year, 'cartype': car_type})
         return dict()
     
-    logger.debug('Dictionary fetched from CPAM')
+    cpam_processing_cartype_logger.info('Dictionary fetched from CPAM', extra={'country': spec_market, 'year': model_year, 'cartype': car_type})
     return parse_xml(response.text, dictionary_resp_template)
 
 def get_authorization(model_year, car_type, spec_market, market_auth_flag='', start_week=''):
@@ -124,17 +129,17 @@ def get_authorization(model_year, car_type, spec_market, market_auth_flag='', st
     Returns:
         str: XML response from CPAM
     """
-    logger.info('Fetching authorization from CPAM')
+    cpam_processing_cartype_logger.info('Fetching authorization from CPAM', extra={'country': spec_market, 'year': model_year, 'cartype': car_type})
     req = authorization_req_xml.format(CONSUMER, AUTHORIZATION, spec_market, car_type, model_year, market_auth_flag, start_week)
-    logger.debug(req)
+    # logger.debug(req)
 
     response = requests.post(API_URL, headers=HEADERS, data=req)
     
     if response.status_code > 500:
-        logger.error('Error fetching authorization from CPAM')
+        cpam_processing_cartype_logger.error('Error fetching authorization from CPAM', extra={'country': spec_market, 'year': model_year, 'cartype': car_type})
         return dict()
     
-    logger.debug('Authorization fetched from CPAM')
+    cpam_processing_cartype_logger.info('Authorization fetched from CPAM', extra={'country': spec_market, 'year': model_year, 'cartype': car_type})
     return parse_xml(response.text, authorization_resp_template)
 
 def get_packages(model_year, car_type, spec_market, market_auth_flag='m', start_week=''):
@@ -149,17 +154,17 @@ def get_packages(model_year, car_type, spec_market, market_auth_flag='m', start_
     Returns:
         str: XML response from CPAM
     """
-    logger.info('Fetching packages from CPAM')
+    cpam_processing_cartype_logger.info('Fetching packages from CPAM', extra={'country': spec_market, 'year': model_year, 'cartype': car_type})
     req = packages_req_xml.format(CONSUMER, PACKAGE, spec_market, car_type, model_year, market_auth_flag, start_week)
-    logger.debug(req)
+    # logger.debug(req)
 
     response = requests.post(API_URL, headers=HEADERS, data=req)
     
     if response.status_code > 500:
-        logger.error('Error fetching packages from CPAM')
+        cpam_processing_cartype_logger.error('Error fetching packages from CPAM', extra={'country': spec_market, 'year': model_year, 'cartype': car_type})
         return dict()
     
-    logger.debug('Packages fetched from CPAM')
+    cpam_processing_cartype_logger.info('Packages fetched from CPAM', extra={'country': spec_market, 'year': model_year, 'cartype': car_type})
     return parse_xml(response.text, packages_resp_template)
 
 def get_dependency_rules(model_year, car_type, spec_market, market_auth_flag='', start_week=''):
@@ -174,17 +179,17 @@ def get_dependency_rules(model_year, car_type, spec_market, market_auth_flag='',
     Returns:
         str: XML response from CPAM
     """
-    logger.info('Fetching dependency rules from CPAM')
+    cpam_processing_cartype_logger.info('Fetching dependency rules from CPAM', extra={'country': spec_market, 'year': model_year, 'cartype': car_type})
     req = dependency_rules_req_xml.format(CONSUMER, DEPENDENCY_RULES, spec_market, car_type, model_year, market_auth_flag, start_week)
-    logger.debug(req)
+    # logger.debug(req)
 
     response = requests.post(API_URL, headers=HEADERS, data=req)
     
     if response.status_code > 500:
-        logger.error('Error fetching dependency rules from CPAM')
+        cpam_processing_cartype_logger.error('Error fetching dependency rules from CPAM', extra={'country': spec_market, 'year': model_year, 'cartype': car_type})
         return dict()
     
-    logger.debug('Dependency rules fetched from CPAM')
+    cpam_processing_cartype_logger.info('Dependency rules fetched from CPAM', extra={'country': spec_market, 'year': model_year, 'cartype': car_type})
     return parse_xml(response.text, dependency_rules_resp_template)
 
 def get_features(model_year, car_type, spec_market, market_auth_flag='', start_week=''):
@@ -199,15 +204,15 @@ def get_features(model_year, car_type, spec_market, market_auth_flag='', start_w
     Returns:
         str: XML response from CPAM
     """
-    logger.info('Fetching features from CPAM')
+    cpam_processing_cartype_logger.info('Fetching features from CPAM', extra={'country': spec_market, 'year': model_year, 'cartype': car_type})
     req = features_req_xml.format(CONSUMER, FEATURES, spec_market, car_type, model_year, market_auth_flag, start_week)
-    logger.debug(req)
+    # logger.debug(req)
 
     response = requests.post(API_URL, headers=HEADERS, data=req)
     
     if response.status_code > 500:
-        logger.error('Error fetching features from CPAM')
+        cpam_processing_cartype_logger.error('Error fetching features from CPAM', extra={'country': spec_market, 'year': model_year, 'cartype': car_type})
         return dict()
     
-    logger.debug('Features fetched from CPAM')
+    cpam_processing_cartype_logger.info('Features fetched from CPAM', extra={'country': spec_market, 'year': model_year, 'cartype': car_type})
     return parse_xml(response.text, features_resp_template)

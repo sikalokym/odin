@@ -112,7 +112,7 @@ class DBOperations:
         if df.empty:
             self.logger.warning('No data to insert')
             return
-        
+        self.logger.info(f'table_name = {table_name}')
         self.create_temp_staging_table(table_name, columns)
         self.insert_data_into_staging(table_name, df, columns, conditional_columns)
         self.merge_data_from_staging(table_name, columns, conditional_columns)
@@ -241,7 +241,7 @@ class DBOperations:
         df = df.drop('MainDataType', axis=1)
         df.insert(5, 'CountryCode', country_code)
 
-        self.logger.debug('Inserting entities')
+        self.logger.info('Inserting entities')
         entities_with_translation = ['Typ', 'SV', 'G']
         for data_type, group in df.groupby('DataType'):
             entity_columns = ['Code', 'Special', 'ShortText', 'MarketText', 'CountryCode', 'StartDate', 'EndDate']

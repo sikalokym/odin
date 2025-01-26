@@ -17,14 +17,14 @@ def schedule_fetch_task():
     for i in range(max_tries):
         try:
             DBOperations.create_instance(logger=logger)
-            logger.info('Starting scheduled task to fetch CPAM data', extra={'country_code': 'All'})
+            logger.info('Starting scheduled task to fetch CPAM data')
             countries = get_supported_countries()
             for country in countries.Code.values:
                 fetch_all_cpam_data(country)
             DatabaseConnection.close_connection()
             break
         except Exception as e:
-            logger.error(f"Failed to complete scheduled task: {e}", extra={'country_code': 'All'})
+            logger.error(f"Failed to complete scheduled task: {e}")
             if i == max_tries - 1:
                 break
     schedule_preprocess_task()
@@ -34,14 +34,15 @@ def schedule_preprocess_task():
     for i in range(max_tries):
         try:
             DBOperations.create_instance(logger=logger)
-            logger.info('Starting scheduled task to process CPAM data', extra={'country_code': 'All'})
+            logger.info('Starting scheduled task to process CPAM data')
             countries = get_supported_countries()
             current_year = datetime.datetime.now().year
             for country in countries.Code.values:
                 process_all_cpam_data(country, current_year)
             DatabaseConnection.close_connection()
+            break
         except Exception as e:
-            logger.error(f"Failed to complete scheduled task: {e}", extra={'country_code': 'All'})
+            logger.error(f"Failed to complete scheduled task: {e}")
             if i == max_tries - 1:
                 break
     schedule_ingest_task()
@@ -51,14 +52,15 @@ def schedule_ingest_task():
     for i in range(max_tries):
         try:
             DBOperations.create_instance(logger=logger)
-            logger.info('Starting scheduled task to ingest CPAM data', extra={'country_code': 'All'})
+            logger.info('Starting scheduled task to ingest CPAM data')
             countries = get_supported_countries()
             current_year = datetime.datetime.now().year
             for country in countries.Code.values:
                 ingest_all_cpam_data(country, start_model_year=current_year)
             DatabaseConnection.close_connection()
+            break
         except Exception as e:
-            logger.error(f"Failed to complete scheduled task: {e}", extra={'country_code': 'All'})
+            logger.error(f"Failed to complete scheduled task: {e}")
             if i == max_tries - 1:
                 break
 
