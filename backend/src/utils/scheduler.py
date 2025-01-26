@@ -72,13 +72,14 @@ separator = config.get('REFRESH_DATE', 'ENV_VAR_NAME_SEPARATOR')
 date = os.getenv(env_var_name, f'mon{separator}4')
 
 try:
-    day, hour = date.split(separator)
+    day, hour, minute = date.split(separator)
     hour = int(hour)
+    minute = int(minute)
 except Exception as e:
     logger.error(f"Failed to parse the refresh date: {e}", extra={'country_code': 'All'})
-    day, hour = "mon", 4
+    day, hour, minute = "mon", 1, 0
 
 cpam_scheduler = BackgroundScheduler(daemon=True, timezone=utc)
-cpam_scheduler.add_job(schedule_fetch_task, 'cron', day_of_week=day, hour=hour, id="cpam_ingestion")
+cpam_scheduler.add_job(schedule_fetch_task, 'cron', day_of_week=day, hour=hour, minute=minute, id="cpam_ingestion")
 
 atexit.register(lambda: cpam_scheduler.shutdown())
