@@ -27,10 +27,10 @@ resource "azurerm_linux_web_app" "odin_backend_app" {
         "minTlsVersion": "1.2",
         "DB_CONNECTION_STRING": "Driver={ODBC Driver 18 for SQL Server};Server=${var.odin_sqlserver_name}.database.windows.net;Database=${var.odin_sqldatabase_name};Authentication=SqlPassword;Encrypt=no;TrustServerCertificate=no;Connection Timeout=60;",
         "SQL_DB_UID": "pmt_db_service",
-        "SQL_DB_PWD": "",
-        "CPAM_API_URL": "https://se-qa-api.volvocars.biz/cpam/service/ProductDataGet",
-        "CPAM_REFRESH_DATE": "mon-1",
-        "CPAM_USER_KEY": "0ee7aafa944473221e76edd7f604290b"
+        "SQL_DB_PWD": "ec1vres@bd@tmp",
+        "CPAM_API_URL": "https://se-api.volvocars.biz/cpam/service/ProductDataGet",
+        "CPAM_REFRESH_DATE": "mon-1-0",
+        "CPAM_USER_KEY": "dc1292e69f251b73fa8be404eef2eac1"
 
     }
 
