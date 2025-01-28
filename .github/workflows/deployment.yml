@@ -1,37 +1,20 @@
-name: ODIN App Deployment
+name: template
 on:
-  push
-
+  workflow_call:
+      inputs:
+        environment:
+          required: true
+          type: string
+  
 permissions:
-  id-token: write # Require write permission to Fetch an OIDC token.
+  id-token: write # Require write permission to Fetch an OIDC token. 
   contents: read
       
 jobs:
   Backend:
     name: Backend Deployment
     runs-on: vcc-azure-ubuntu-latest
-    environment: development
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Azure Login
-      uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURE_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-    - name: 'Deploy Backend to Azure Web App'
-      id: deploy-to-webapp
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: odin-dev-portal-backend
-        package: ./backend
-    
-  Frontend :
-    name: Frontend Deployment
-    runs-on: vcc-azure-ubuntu-latest
-    environment: development
+    environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
       
@@ -42,9 +25,30 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: 'Deploy Frontend to Azure Web App'
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v2
+      # - name: 'Deploy Backend to Azure Web App'
+      #   # id: deploy-to-webapp
+      #   uses: azure/webapps-deploy@v2
+      #   with:
+      #     app-name: odin-dev-portal-backend
+      #     package: ./backend
+    
+  Frontend :
+    name: Frontend Deployment
+    runs-on: vcc-azure-ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Azure Login
+        uses: azure/login@v2
         with:
-          app-name: odin-dev-portal
-          package: ./frontend
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # - name: 'Deploy Frontend to Azure Web App'
+      #   # id: deploy-to-webapp
+      #   uses: azure/webapps-deploy@v2
+      #   with:
+      #     app-name: odin-dev-portal
+      #     package: ./frontend
