@@ -1,5 +1,5 @@
 name: ODIN App Deployment
-on: None
+on: workflow_dispatch
 
 permissions:
   id-token: write # Require write permission to Fetch an OIDC token.
