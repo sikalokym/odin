@@ -1,5 +1,14 @@
 name: ODIN App Deployment
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        required: true
+        type: choice
+        description: Environment
+        options:
+          - development
+          - testing
 
 permissions:
   id-token: write # Require write permission to Fetch an OIDC token.
