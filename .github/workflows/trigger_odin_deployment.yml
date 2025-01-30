@@ -1,6 +1,6 @@
 on: [push]
 
-name: ODIN deployment
+name: ODIN deployment 
 
 run-name: Deploy to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                         github.ref == 'refs/heads/test' && 'Testing' }} environment 
