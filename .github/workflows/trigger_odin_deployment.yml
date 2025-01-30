@@ -7,7 +7,6 @@ on:
     paths: 
       - 'frontend/**'
       - 'backend/**'
-  
 
 name: ODIN deployment
 
