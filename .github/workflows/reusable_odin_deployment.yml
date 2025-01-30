@@ -15,6 +15,8 @@ on:
         subscription-id:
           required: true
 
+name: Reusable ODIN deployment template
+
 permissions:
   id-token: write # Require write permission to Fetch an OIDC token. 
   contents: read
@@ -36,12 +38,12 @@ jobs:
           tenant-id: ${{ secrets.tenant-id }}
           subscription-id: ${{ secrets.subscription-id }}
 
-      - name: 'Deploy Backend to Azure Web App'
-        # id: deploy-to-webapp
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: ${{ vars.BACKEND_APP_NAME }}
-          package: ./backend
+      # - name: 'Deploy Backend to Azure Web App'
+      #   # id: deploy-to-webapp
+      #   uses: azure/webapps-deploy@v2
+      #   with:
+      #     app-name: ${{ vars.BACKEND_APP_NAME }}
+      #     package: ./backend
     
   Frontend :
     name: Frontend Deployment
@@ -59,9 +61,9 @@ jobs:
           tenant-id: ${{ secrets.tenant-id }}
           subscription-id: ${{ secrets.subscription-id }}
 
-      - name: 'Deploy Frontend to Azure Web App'
-        # id: deploy-to-webapp
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: ${{ vars.FRONTEND_APP_NAME }}
-          package: ./frontend
+      # - name: 'Deploy Frontend to Azure Web App'
+      #   # id: deploy-to-webapp
+      #   uses: azure/webapps-deploy@v2
+      #   with:
+      #     app-name: ${{ vars.FRONTEND_APP_NAME }}
+      #     package: ./frontend
