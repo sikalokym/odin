@@ -14,6 +14,8 @@ on:
           required: true
         subscription-id:
           required: true
+        terraform-token:
+          required: true
 
 permissions:
   id-token: write # Require write permission to Fetch an OIDC token. 
@@ -31,4 +33,4 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v2.0.3
         with:
-          cli_config_credentials_token: sdfsdf
+          cli_config_credentials_token: ${{ terraform-token }}
