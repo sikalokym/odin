@@ -37,3 +37,6 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
+
+      - name: Terraform Plan
+        run: terraform plan -chdir=terraform -var-file .\tfvars\dev.tfvars -input=false
