@@ -22,8 +22,8 @@ permissions:
   contents: read
       
 jobs:
-  infra:
-    name: Infrastructure Deployment
+  terraform-plan:
+    name: Terraform Plan
     runs-on: vcc-azure-ubuntu-latest
     env:
       TF_CLOUD_ORGANIZATION: Sikalokym
