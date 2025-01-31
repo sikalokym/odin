@@ -28,12 +28,12 @@ jobs:
     env:
       TF_CLOUD_ORGANIZATION: Sikalokym
       TF_CLOUD_PROJECT: Odin
-      TF_WORKSPACE: Development
+      TF_WORKSPACE: ${{ inputs.environment }}
       ARM_CLIENT_ID: ${{ secrets.client-id }}
       ARM_SUBSCRIPTION_ID: ${{ secrets.subscription-id }}
       ARM_TENANT_ID:  ${{ secrets.tenant-id }}
       
-    environment: ${{ inputs.environment }}
+    # environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -61,3 +61,31 @@ jobs:
         with:
           name: terraform-plan
           path: terraform/odin.${{ inputs.environment }}.tfplan
+  
+  terraform-apply:
+    name: Terraform Apply
+    runs-on: vcc-azure-ubuntu-latest
+    env:
+      TF_CLOUD_ORGANIZATION: Sikalokym
+      TF_CLOUD_PROJECT: Odin
+      TF_WORKSPACE: ${{ inputs.environment }}
+      ARM_CLIENT_ID: ${{ secrets.client-id }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.subscription-id }}
+      ARM_TENANT_ID:  ${{ secrets.tenant-id }}
+      
+    # environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.client-id }}
+          tenant-id: ${{ secrets.tenant-id }}
+          subscription-id: ${{ secrets.subscription-id }}
+
+      - uses: hashicorp/setup-terraform@v2.0.3
+        with:
+          cli_config_credentials_token: ${{ secrets.terraform-token }}
