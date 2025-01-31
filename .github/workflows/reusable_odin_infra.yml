@@ -56,5 +56,8 @@ jobs:
       - name: Terraform Plan
         run: terraform -chdir=terraform plan -var-file tfvars/dev.tfvars -input=false -out=odin.${{ inputs.environment }}.tfplan
 
-      - name: check
-        run: ls -l; ls -ls terraform
+      - name: Upload Terraform Plan for deployment jobs
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: terraform/odin.${{ inputs.environment }}.tfplan
