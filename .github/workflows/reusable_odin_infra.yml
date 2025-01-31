@@ -33,6 +33,8 @@ jobs:
   get-secrets:
     runs-on: vcc-azure-ubuntu-latest
     environment: ${{ inputs.environment }}
+    steps:
+      - run: ls- l
     
   terraform-plan:
     name: Terraform Plan
