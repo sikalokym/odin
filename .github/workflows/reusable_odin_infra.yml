@@ -25,6 +25,11 @@ jobs:
   infra:
     name: Infrastructure Deployment
     runs-on: vcc-azure-ubuntu-latest
+    env:
+      TF_CLOUD_ORGANIZATION: Sikalokym
+      TF_CLOUD_PROJECT: Odin
+      TF_WORKSPACE: Development
+      
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
