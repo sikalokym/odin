@@ -30,6 +30,10 @@ permissions:
   contents: read
       
 jobs:
+  get-secrets:
+    runs-on: vcc-azure-ubuntu-latest
+    environment: ${{ inputs.environment }}
+    
   terraform-plan:
     name: Terraform Plan
     runs-on: vcc-azure-ubuntu-latest
