@@ -41,7 +41,7 @@ jobs:
     #   ARM_SUBSCRIPTION_ID: ${{ secrets.subscription-id }}
     #   ARM_TENANT_ID:  ${{ secrets.tenant-id }}
       
-    environment: ${{ inputs.environment }}
+    # environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -81,7 +81,7 @@ jobs:
     #   ARM_SUBSCRIPTION_ID: ${{ secrets.subscription-id }}
     #   ARM_TENANT_ID:  ${{ secrets.tenant-id }}
       
-    environment: ${{ inputs.environment }}
+    # environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
         with:
