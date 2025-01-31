@@ -39,6 +39,7 @@ jobs:
   terraform-plan:
     name: Terraform Plan
     runs-on: vcc-azure-ubuntu-latest
+    needs: [get-secrets]
     # env:
     #   TF_CLOUD_ORGANIZATION: Sikalokym
     #   TF_CLOUD_PROJECT: Odin
