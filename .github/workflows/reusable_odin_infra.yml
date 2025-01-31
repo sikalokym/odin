@@ -29,6 +29,9 @@ jobs:
       TF_CLOUD_ORGANIZATION: Sikalokym
       TF_CLOUD_PROJECT: Odin
       TF_WORKSPACE: Development
+      ARM_CLIENT_ID: ${{ secrets.client-id }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.subscription-id }}
+      ARM_TENANT_ID:  ${{ secrets.tenant-id }}
       
     environment: ${{ inputs.environment }}
     steps:
