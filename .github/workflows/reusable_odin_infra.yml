@@ -5,9 +5,6 @@ on:
           required: false
           type: string
           default: Development
-      #   ref:
-      #     required: true
-      #     type: string
       secrets:
         client-id:
           required: true
@@ -34,14 +31,6 @@ jobs:
   terraform-plan:
     name: Terraform Plan
     runs-on: vcc-azure-ubuntu-latest
-    # env:
-    #   TF_CLOUD_ORGANIZATION: Sikalokym
-    #   TF_CLOUD_PROJECT: Odin
-    #   TF_WORKSPACE: ${{ inputs.environment }}
-    #   ARM_CLIENT_ID: ${{ secrets.client-id }}
-    #   ARM_SUBSCRIPTION_ID: ${{ secrets.subscription-id }}
-    #   ARM_TENANT_ID:  ${{ secrets.tenant-id }}
-      
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
@@ -82,14 +71,6 @@ jobs:
     name: Terraform Apply
     needs: [terraform-plan, terraform-apply-approval]
     runs-on: vcc-azure-ubuntu-latest
-    # env:
-    #   TF_CLOUD_ORGANIZATION: Sikalokym
-    #   TF_CLOUD_PROJECT: Odin
-    #   TF_WORKSPACE: ${{ inputs.environment }}
-    #   ARM_CLIENT_ID: ${{ secrets.client-id }}
-    #   ARM_SUBSCRIPTION_ID: ${{ secrets.subscription-id }}
-    #   ARM_TENANT_ID:  ${{ secrets.tenant-id }}
-      
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
