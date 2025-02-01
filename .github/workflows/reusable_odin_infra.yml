@@ -5,26 +5,31 @@ on:
           required: false
           type: string
           default: Development
-        ref:
-          required: true
-          type: string
-      secrets:
-        client-id:
-          required: true
-        tenant-id:
-          required: true
-        subscription-id:
-          required: true
-        terraform-token:
-          required: true
+      #   ref:
+      #     required: true
+      #     type: string
+      # secrets:
+      #   client-id:
+      #     required: true
+      #   tenant-id:
+      #     required: true
+      #   subscription-id:
+      #     required: true
+      #   terraform-token:
+      #     required: true
 
-env:
-  TF_CLOUD_ORGANIZATION: Sikalokym
-  TF_CLOUD_PROJECT: Odin
-  TF_WORKSPACE: ${{ inputs.environment }}
-  ARM_CLIENT_ID: ${{ secrets.client-id }}
-  ARM_SUBSCRIPTION_ID: ${{ secrets.subscription-id }}
-  ARM_TENANT_ID:  ${{ secrets.tenant-id }}
+# env:
+#   TF_CLOUD_ORGANIZATION: Sikalokym
+#   TF_CLOUD_PROJECT: Odin
+#   TF_WORKSPACE: ${{ inputs.environment }}
+#   ARM_CLIENT_ID: ${{ secrets.client-id }}
+#   ARM_SUBSCRIPTION_ID: ${{ secrets.subscription-id }}
+#   ARM_TENANT_ID:  ${{ secrets.tenant-id }}
+
+      #   client-id: ${{ secrets.AZURE_CLIENT_ID }}
+    #   tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+    #   subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    #   terraform-token: ${{ secrets.TERRAFORM_TOKEN }}
 
 permissions:
   id-token: write # Require write permission to Fetch an OIDC token. 
@@ -45,19 +50,17 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.ref }}
 
       - name: Azure Login
         uses: azure/login@v2
         with:
-          client-id: ${{ env.ARM_CLIENT_ID }}
-          tenant-id: ${{ env.ARM_TENANT_ID }}
-          subscription-id: ${{ env.ARM_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - uses: hashicorp/setup-terraform@v2.0.3
         with:
-          cli_config_credentials_token: ${{ secrets.terraform-token }}
+          cli_config_credentials_token: ${{ secrets.TERRAFORM_TOKEN }}
 
       - name: Terraform Init
         run: terraform -chdir=terraform init
@@ -95,16 +98,14 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.ref }}
-
+      
       - name: Azure Login
         uses: azure/login@v2
         with:
-          client-id: ${{ env.ARM_CLIENT_ID }}
-          tenant-id: ${{ env.ARM_TENANT_ID }}
-          subscription-id: ${{ env.ARM_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - uses: hashicorp/setup-terraform@v2.0.3
         with:
-          cli_config_credentials_token: ${{ secrets.terraform-token }}
+          cli_config_credentials_token: ${{ secrets.TERRAFORM_TOKEN }}
