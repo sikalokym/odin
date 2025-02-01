@@ -70,9 +70,17 @@ jobs:
         with:
           name: terraform-plan
           path: terraform/odin.${{ inputs.environment }}.tfplan
+
+  terraform-apply-approval:
+    runs-on: ubuntu-latest
+    environment: terraform-apply-approval
+    steps:
+    - name: 'Terraform Apply status'
+      run: echo "Terraform Apply approved!"
   
   terraform-apply:
     name: Terraform Apply
+    needs: [terraform-plan, terraform-apply-approval]
     runs-on: vcc-azure-ubuntu-latest
     # env:
     #   TF_CLOUD_ORGANIZATION: Sikalokym
