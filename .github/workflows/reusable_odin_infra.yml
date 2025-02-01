@@ -16,9 +16,9 @@ on:
           required: true
 
 env:
-  TF_CLOUD_ORGANIZATION: Sikalokym
-  TF_CLOUD_PROJECT: Odin
-  TF_WORKSPACE: ${{ inputs.environment }}
+  TF_CLOUD_ORGANIZATION: ${{ vars.TF_CLOUD_ORGANIZATION }}
+  TF_CLOUD_PROJECT: ${{ vars.TF_CLOUD_PROJECT }}
+  TF_WORKSPACE: ${{ vars.TF_WORKSPACE }}
   ARM_CLIENT_ID: ${{ secrets.client-id }}
   ARM_SUBSCRIPTION_ID: ${{ secrets.subscription-id }}
   ARM_TENANT_ID:  ${{ secrets.tenant-id }}
