@@ -88,5 +88,5 @@ jobs:
           cli_config_credentials_token: ${{ secrets.terraform-token }}
       
       - name: Terraform Apply
-        run: terraform apply -chdir=terraform
+        run: terraform -chdir=terraform apply
 
