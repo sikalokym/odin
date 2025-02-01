@@ -91,5 +91,5 @@ jobs:
         run: terraform -chdir=terraform init
       
       - name: Terraform Apply
-        run: terraform -chdir=terraform apply -auto-approve -input=false
+        run: terraform -chdir=terraform apply #-auto-approve -input=false
 
