@@ -72,6 +72,7 @@ jobs:
           path: terraform/odin.${{ inputs.environment }}.tfplan
 
   terraform-apply-approval:
+    name: Terraform Apply Approval
     runs-on: ubuntu-latest
     needs: [terraform-plan]
     environment: terraform-apply-approval
