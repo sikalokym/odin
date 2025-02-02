@@ -4,9 +4,6 @@ on:
         environment:
           required: true
           type: string
-        ref:
-          required: true
-          type: string
       secrets:
         client-id:
           required: true
