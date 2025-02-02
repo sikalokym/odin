@@ -81,20 +81,23 @@ jobs:
         with:
           name: terraform-plan
           path: .
+      
+      - name: check
+        run: ls -l
+      
+      # - name: Azure Login
+      #   uses: azure/login@v2
+      #   with:
+      #     client-id: ${{ secrets.client-id }}
+      #     tenant-id: ${{ secrets.tenant-id }}
+      #     subscription-id: ${{ secrets.subscription-id }}
 
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.client-id }}
-          tenant-id: ${{ secrets.tenant-id }}
-          subscription-id: ${{ secrets.subscription-id }}
+      # - uses: hashicorp/setup-terraform@v2.0.3
+      #   with:
+      #     cli_config_credentials_token: ${{ secrets.terraform-token }}
 
-      - uses: hashicorp/setup-terraform@v2.0.3
-        with:
-          cli_config_credentials_token: ${{ secrets.terraform-token }}
+      # - name: Terraform Init
+      #   run: terraform -chdir=terraform init
 
-      - name: Terraform Init
-        run: terraform -chdir=terraform init
-
-      - name: Terraform Apply
-        run: terraform -chdir=terraform apply -var-file tfvars/${{ inputs.environment }}.tfvars -auto-approve terraform/odin.${{ inputs.environment }}.tfplan
+      # - name: Terraform Apply
+      #   run: terraform -chdir=terraform apply -var-file tfvars/${{ inputs.environment }}.tfvars -auto-approve terraform/odin.${{ inputs.environment }}.tfplan
