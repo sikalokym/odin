@@ -75,7 +75,13 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
-      
+
+      - name: Download Terraform Plan from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan
+          path: .
+
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -89,7 +95,7 @@ jobs:
 
       - name: Terraform Init
         run: terraform -chdir=terraform init
-      
+
       - name: Terraform Apply
-        run: terraform -chdir=terraform apply -var-file tfvars/${{ inputs.environment }}.tfvars -auto-approve
+        run: terraform -chdir=terraform apply -var-file tfvars/${{ inputs.environment }}.tfvars -auto-approve terraform/odin.${{ inputs.environment }}.tfplan
 
