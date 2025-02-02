@@ -4,6 +4,6 @@ output "odin_sqlserver_name" {
 }
 
 output "odin_sqldatabase_name" {
-  value = var.purpose == "dev" ? azurerm_mssql_database.odin-mssql-database-dev[0].name : azurerm_mssql_database.odin-mssql-database[0].name
+  value = one(concat(azurerm_mssql_database.odin-mssql-database-dev[*].name, azurerm_mssql_database.odin-mssql-database[*].name))
   sensitive = false
 }
