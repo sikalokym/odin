@@ -4,6 +4,6 @@ output "odin_sqlserver_name" {
 }
 
 output "odin_sqldatabase_name" {
-  value = azurerm_mssql_database.odin-mssql-database.name
+  value = one(concat(azurerm_mssql_database.odin-mssql-database-dev[*].name, azurerm_mssql_database.odin-mssql-database[*].name))
   sensitive = false
 }
