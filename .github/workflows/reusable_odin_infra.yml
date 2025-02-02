@@ -51,7 +51,7 @@ jobs:
         run: terraform -chdir=terraform init
 
       - name: Terraform Plan
-        run: terraform -chdir=terraform plan -var-file tfvars/${{ inputs.environment }}.tfvars -input=false -out=odin.${{ inputs.environment }}.tfplan
+        run: terraform -chdir=terraform plan -var-file tfvars/${{ inputs.environment }}.tfvars -input=false -out odin.${{ inputs.environment }}.tfplan
 
       - name: Upload Terraform Plan for deployment jobs
         uses: actions/upload-artifact@v4
@@ -98,4 +98,3 @@ jobs:
 
       - name: Terraform Apply
         run: terraform -chdir=terraform apply -var-file tfvars/${{ inputs.environment }}.tfvars -auto-approve terraform/odin.${{ inputs.environment }}.tfplan
-
