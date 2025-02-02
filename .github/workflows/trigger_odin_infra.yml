@@ -7,6 +7,10 @@ on:
     paths: 
       - 'terraform/**'
 
+concurrency: 
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
 name: ODIN Infrastructure
 
 run-name: Deploy Infra to ${{ github.ref == 'refs/heads/dev' && 'Development' ||
