@@ -1,7 +1,3 @@
-# $env:TF_CLOUD_PROJECT = "Odin"
-# $env:TF_CLOUD_ORGANIZATION = "Sikalokym"
-# $env:TF_WORKSPACE = "development"
-
 terraform { 
   cloud { 
   }
