@@ -8,6 +8,10 @@ on:
       - 'frontend/**'
       - 'backend/**'
 
+concurrency: 
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
 name: ODIN deployment
 
 run-name: Deploy to ${{ github.ref == 'refs/heads/dev' && 'Development' ||
