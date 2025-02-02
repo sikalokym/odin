@@ -97,4 +97,4 @@ jobs:
         run: terraform -chdir=terraform init
 
       - name: Terraform Apply
-        run: terraform -chdir=terraform apply -var-file tfvars/${{ inputs.environment }}.tfvars -auto-approve odin.${{ inputs.environment }}.tfplan
+        run: terraform -chdir=terraform apply -auto-approve odin.${{ inputs.environment }}.tfplan
