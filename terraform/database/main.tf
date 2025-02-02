@@ -32,14 +32,36 @@ module "sql_server_networking" {
 }
 
 resource "azurerm_mssql_database" "odin-mssql-database" {
-    name = var.purpose != "" ? "odin-${var.purpose}-mssql-database" : "odin-mssql-database"
+    count = var.purpose != "dev" ? 1 : 0
+    name = "odin-${var.purpose}-mssql-database"
     server_id = azurerm_mssql_server.odin_mssql_server.id
     collation = "SQL_Latin1_General_CP1_CI_AS"
     min_capacity = 0.5
-    # license_type = "LicenseIncluded"
+    storage_account_type = "Local"
+    auto_pause_delay_in_minutes = var.purpose == "prod" ? -1 : 60
+    max_size_gb = local.max_size_gb[var.purpose]
+    sku_name = local.sku_name[var.purpose]
+    depends_on = [
+        azurerm_mssql_server.odin_mssql_server
+    ]
+
+    lifecycle {
+      prevent_destroy = true
+      ignore_changes = [
+        tags["AppID"],
+        tags["EnvType"],
+        tags["owner-appid"]
+       ]
+    }
+}
+
+resource "azurerm_mssql_database" "odin-mssql-database-dev" {
+    count = var.purpose == "dev" ? 1 : 0
+    name = "odin-${var.purpose}-mssql-database"
+    server_id = azurerm_mssql_server.odin_mssql_server.id
+    collation = "SQL_Latin1_General_CP1_CI_AS"
     storage_account_type = "Local"
     max_size_gb = local.max_size_gb[var.purpose]
-    # auto_pause_delay_in_minutes = 60
     sku_name = local.sku_name[var.purpose]
     depends_on = [
         azurerm_mssql_server.odin_mssql_server
