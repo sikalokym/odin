@@ -55,7 +55,7 @@ resource "azurerm_mssql_database" "odin-mssql-database" {
     }
 }
 
-resource "azurerm_mssql_database" "odin-mssql-database" {
+resource "azurerm_mssql_database" "odin-mssql-database-dev" {
     count = var.purpose == "dev" ? 1 : 0
     name = "odin-${var.purpose}-mssql-database"
     server_id = azurerm_mssql_server.odin_mssql_server.id
