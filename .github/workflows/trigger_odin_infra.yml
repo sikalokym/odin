@@ -3,7 +3,7 @@ on:
     branches: 
       - 'main'
       - 'test'
-      - 'dev'
+      - 'develop'
     paths: 
       - 'terraform/**'
 
@@ -13,20 +13,20 @@ concurrency:
 
 name: ODIN Infrastructure
 
-run-name: Deploy Infra to ${{ github.ref == 'refs/heads/dev' && 'Development' ||
+run-name: Deploy Infra to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                               github.ref == 'refs/heads/test' && 'Testing' ||
                               github.ref == 'refs/heads/main' && 'Production' ||
                               'Development'}} environment
 
 jobs:
   job:
-    name: Deploy Infra to ${{ github.ref == 'refs/heads/dev' && 'Development' ||
+    name: Deploy Infra to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                               github.ref == 'refs/heads/test' && 'Testing' ||
                               github.ref == 'refs/heads/main' && 'Production' ||
                               'Development' }}
     uses: ./.github/workflows/reusable_odin_infra.yml
     with:
-      environment: ${{ github.ref == 'refs/heads/dev' && 'Development' ||
+      environment: ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                        github.ref == 'refs/heads/test' && 'Testing' ||
                        github.ref == 'refs/heads/main' && 'Production' ||
                        'Development' }}
