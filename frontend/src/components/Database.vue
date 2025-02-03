@@ -65,6 +65,7 @@
     <button style="display:block;width:180px; height:50px; display: inline-block; margin-top: 64px;"
       @click="reset">Reset Filters</button>
     <hr class="divider" style="margin-top: 40px;">
+
     <!-- CPAM Refresh Button
     <span style="font-size: 32px;">Manage Sources</span>
     <button style="display:block;width:180px; height:50px; display: inline-block; margin-top:10px;"
