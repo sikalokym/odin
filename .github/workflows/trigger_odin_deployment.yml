@@ -3,7 +3,7 @@ on:
     branches: 
       - 'main'
       - 'test'
-      - 'dev'
+      - 'develop'
     paths: 
       - 'frontend/**'
       - 'backend/**'
@@ -14,18 +14,18 @@ concurrency:
 
 name: ODIN deployment
 
-run-name: Deploy to ${{ github.ref == 'refs/heads/dev' && 'Development' ||
+run-name: Deploy to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                         github.ref == 'refs/heads/test' && 'Testing' ||
                         github.ref == 'refs/heads/main' && 'Production' }} environment
 
 jobs:
   job:
-    name: Deploy to ${{ github.ref == 'refs/heads/dev' && 'Development' ||
+    name: Deploy to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                         github.ref == 'refs/heads/test' && 'Testing' ||
                         github.ref == 'refs/heads/main' && 'Production' }}
     uses: ./.github/workflows/reusable_odin_deployment.yml
     with:
-      environment: ${{ github.ref == 'refs/heads/dev' && 'Development' ||
+      environment: ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                        github.ref == 'refs/heads/test' && 'Testing' ||
                        github.ref == 'refs/heads/main' && 'Production' }}
     secrets:
