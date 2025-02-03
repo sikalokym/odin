@@ -1,0 +1,34 @@
+on:
+  push:
+    branches: 
+      - 'main'
+      - 'test'
+      - 'dev'
+    paths: 
+      - 'frontend/**'
+      - 'backend/**'
+
+concurrency: 
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+name: ODIN deployment
+
+run-name: Deploy to ${{ github.ref == 'refs/heads/dev' && 'Development' ||
+                        github.ref == 'refs/heads/test' && 'Testing' ||
+                        github.ref == 'refs/heads/main' && 'Production' }} environment
+
+jobs:
+  job:
+    name: Deploy to ${{ github.ref == 'refs/heads/dev' && 'Development' ||
+                        github.ref == 'refs/heads/test' && 'Testing' ||
+                        github.ref == 'refs/heads/main' && 'Production' }}
+    uses: ./.github/workflows/reusable_odin_deployment.yml
+    with:
+      environment: ${{ github.ref == 'refs/heads/dev' && 'Development' ||
+                       github.ref == 'refs/heads/test' && 'Testing' ||
+                       github.ref == 'refs/heads/main' && 'Production' }}
+    secrets:
+      client-id: ${{ secrets.AZURE_CLIENT_ID }}
+      tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+      subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
