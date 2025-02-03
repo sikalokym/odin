@@ -28,7 +28,6 @@ app.register_blueprint(bp_db_writer)
 app.register_blueprint(bp_exporter)
 app.register_blueprint(bp_scheduler)
 
-
 # Template string for rendering the welcome page
 WELCOME_PAGE_TEMPLATE = """
 <!doctype html>
