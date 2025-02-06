@@ -1,0 +1,39 @@
+on:
+  workflow_call:
+      inputs:
+        environment:
+          required: false
+          type: string
+          default: Development
+      secrets:
+        client-id:
+          required: true
+        tenant-id:
+          required: true
+        subscription-id:
+          required: true
+        terraform-token:
+          required: true
+
+name: Reusable ODIN infa template
+
+env:
+  DOCKER_IMAGE: redgate/flyway
+
+jobs:
+  database-migrate:
+    name: Database Migrate
+    runs-on: vcc-azure-ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Flyway Migrate
+        run: |
+          docker run --rm
+                     --volume .\database:/flyway/sql:ro
+                     redgate/flyway
+                     -url='jdbc:sqlserver://odin-dev-mssql-server.database.windows.net:1433;database=odin-dev-mssql-database;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30'
+                     -user={{ secrets.DB_USER_NAME }}
+                     -password={{ secrets.DB_USER_PASS }}
+                     validate
