@@ -33,6 +33,7 @@ jobs:
           docker run --rm \
                      --volume ./database:/flyway/sql:ro \
                      redgate/flyway \
+                     -defaultSchema="flyway" \
                      -url='jdbc:sqlserver://${{ secrets.db-server }};database=${{ secrets.db-name }};encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30' \
                      -user='${{ secrets.db-user-name }}' \
                      -password='${{ secrets.db-user-pass }}' \
