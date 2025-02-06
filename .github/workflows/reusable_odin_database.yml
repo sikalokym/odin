@@ -25,6 +25,6 @@ jobs:
                      --volume ./database:/flyway/sql:ro \
                      redgate/flyway \
                      -url='jdbc:sqlserver://odin-dev-mssql-server.database.windows.net:1433;database=odin-dev-mssql-database;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30' \
-                     -user="{{ secrets.DB_USER_NAME }}" \
-                     -password="{{ secrets.DB_USER_PASS }}" \
+                     -user='${{ secrets.DB_USER_NAME }}' \
+                     -password='${{ secrets.DB_USER_PASS }}' \
                      validate
