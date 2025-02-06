@@ -20,11 +20,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Flyway Migrate
+        env:
+          FLYWAY_URL: ${{ inputs.url }}
+          FLYWAY_USER: ${{ secrets.DB_USER_NAME }}
+          FLYWAY_PASSWORD: ${{ secrets.DB_USER_PASS }}
         run: >-
           docker run --rm \
                      --volume ./database:/flyway/sql:ro \
                      redgate/flyway \
                      -url='jdbc:sqlserver://odin-dev-mssql-server.database.windows.net:1433;database=odin-dev-mssql-database;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30' \
-                     -user='${{ secrets.DB_USER_NAME }}' \
-                     -password='${{ secrets.DB_USER_PASS }}' \
                      validate
