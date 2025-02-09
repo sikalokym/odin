@@ -20,7 +20,7 @@ run-name: Deploy Application to ${{ github.ref == 'refs/heads/develop' && 'Devel
 
 jobs:
   job:
-    name: Deploy to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+    name: Deploy Application to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                         github.ref == 'refs/heads/test' && 'Testing' ||
                         github.ref == 'refs/heads/main' && 'Production' }}
     uses: ./.github/workflows/reusable_odin_application.yml
