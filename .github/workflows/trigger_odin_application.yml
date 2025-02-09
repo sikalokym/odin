@@ -12,18 +12,18 @@ concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
 
-name: ODIN deployment
+name: ODIN Application
 
-run-name: Deploy to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
-                        github.ref == 'refs/heads/test' && 'Testing' ||
-                        github.ref == 'refs/heads/main' && 'Production' }} environment
+run-name: Deploy Application to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+                                    github.ref == 'refs/heads/test' && 'Testing' ||
+                                    github.ref == 'refs/heads/main' && 'Production' }} environment
 
 jobs:
   job:
-    name: Deploy to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+    name: Deploy Application to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                         github.ref == 'refs/heads/test' && 'Testing' ||
                         github.ref == 'refs/heads/main' && 'Production' }}
-    uses: ./.github/workflows/reusable_odin_deployment.yml
+    uses: ./.github/workflows/reusable_odin_application.yml
     with:
       environment: ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                        github.ref == 'refs/heads/test' && 'Testing' ||
