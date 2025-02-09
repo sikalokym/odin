@@ -28,10 +28,11 @@ jobs:
       - name: Flyway Migrate
         run: |
           docker run --rm \
-                     --volume ./database:/flyway/sql:ro \
+                     --volume ./database:/database:ro \
                      redgate/flyway \
                      -defaultSchema="flyway" \
                      -baselineOnMigrate="true" \
+                     -locations="filesystem:/database" \
                      -url='jdbc:sqlserver://${{ secrets.db-server }};database=${{ secrets.db-name }};encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30' \
                      -user='${{ secrets.db-user-name }}' \
                      -password='${{ secrets.db-user-pass }}' \
