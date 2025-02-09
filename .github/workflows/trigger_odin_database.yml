@@ -13,20 +13,20 @@ concurrency:
 
 name: ODIN Database
 
-run-name: Deploy Database to ${{ github.ref == 'refs/heads/dev' && 'Development' ||
+run-name: Deploy Database to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                               github.ref == 'refs/heads/test' && 'Testing' ||
                               github.ref == 'refs/heads/main' && 'Production' ||
                               'Development'}} environment
 
 jobs:
   job:
-    name: Deploy Database to ${{ github.ref == 'refs/heads/dev' && 'Development' ||
+    name: Deploy Database to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                               github.ref == 'refs/heads/test' && 'Testing' ||
                               github.ref == 'refs/heads/main' && 'Production' ||
                               'Development' }}
     uses: ./.github/workflows/reusable_odin_database.yml
     with:
-      environment: ${{ github.ref == 'refs/heads/dev' && 'Development' ||
+      environment: ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                        github.ref == 'refs/heads/test' && 'Testing' ||
                        github.ref == 'refs/heads/main' && 'Production' ||
                        'Development' }}
