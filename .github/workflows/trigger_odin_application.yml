@@ -14,9 +14,9 @@ concurrency:
 
 name: ODIN Application
 
-run-name: Deploy to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
-                        github.ref == 'refs/heads/test' && 'Testing' ||
-                        github.ref == 'refs/heads/main' && 'Production' }} environment
+run-name: Deploy Application to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+                                    github.ref == 'refs/heads/test' && 'Testing' ||
+                                    github.ref == 'refs/heads/main' && 'Production' }} environment
 
 jobs:
   job:
