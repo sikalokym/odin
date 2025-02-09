@@ -1,11 +1,11 @@
 on:
   push:
-    # branches: 
-    #   - 'main'
-    #   - 'test'
-    #   - 'dev'
-    # paths: 
-    #   - 'database/**'
+    branches: 
+      - 'main'
+      - 'test'
+      - 'dev'
+    paths: 
+      - 'database/**'
 
 concurrency: 
   group: ${{ github.ref }}
