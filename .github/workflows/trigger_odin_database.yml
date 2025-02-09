@@ -1,0 +1,37 @@
+on:
+  push:
+    branches: 
+      - 'main'
+      - 'test'
+      - 'dev'
+    paths: 
+      - 'database/**'
+
+concurrency: 
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+name: ODIN Database
+
+run-name: Deploy Database to ${{ github.ref == 'refs/heads/dev' && 'Development' ||
+                              github.ref == 'refs/heads/test' && 'Testing' ||
+                              github.ref == 'refs/heads/main' && 'Production' ||
+                              'Development'}} environment
+
+jobs:
+  job:
+    name: Deploy Database to ${{ github.ref == 'refs/heads/dev' && 'Development' ||
+                              github.ref == 'refs/heads/test' && 'Testing' ||
+                              github.ref == 'refs/heads/main' && 'Production' ||
+                              'Development' }}
+    uses: ./.github/workflows/reusable_odin_database.yml
+    with:
+      environment: ${{ github.ref == 'refs/heads/dev' && 'Development' ||
+                       github.ref == 'refs/heads/test' && 'Testing' ||
+                       github.ref == 'refs/heads/main' && 'Production' ||
+                       'Development' }}
+    secrets:
+      db-user-name: ${{ secrets.DB_USER_NAME }}
+      db-user-pass: ${{ secrets.DB_USER_PASS }}
+      db-name: ${{ secrets.DB_NAME }}
+      db-server: ${{ secrets.DB_SERVER }}

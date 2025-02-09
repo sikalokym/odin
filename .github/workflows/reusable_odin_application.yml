@@ -1,0 +1,66 @@
+on:
+  workflow_call:
+      inputs:
+        environment:
+          required: true
+          type: string
+      secrets:
+        client-id:
+          required: true
+        tenant-id:
+          required: true
+        subscription-id:
+          required: true
+
+name: Reusable ODIN deployment template
+
+permissions:
+  id-token: write # Require write permission to Fetch an OIDC token. 
+  contents: read
+      
+jobs:
+  Backend:
+    name: Backend Deployment
+    runs-on: vcc-azure-ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.client-id }}
+          tenant-id: ${{ secrets.tenant-id }}
+          subscription-id: ${{ secrets.subscription-id }}
+
+      - name: 'Deploy Backend to Azure Web App'
+        # id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ vars.BACKEND_APP_NAME }}
+          package: ./backend
+    
+  Frontend :
+    name: Frontend Deployment
+    runs-on: vcc-azure-ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.client-id }}
+          tenant-id: ${{ secrets.tenant-id }}
+          subscription-id: ${{ secrets.subscription-id }}
+
+      - name: 'Deploy Frontend to Azure Web App'
+        # id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ vars.FRONTEND_APP_NAME }}
+          package: ./frontend
