@@ -13,14 +13,14 @@ concurrency:
 
 name: ODIN Infrastructure
 
-run-name: Deploy Infra to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+run-name: Deploy Infrastructure to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                               github.ref == 'refs/heads/test' && 'Testing' ||
                               github.ref == 'refs/heads/main' && 'Production' ||
                               'Development'}} environment
 
 jobs:
   job:
-    name: Deploy Infra to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+    name: Deploy Infrastructure to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                               github.ref == 'refs/heads/test' && 'Testing' ||
                               github.ref == 'refs/heads/main' && 'Production' ||
                               'Development' }}
