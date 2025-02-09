@@ -5,33 +5,33 @@ on:
       - 'test'
       - 'develop'
     paths: 
-      - 'terraform/**'
+      - 'database/**'
 
 concurrency: 
   group: ${{ github.ref }}
   cancel-in-progress: true
 
-name: ODIN Infrastructure
+name: ODIN Database
 
-run-name: Deploy Infra to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+run-name: Deploy Database to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                               github.ref == 'refs/heads/test' && 'Testing' ||
                               github.ref == 'refs/heads/main' && 'Production' ||
                               'Development'}} environment
 
 jobs:
   job:
-    name: Deploy Infra to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+    name: Deploy Database to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                               github.ref == 'refs/heads/test' && 'Testing' ||
                               github.ref == 'refs/heads/main' && 'Production' ||
                               'Development' }}
-    uses: ./.github/workflows/reusable_odin_infra.yml
+    uses: ./.github/workflows/reusable_odin_database.yml
     with:
       environment: ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                        github.ref == 'refs/heads/test' && 'Testing' ||
                        github.ref == 'refs/heads/main' && 'Production' ||
                        'Development' }}
     secrets:
-      client-id: ${{ secrets.AZURE_CLIENT_ID }}
-      tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-      subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      terraform-token: ${{ secrets.TERRAFORM_TOKEN }}
+      db-user-name: ${{ secrets.DB_USER_NAME }}
+      db-user-pass: ${{ secrets.DB_USER_PASS }}
+      db-name: ${{ secrets.DB_NAME }}
+      db-server: ${{ secrets.DB_SERVER }}

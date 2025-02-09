@@ -1,0 +1,39 @@
+on:
+  workflow_call:
+      inputs:
+        environment:
+          required: false
+          type: string
+          default: Development
+      secrets:
+        db-user-name:
+          required: true
+        db-user-pass:
+          required: true
+        db-name:
+          required: true
+        db-server:
+          required: true
+
+name: Reusable ODIN infa template
+
+jobs:
+  database-migrate:
+    name: Database Migrate
+    runs-on: vcc-azure-ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Flyway Migrate
+        run: |
+          docker run --rm \
+                     --volume ./database:/database:ro \
+                     redgate/flyway \
+                     -defaultSchema="flyway" \
+                     -baselineOnMigrate="true" \
+                     -locations="filesystem:/database" \
+                     -url='jdbc:sqlserver://${{ secrets.db-server }};database=${{ secrets.db-name }};encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30' \
+                     -user='${{ secrets.db-user-name }}' \
+                     -password='${{ secrets.db-user-pass }}' \
+                     migrate
