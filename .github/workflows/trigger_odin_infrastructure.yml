@@ -11,7 +11,7 @@ concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
 
-name: ODIN Infrastructure
+name: Automated Deployment Infrastructure
 
 run-name: Deploy Infrastructure to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                               github.ref == 'refs/heads/test' && 'Testing' ||
