@@ -26,7 +26,9 @@ jobs:
           mkdir -p $DOCKER_CONFIG/cli-plugins
           curl -SL https://github.com/docker/compose/releases/download/v2.33.0/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose
           ls -l /home/runner/.docker
-          ls -lr /usr/local/lib/docker/*
+          chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
+          docker compose version
+          # ls -lr /usr/local/lib/docker/*
           # docker build -f ./docker/database/database.Dockerfile . -t odin_database --secret id=sa_password,src=./docker/database_admin
           # docker container run --rm -p 1433:1433 --name odin_database_cntr -d odin_database
           # id
