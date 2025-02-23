@@ -18,14 +18,9 @@ jobs:
 
       - name: Create database instance
         run: |
-          echo $HOME
-          DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
-          echo $DOCKER_CONFIG
-          ls -l /home/runner
           DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
           mkdir -p $DOCKER_CONFIG/cli-plugins
           curl -SL https://github.com/docker/compose/releases/download/v2.33.0/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose
-          ls -l /home/runner/.docker
           chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
           docker compose version
           # ls -lr /usr/local/lib/docker/*
