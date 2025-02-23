@@ -2,11 +2,11 @@ services:
   database:
     image: "test_odin_database"
     build:
-      context: .
-      dockerfile: ./database/database.Dockerfile
+      context: ..
+      dockerfile: run_test/database/database.Dockerfile
       secrets:
         - sa_password
-    container_name: odin_database
+    container_name: test_odin_database
     ports:
       - "1433:1433"
     environment:
@@ -16,26 +16,23 @@ services:
     secrets:
       - sa_password
   
-  # backend:
-  #   image: "odin_backend"
-  #   build:
-  #     context: ..
-  #     dockerfile: docker/backend/backend.Dockerfile
-  #   container_name: odin_backend
-  #   ports:
-  #     - "5000:50505"
-  #   environment:
-  #     DB_CONNECTION_STRING: "Driver={ODBC Driver 18 for SQL Server};Server=odin-dev-mssql-server.database.windows.net;Database=odin-dev-mssql-database;Uid=pmt_db_service;Pwd=ec1vres@bd@tmp;Authentication=SqlPassword;Encrypt=no;TrustServerCertificate=no;Connection Timeout=60;"
-  #     # DB_CONNECTION_STRING: "DSN=MSSQLServerDatabase;Database=odin;Uid=sa;Encrypt=yes;Connection Timeout=30;"
-  #   volumes:
-  #     - ..\backend:/app
-  #   secrets:
-  #     - sa_password
-  #   entrypoint: [ "/usr/backend_start.sh" ]
+  backend:
+    image: "test_odin_backend"
+    build:
+      context: ..
+      dockerfile: run_test/backend/backend.Dockerfile
+    container_name: test_odin_backend
+    environment:
+      DB_CONNECTION_STRING: "DSN=MSSQLServerDatabase;Database=odin;Uid=sa;Encrypt=yes;Connection Timeout=30;"
+    volumes:
+      - ..\backend:/app
+    secrets:
+      - sa_password
+    entrypoint: [ "/usr/backend_start.sh" ]
 
 secrets:
   sa_password:
-    file: ./database/database_admin
+    file: database/database_admin
 
 
 # Manual run:

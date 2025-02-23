@@ -26,7 +26,7 @@ RUN odbcinst -i -s -f ~/sql_conn_setup -l
 # COPY ./backend/requirements_dev.txt .
 # RUN pip3 install -r requirements.txt
 # RUN pip3 install -r requirements_dev.txt
-COPY /docker/backend/backend_start.sh /usr
+COPY run_test/backend/backend_start.sh /usr
 RUN chmod +x /usr/backend_start.sh
 EXPOSE 50505
 # CMD ["/usr/backend_start.sh"]
