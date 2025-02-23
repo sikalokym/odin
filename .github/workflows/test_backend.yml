@@ -18,5 +18,6 @@ jobs:
 
       - name: Create database instance
         run: |
-          docker compose -f 'docker\compose.yml' up -d --build 'database'
+          docker compose --help
+          # docker compose -f 'docker\compose.yml' up -d --build 'database'
           
