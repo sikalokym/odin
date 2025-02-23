@@ -22,5 +22,6 @@ jobs:
           # docker build -f ./docker/database/database.Dockerfile . -t odin_database --secret id=sa_password,src=./docker/database_admin
           # docker container run --rm -p 1433:1433 --name odin_database_cntr -d odin_database
           id
-          sudo curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+          sudo apt-get update
+          sudo apt-get install docker-compose-plugin
           
