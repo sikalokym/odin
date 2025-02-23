@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/mssql/server:2022-latest
 WORKDIR /usr
-COPY --chmod=777 docker/database/setup.sh ./scripts/setup.sh
+COPY --chmod=777 database/setup.sh ./scripts/setup.sh
 # COPY backend/src/database/sql_templates/db_setup.sql ./scripts/db_setup.sql
 # COPY backend/src/database/sql_templates/log_triggers.sql ./scripts/log_triggers.sql
 # RUN  chmod 777 /usr/scripts/setup.sh
