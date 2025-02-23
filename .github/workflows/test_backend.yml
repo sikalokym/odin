@@ -13,8 +13,8 @@ jobs:
       #   with:
       #     length: 20
       
-      - run: echo "sdfgdsfg3454!" > docker/database_admin
-        shell: bash
+      # - run: echo "sdfgdsfg3454!" > docker/database_admin
+      #   shell: bash
 
       - name: Create database instance
         run: |
