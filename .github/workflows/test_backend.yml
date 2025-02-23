@@ -21,7 +21,8 @@ jobs:
           echo $HOME
           DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
           echo $DOCKER_CONFIG
-          # ls -l ./docker
+          ls -l /home/runner
+          ls -l /home/runner/.docker
           # docker build -f ./docker/database/database.Dockerfile . -t odin_database --secret id=sa_password,src=./docker/database_admin
           # docker container run --rm -p 1433:1433 --name odin_database_cntr -d odin_database
           # id
