@@ -13,11 +13,10 @@ jobs:
         with:
           length: 20
       
-      - run: echo "${{ steps.generated-password.outputs.password }}"
+      - run: echo "${{ steps.generated-password.outputs.password }}" > docker/database_admin
         shell: bash
 
       - name: Create database instance
         run: |
-          ${{ steps.generated-password.outputs.password }} > docker/database_admin
           docker compose -f 'docker\compose.yml' up -d --build 'database'
           
