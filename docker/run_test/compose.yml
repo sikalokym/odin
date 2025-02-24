@@ -32,7 +32,7 @@ services:
       - ./backend/odin_database:/odin_database
     secrets:
       - sa_password
-    entrypoint: [ "/usr/start_backend_test.sh" ]
+    entrypoint: ["bash", "/usr/start_backend_test.sh" ]
 
 secrets:
   sa_password:
