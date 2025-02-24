@@ -17,7 +17,7 @@ Driver                 = ODBC Driver 18 for SQL Server\n\
 Description            = Connect to my SQL Server instance\n\
 Trace                  = No\n\
 TrustServerCertificate = Yes\n\
-Server                 = odin_database" >> ~/sql_conn_setup
+Server                 = test_odin_database" >> ~/sql_conn_setup
 
 RUN odbcinst -i -s -f ~/sql_conn_setup -l
 
@@ -26,7 +26,7 @@ RUN odbcinst -i -s -f ~/sql_conn_setup -l
 # COPY ./backend/requirements_dev.txt .
 # RUN pip3 install -r requirements.txt
 # RUN pip3 install -r requirements_dev.txt
-COPY --chmod=777 run_test/backend/backend_start.sh /usr
+# COPY --chmod=777 run_test/backend/backend_start.sh /usr
 # RUN chmod +x /usr/backend_start.sh
 # CMD ["/usr/backend_start.sh"]
-ENTRYPOINT [ "/usr/backend_start.sh" ]: 
+# ENTRYPOINT [ "/usr/backend_start.sh" ]: 
