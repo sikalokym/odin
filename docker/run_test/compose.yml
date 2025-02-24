@@ -24,11 +24,15 @@ services:
     container_name: test_odin_backend
     environment:
       DB_CONNECTION_STRING: "Driver={ODBC Driver 18 for SQL Server};Server=test_odin_database;Database=odin;Authentication=SqlPassword;Encrypt=no;TrustServerCertificate=Yes;Connection Timeout=60;"
+      SQL_DB_UID: "sa"
+      SQL_DB_PWD: "M1y9k8o3l1a2a!"
     volumes:
-      - ..\..\backend:/app
+      - ../../backend:/app
+      - ./backend/start_backend_test.sh:/usr/start_backend_test.sh
+      - ./backend/odin_database:/odin_database
     secrets:
       - sa_password
-    entrypoint: [ "/usr/backend_start.sh" ]
+    entrypoint: [ "/usr/start_backend_test.sh" ]
 
 secrets:
   sa_password:
