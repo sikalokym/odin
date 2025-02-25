@@ -46,7 +46,7 @@ secrets:
 # docker compose -f 'docker\compose.yml' up -d --build 'database' 
 # docker build -f .\docker\database\database.Dockerfile . -t odin_database --secret id=sa_password,src=.\docker\database_admin
 # docker container run --rm -p 1433:1433 --network docker_default --name test_odin_database -d test_odin_database
-# docker container run -it -v .\backend:/app --env DB_CONNECTION_STRING="DSN=MSSQLServerDatabase;Database=odin;Encrypt=yes;Connection Timeout=30;" --env SQL_DB_UID="sa" --env SQL_DB_PWD="M1y9k8o3l1a2a!" --network docker_default --name test_odin_backend test_odin_backend bash
+# docker container run -it -v .\docker\run_test\backend\backend_start.sh:/usr/backend_start.sh -v .\docker\run_test\backend\odin_database:/odin_database -v .\backend:/app --env DB_CONNECTION_STRING="Driver={ODBC Driver 18 for SQL Server};Server=test_odin_database;Database=odin;Authentication=SqlPassword;Encrypt=no;TrustServerCertificate=Yes;Connection Timeout=60;" --env SQL_DB_UID="sa" --env SQL_DB_PWD="M1y9k8o3l1a2a!" --network docker_default --name test_odin_backend test_odin_backend bash
 
 
 # docker container run -it --name odin_backend_debug -v .\backend:/app --env DB_CONNECTION_STRING="DSN=MSSQLServerDatabase;Database=odin;Uid=sa;Pwd=;Encrypt=yes;Connection Timeout=30;" --publish 5000:50505 --network docker_default odin_backend bash
