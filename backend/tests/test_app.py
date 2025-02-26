@@ -26,7 +26,7 @@ def test_visa_upload(client, mocker):
     data = {}
     data['visa'] = my_file
     respponse = client.post("/api/231/ingest/visa/upload", data=data)
-    assert respponse.status_code == 200
+    assert respponse.status_code == 2
     assert respponse.json == "File uploaded successfully"
 
 
