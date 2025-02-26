@@ -23,6 +23,7 @@ jobs:
           curl -SL https://github.com/docker/compose/releases/download/v2.33.0/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose
           chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
           docker compose version
+          docker login -u mykolakis609 -p ${{ secrets.DOCKER_TOKEN }}
           docker compose -f 'docker/run_test/compose.yml' up -d --build database
           docker compose -f 'docker/run_test/compose.yml' up --build backend
           docker_exit=$?
