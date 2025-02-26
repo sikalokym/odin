@@ -25,6 +25,8 @@ jobs:
           docker compose version
           docker compose -f 'docker/run_test/compose.yml' up -d --build database
           docker compose -f 'docker/run_test/compose.yml' up --build backend
+          docker_exit=$?
+          echo $docker_exit
           docker compose -f 'docker/run_test/compose.yml' rm -s -f backend
           docker compose -f 'docker/run_test/compose.yml' rm -s -f database
 
