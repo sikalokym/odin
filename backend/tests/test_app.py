@@ -31,7 +31,7 @@ def test_visa_upload(client, mocker):
 
 
 def test_visa_files(client, mocker):
-    expected_responce = '[{"VisaFile":"VISA_V90 MY25_24w17 (24w15).xlsx","CarType":"235","CustomName":"V90"}]'
+    expected_responce = '[{"VisaFile":"VISA_V90 MY25_24w17 (24w15)","CarType":"235","CustomName":"V90"}]'
     response = client.get("/api/db/231/2025/visa-files")
     assert response.status_code == 200
     assert response.text == expected_responce
