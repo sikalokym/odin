@@ -31,6 +31,24 @@ def test_pnos(client, mocker):
     assert response.text == expected_response
 
 
+def test_models(client, mocker):
+    expected_response = '[{"Code":"539","CustomName":"EC40","MarketText":"EC40"}]'
+    response = client.get("/api/db/231/2025/models")
+    assert response.status_code == 200
+    assert response.text == expected_response
+
+
+def test_packages(client, mocker):
+    expected_response = '[{"Code":"P0030","MarketText":"Edition Pack","CustomName":""}]'
+    response = client.get("/api/db/231/2025/packages")
+    assert response.status_code == 200
+    assert response.text == expected_response
+
+    response = client.get("/api/db/231/2025/packages?model=539")
+    assert response.status_code == 200
+    assert response.text == expected_response
+
+
 def test_visa_upload(client, mocker):
     my_file = FileStorage(
         stream=open('tests/VISA C40 MY25_24w17 (24w05).xlsx', 'rb'),
