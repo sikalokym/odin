@@ -49,6 +49,17 @@ def test_packages(client, mocker):
     assert response.text == expected_response
 
 
+def test_colors(client, mocker):
+    expected_response = '[{"Code":"717","MarketText":"Space","CustomName":""}]'
+    response = client.get("/api/db/231/2025/colors")
+    assert response.status_code == 200
+    assert response.text == expected_response
+
+    response = client.get("/api/db/231/2025/colors?model=539")
+    assert response.status_code == 200
+    assert response.text == expected_response
+
+
 def test_visa_upload(client, mocker):
     my_file = FileStorage(
         stream=open('tests/VISA C40 MY25_24w17 (24w05).xlsx', 'rb'),
