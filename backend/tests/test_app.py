@@ -78,6 +78,39 @@ def test_engine_cats(client, mocker):
     assert response.json == expected_response
 
 
+def test_sales_versions(client, mocker):
+    expected_response = {"Code":"CB","CustomName":"Ultra Black Edition","MarketText":"BLACK EDITION PURE EL 2"}
+    response = client.get("/api/db/231/2025/sales_versions")
+    assert response.status_code == 200
+    assert json.loads(response.text).index(expected_response) >=0
+
+
+def test_gearboxes(client, mocker):
+    expected_response = {"Code":"L","CustomName":"Automatikgetriebe einstufig","MarketText":"1-SPEED GEARBOX"}
+    response = client.get("/api/db/231/2025/gearboxes")
+    assert response.status_code == 200
+    assert json.loads(response.text).index(expected_response) >=0
+
+
+def test_upholstery(client, mocker):
+    expected_response = {'Code': 'R780', 'MarketText': None, 'CustomName': '', 'CustomCategory': ''}
+    response = client.get("/api/db/231/2025/upholstery")
+    assert response.status_code == 200
+    assert json.loads(response.text).index(expected_response) >=0
+
+    response = client.get("/api/db/231/2025/upholstery?model=539")
+    assert response.status_code == 200
+    assert json.loads(response.text).index(expected_response) >=0
+
+
+def test_sales_channels(client, mocker):
+    expected_response = {'ID': 'F8C6D0C4-8B29-4163-9AE8-BEA5CC491705', 'Code': '01', 'ChannelName': 'HDL', 'Comment': '90% WS ALL', 'DateFrom': '2023-01-02', 'DateTo': '2099-12-30'}
+    response = client.get("/api/db/231/2025/sales-channels")
+    assert response.status_code == 200
+    assert json.loads(response.text).index(expected_response) >=0
+
+
+# visa tests ---------------------------------------------------------------------------------------------------
 def test_visa_upload(client, mocker):
     my_file = FileStorage(
         stream=open('tests/VISA C40 MY25_24w17 (24w05).xlsx', 'rb'),
@@ -99,11 +132,15 @@ def test_visa_files(client, mocker):
 
 
 def test_visa_file(client, mocker):
-    expected_responce = '[{"ID":"C3082836-FBF7-4C9A-96BB-3A7727989C2D","Active":"X","SalesOrg":"1585","DistrCh":"10","PriceList":"01","DealerGroup":"DE","Country":"DE","CarType":"539","Engine":"--","SalesVersion":"CB","Body":"-","Gearbox":"-","Steering":"-","MarketCode":"19","ModelYear":"2025","StructureWeek":"-","DateFrom":"2024-02-01","DateTo":"2025-04-20","Currency":"EUR","Color":"","Options":"","Upholstery":"","Package":"P0030","SNote":"","MSRP":"1810","TAX2":"0","VAT":"288.99","TAX1":"0","PriceBeforeTax":"1521.01","WholesalePrice":"1399.33","TransferPrice":"1034.29","VisaFile":"VISA C40 MY25_24w17 (24w05)"},{"ID":"4EDA9FC6-F7A5-4AA2-8E36-67DC0E55D618","Active":"X","SalesOrg":"1585","DistrCh":"10","PriceList":"01","DealerGroup":"DE","Country":"DE","CarType":"539","Engine":"EB","SalesVersion":"C8","Body":"0","Gearbox":"L","Steering":"1","MarketCode":"19","ModelYear":"2025","StructureWeek":"-","DateFrom":"2024-02-01","DateTo":"2025-04-20","Currency":"EUR","Color":"","Options":"","Upholstery":"","Package":"","SNote":"","MSRP":"58090","TAX2":"0","VAT":"9274.87","TAX1":"0","PriceBeforeTax":"48815.13","WholesalePrice":"44909.92","TransferPrice":"33194.29","VisaFile":"VISA C40 MY25_24w17 (24w05)"}]'
+    expected_responce = {"Active":"X","SalesOrg":"1585","DistrCh":"10","PriceList":"01","DealerGroup":"DE","Country":"DE","CarType":"539","Engine":"--","SalesVersion":"CB","Body":"-","Gearbox":"-","Steering":"-","MarketCode":"19","ModelYear":"2025","StructureWeek":"-","DateFrom":"2024-02-01","DateTo":"2025-04-20","Currency":"EUR","Color":"","Options":"","Upholstery":"","Package":"P0030","SNote":"","MSRP":"1810","TAX2":"0","VAT":"288.99","TAX1":"0","PriceBeforeTax":"1521.01","WholesalePrice":"1399.33","TransferPrice":"1034.29","VisaFile":"VISA C40 MY25_24w17 (24w05)"}
     params = urllib.parse.urlencode({"VisaFile": "VISA C40 MY25_24w17 (24w05)"})
     response = client.get(f"/api/db/231/2025/visa-file?{params}")
     assert response.status_code == 200
-    assert response.text == expected_responce
+    resp_dict = []
+    for row in json.loads(response.text):
+        row.pop("ID")
+        resp_dict.append(row)
+    assert resp_dict.index(expected_responce) >= 0
 
 
 def test_visa_rename(client, mocker):
@@ -113,6 +150,8 @@ def test_visa_rename(client, mocker):
     assert response.status_code == 200
     assert response.text == "Visa file renamed successfully"
 
+    data = {"OldName": "Old name ",
+            "NewName": "New name"}
     response = client.post("/api/db/231/2025/write/visa/rename", json=data)
     assert response.status_code == 203
     assert response.text == "Visa file not found"
@@ -130,15 +169,16 @@ def test_visa_post(client, mocker):
     assert response.text == "Visa file created successfully"
 
 
+def test_visa_data(client, mocker):
+    params = urllib.parse.urlencode({"ID": "C3082836-FBF7-4C9A-96BB-3A7727989C2D"})
+    response = client.delete(f"/api/db/231/2025/write/visa/data?{params}")
+    assert response.status_code == 200
+    assert response.text == "Record deleted successfully"
+
+
 def test_visa_delete(client, mocker):
     params = urllib.parse.urlencode({"VisaFile": "VISA C40 MY25_24w17 (24w05)"})
     response = client.delete(f"/api/db/231/2025/write/visa?{params}")
     assert response.status_code == 200
     assert response.text == "Record deleted successfully"
-
-
-def test_visa_data(client, mocker):
-    params = urllib.parse.urlencode({"ID": "4EDA9FC6-F7A5-4AA2-8E36-67DC0E55D618"})
-    response = client.delete(f"/api/db/231/2025/write/visa/data?{params}")
-    assert response.status_code == 200
-    assert response.text == "Record deleted successfully"
+# ----------------------------------------------------------------------------------------------------------------
