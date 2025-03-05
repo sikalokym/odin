@@ -110,6 +110,18 @@ def test_sales_channels(client, mocker):
     assert json.loads(response.text).index(expected_response) >=0
 
 
+def test_discount_post(client, mocker):
+    data = {"ChannelID": "3CE65903-0688-453F-ABFA-943383A2D82E",
+            "DiscountPercentage": 0,
+            "RetailPrice": None,
+            "WholesalePrice": None,
+            "PNOSpecific": 0,
+            "AffectedVisaFile": None}
+    response = client.post("/api/db/231/2025/write/discounts", json=data)
+    assert response.status_code == 200
+    assert response.text == "Discount created successfully"
+
+
 # visa tests ---------------------------------------------------------------------------------------------------
 def test_visa_upload(client, mocker):
     my_file = FileStorage(

@@ -20,5 +20,6 @@ pip3 install -r /app/requirements.txt -r /app/requirements_dev.txt
 /opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.Gearbox.Table.sql
 /opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.Upholstery.Table.sql
 /opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.SalesChannel.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.Discount.Table.sql
 cd /app
 pytest -s -vv
