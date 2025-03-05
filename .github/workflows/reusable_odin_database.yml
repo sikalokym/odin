@@ -15,7 +15,7 @@ on:
         db-server:
           required: true
 
-name: Reusable ODIN infa template
+name: Reusable template Database
 
 jobs:
   database-migrate:

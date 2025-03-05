@@ -12,7 +12,7 @@ on:
         subscription-id:
           required: true
 
-name: Reusable ODIN deployment template
+name: Reusable template Application
 
 permissions:
   id-token: write # Require write permission to Fetch an OIDC token. 

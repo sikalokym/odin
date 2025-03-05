@@ -15,7 +15,7 @@ on:
         terraform-token:
           required: true
 
-name: Reusable ODIN infa template
+name: Reusable template Infrastructure
 
 env:
   TF_CLOUD_ORGANIZATION: ${{ vars.TF_CLOUD_ORGANIZATION }}
