@@ -2,7 +2,7 @@ import io
 import urllib.parse
 from werkzeug.datastructures import FileStorage
 import json
-
+import uuid
 
 def test_supported_countries(client, mocker):
     expected_response = [
@@ -36,14 +36,29 @@ def test_pnos(client, mocker):
 
 
 def test_models(client, mocker):
-    expected_response = '[{"Code":"539","CustomName":"EC40","MarketText":"EC40"}]'
+    data = {"Code": '539', "CustomName": "test name"}
+    response = client.post("/api/db/231/2025/write/models", json=data)
+    assert response.status_code == 200
+    assert response.text == 'Models written successfully'
+
+    expected_response = '[{"Code":"539","CustomName":"test name","MarketText":"EC40"}]'
     response = client.get("/api/db/231/2025/models")
     assert response.status_code == 200
     assert response.text == expected_response
 
 
 def test_packages(client, mocker):
-    expected_response = '[{"Code":"P0030","MarketText":"Edition Pack","CustomName":""}]'
+    data = {
+        "Code": "P0030",
+        "CustomName": "test name",
+        "Model": "539"
+    }
+
+    response = client.post("/api/db/231/2025/write/packages", json=data)
+    assert response.status_code == 200
+    assert response.text == 'Packages written successfully'
+
+    expected_response = '[{"Code":"P0030","MarketText":"Edition Pack","CustomName":"test name"}]'
     response = client.get("/api/db/231/2025/packages")
     assert response.status_code == 200
     assert response.text == expected_response
@@ -54,7 +69,12 @@ def test_packages(client, mocker):
 
 
 def test_colors(client, mocker):
-    expected_response = '[{"Code":"717","MarketText":"Space","CustomName":""}]'
+    data = {"Code": 717, "CustomName": "test name", "Model": 539}
+    response = client.post("/api/db/231/2025/write/colors", json=data)
+    assert response.status_code == 200
+    assert response.text == 'Colors written successfully'
+
+    expected_response = '[{"Code":"717","MarketText":"Space","CustomName":"test name"}]'
     response = client.get("/api/db/231/2025/colors")
     assert response.status_code == 200
     assert response.text == expected_response
@@ -65,7 +85,18 @@ def test_colors(client, mocker):
 
 
 def test_engines(client, mocker):
-    expected_response = '[{"Code":"EH","MarketText":"EL-ENGINE         252","CustomName":"Single Motor Extended Range RWD","Performance":"185 (252)","EngineCategory":"Vollelektrisch","EngineType":"Vollelektrisch"}]'
+    data = {
+        "Code": "EH",
+        "CustomName": "test name",
+        "EngineCategory": "Vollelektrisch",
+        "EngineType": "Vollelektrisch",
+        "Performance": "185 (252)"
+    }
+    response = client.post("/api/db/231/2025/write/engines", json=data)
+    assert response.status_code == 200
+    assert response.text == 'Engines written successfully'
+
+    expected_response = '[{"Code":"EH","MarketText":"EL-ENGINE         252","CustomName":"test name","Performance":"185 (252)","EngineCategory":"Vollelektrisch","EngineType":"Vollelektrisch"}]'
     response = client.get("/api/db/231/2025/engines")
     assert response.status_code == 200
     assert response.text == expected_response
@@ -79,21 +110,42 @@ def test_engine_cats(client, mocker):
 
 
 def test_sales_versions(client, mocker):
-    expected_response = {"Code":"CB","CustomName":"Ultra Black Edition","MarketText":"BLACK EDITION PURE EL 2"}
+    data = {"Code": 'CB', "CustomName": "test name"}
+    response = client.post("/api/db/231/2025/write/sales_versions", json=data)
+    assert response.status_code == 200
+    assert response.text == 'Sales Versions written successfully'
+
+    expected_response = {"Code":"CB","CustomName":"test name","MarketText":"BLACK EDITION PURE EL 2"}
     response = client.get("/api/db/231/2025/sales_versions")
     assert response.status_code == 200
     assert json.loads(response.text).index(expected_response) >=0
 
 
 def test_gearboxes(client, mocker):
-    expected_response = {"Code":"L","CustomName":"Automatikgetriebe einstufig","MarketText":"1-SPEED GEARBOX"}
+    data = {"Code": 'L', "CustomName": "test name"}
+    response = client.post("/api/db/231/2025/write/gearboxes", json=data)
+    assert response.status_code == 200
+    assert response.text == 'Gearboxes written successfully'
+
+    expected_response = {"Code":"L","CustomName":"test name","MarketText":"1-SPEED GEARBOX"}
     response = client.get("/api/db/231/2025/gearboxes")
     assert response.status_code == 200
     assert json.loads(response.text).index(expected_response) >=0
 
 
 def test_upholstery(client, mocker):
-    expected_response = {'Code': 'R780', 'MarketText': None, 'CustomName': '', 'CustomCategory': ''}
+    data = {
+        "Code": "R780",
+        "CustomName": "test name",
+        "CustomCategory": "test category",
+        "Model": "539"
+    }
+
+    response = client.post("/api/db/231/2025/write/upholstery", json=data)
+    assert response.status_code == 200
+    assert response.text == 'Upholstery written successfully'
+
+    expected_response = {'Code': 'R780', 'MarketText': None, 'CustomName': 'test name', 'CustomCategory': 'test category'}
     response = client.get("/api/db/231/2025/upholstery")
     assert response.status_code == 200
     assert json.loads(response.text).index(expected_response) >=0
@@ -104,22 +156,116 @@ def test_upholstery(client, mocker):
 
 
 def test_sales_channels(client, mocker):
-    expected_response = {'ID': 'F8C6D0C4-8B29-4163-9AE8-BEA5CC491705', 'Code': '01', 'ChannelName': 'HDL', 'Comment': '90% WS ALL', 'DateFrom': '2023-01-02', 'DateTo': '2099-12-30'}
+    data = {
+        "Code": "01",
+        "ChannelName": "HDL",
+        "Comment": "90% WS ALL",
+        "DateFrom": "2023-01-02",
+        "DateTo": "2099-12-30"
+    }
+    response = client.post("/api/db/231/2025/write/sales-channels", json=data)
+    assert response.status_code == 200
+    assert response.text == "Sales channel created successfully"
+
+    expected_response = {'Code': '01', 'ChannelName': 'HDL', 'Comment': '90% WS ALL', 'DateFrom': '2023-01-02', 'DateTo': '2099-12-30'}
     response = client.get("/api/db/231/2025/sales-channels")
     assert response.status_code == 200
-    assert json.loads(response.text).index(expected_response) >=0
+    resp_dict = []
+    for row in json.loads(response.text):
+        sales_channels_id = row.pop("ID")
+        resp_dict.append(row)
+    assert resp_dict.index(expected_response) >= 0
+
+    response = client.post(f"/api/db/231/2025/write/sales-channels/copy?ids={sales_channels_id}")
+    assert response.status_code == 200
+    assert response.text == "Sales channel copied successfully"
 
 
-def test_discount_post(client, mocker):
+    response = client.delete(f"/api/db/231/2025/write/sales-channels?ID={sales_channels_id}")
+    assert response.status_code == 200
+    assert response.json == {"message":"Record deleted successfully"}
+
+
+def test_custom_local_options(client, mocker):
+    data = {
+        "ChannelID": "17597AA7-57D1-4C3C-BC7E-05956CD40FCF",
+        "FeatureCode": "X03015",
+        "FeatureRetailPrice": 3000,
+        "FeatureWholesalePrice": 0,
+        "AffectedVisaFile": None,
+        "DateFrom": "2022-01-03",
+        "DateTo": "2099-12-31"
+    }
+    response = client.post("/api/db/231/2025/write/custom-local-options", json=data)
+    assert response.status_code == 200
+    assert response.text == "Custom local option created successfully"
+
+    expected_response = {'FeatureCode': 'X03015', 'FeatureRetailPrice': 3000.0, 'FeatureWholesalePrice': 0.0, 'AffectedVisaFile': [], 'DateFrom': '2022-01-03', 'DateTo': '2099-12-31'}
+    response = client.get("/api/db/231/2025/custom-local-options?id=17597AA7-57D1-4C3C-BC7E-05956CD40FCF")
+    assert response.status_code == 200
+    resp_dict = []
+    for row in json.loads(response.text):
+        custom_local_options_id = row.pop("ID")
+        resp_dict.append(row)
+    assert resp_dict.index(expected_response) >= 0
+
+    response = client.delete(f"/api/db/231/2025/write/custom-local-options?ID={custom_local_options_id}")
+    assert response.status_code == 200
+    assert response.json == {"message": "Record deleted successfully"}
+    
+
+def test_discount(client, mocker):
     data = {"ChannelID": "3CE65903-0688-453F-ABFA-943383A2D82E",
-            "DiscountPercentage": 0,
+            "DiscountPercentage": 0.0,
             "RetailPrice": None,
             "WholesalePrice": None,
-            "PNOSpecific": 0,
-            "AffectedVisaFile": None}
+            "PNOSpecific": False,
+            "AffectedVisaFile": []}
     response = client.post("/api/db/231/2025/write/discounts", json=data)
     assert response.status_code == 200
     assert response.text == "Discount created successfully"
+
+    response = client.get("/api/db/231/2025/discounts?id=3CE65903-0688-453F-ABFA-943383A2D82E")
+    resp_data = json.loads(response.data)[0]
+    discount_id = resp_data.pop("ID")
+    assert response.status_code == 200
+    assert resp_data == data
+
+    response = client.delete(f"/api/db/231/2025/write/discounts?ID={discount_id}")
+    assert response.status_code == 200
+    assert response.json == {'message': 'Record deleted successfully'}
+    
+
+def test_customfeatures(client, mocker):
+    data_insert = {
+        "CustomName": "test name",
+        "CustomCategory": "test category",
+        "StartDate": "202001",
+        "EndDate": "202901",
+        "Model": "539"
+    }
+    response = client.post("/api/db/231/2025/write/insert/customfeatures", json=data_insert)
+    assert response.status_code == 200
+    assert response.text == "Features written successfully"
+
+    data_update = {
+        "Code": "XY0001",
+        "CustomName": "test name 2",
+        "CustomCategory": "test category 2",
+        "Model": "539",
+        "ID": "2D9B2F73-3736-41D1-811C-01FD94C371F6"
+    }
+    response = client.post("/api/db/231/2025/write/update/customfeatures", json=data_update)
+    assert response.status_code == 200
+    assert response.text == "Features written successfully"
+
+    data_delete = {
+        "ID": "2D9B2F73-3736-41D1-811C-01FD94C371F6"
+    }
+    response = client.post("/api/db/231/2025/write/delete/customfeatures", json=data_delete)
+    assert response.status_code == 200
+    assert response.json == {"message": "Records deleted successfully"}
+
 
 
 # visa tests ---------------------------------------------------------------------------------------------------
