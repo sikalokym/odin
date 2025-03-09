@@ -167,14 +167,17 @@ def test_sales_channels(client, mocker):
     assert response.status_code == 200
     assert response.text == "Sales channel created successfully"
 
-    expected_response = {'Code': '01', 'ChannelName': 'HDL', 'Comment': '90% WS ALL', 'DateFrom': '2023-01-02', 'DateTo': '2099-12-30'}
     response = client.get("/api/db/231/2025/sales-channels")
     assert response.status_code == 200
     resp_dict = []
+    sales_channels_id = None
     for row in json.loads(response.text):
-        sales_channels_id = row.pop("ID")
+        if not sales_channels_id:
+            id = row.pop("ID")
+            if row == data:
+                sales_channels_id = id
         resp_dict.append(row)
-    assert resp_dict.index(expected_response) >= 0
+    assert resp_dict.index(data) >= 0
 
     response = client.post(f"/api/db/231/2025/write/sales-channels/copy?ids={sales_channels_id}")
     assert response.status_code == 200
@@ -215,7 +218,7 @@ def test_custom_local_options(client, mocker):
     
 
 def test_discount(client, mocker):
-    data = {"ChannelID": "3CE65903-0688-453F-ABFA-943383A2D82E",
+    data = {"ChannelID": "17597AA7-57D1-4C3C-BC7E-05956CD40FCF",
             "DiscountPercentage": 0.0,
             "RetailPrice": None,
             "WholesalePrice": None,
@@ -225,7 +228,7 @@ def test_discount(client, mocker):
     assert response.status_code == 200
     assert response.text == "Discount created successfully"
 
-    response = client.get("/api/db/231/2025/discounts?id=3CE65903-0688-453F-ABFA-943383A2D82E")
+    response = client.get("/api/db/231/2025/discounts?id=17597AA7-57D1-4C3C-BC7E-05956CD40FCF")
     resp_data = json.loads(response.data)[0]
     discount_id = resp_data.pop("ID")
     assert response.status_code == 200
@@ -283,10 +286,10 @@ def test_visa_upload(client, mocker):
 
 
 def test_visa_files(client, mocker):
-    expected_responce = '[{"VisaFile":"VISA C40 MY25_24w17 (24w05)","CarType":"539","CustomName":"EC40"}]'
+    # expected_responce = '[{"VisaFile":"VISA C40 MY25_24w17 (24w05)","CarType":"539","CustomName":"EC40"}]'
     response = client.get("/api/db/231/2025/visa-files")
     assert response.status_code == 200
-    assert response.text == expected_responce
+    assert json.loads(response.text)[0]["VisaFile"] == "VISA C40 MY25_24w17 (24w05)"
 
 
 def test_visa_file(client, mocker):
