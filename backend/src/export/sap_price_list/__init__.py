@@ -122,7 +122,11 @@ def get_sap_price_list(visa_file, df_sales_channels, df_discount_options, model_
     
     df_sap_price['Sales Org.'] = config['DEFAULT']['SALES_ORG']
     df_sap_price['Structure week'] = config['DEFAULT']['STRUCTURE_WEEK']
-    transfer_price_factor = float(config['DEFAULT']['TRANSFER_PRICE_FACTOR'])
+
+    transfer_price_factor = config.getfloat(model_year, 'TRANSFER_PRICE_FACTOR', fallback=None)
+    if not transfer_price_factor:
+        transfer_price_factor = config.getfloat('DEFAULT', 'TRANSFER_PRICE_FACTOR')
+
     df_sap_price['Transfer Price'] = df_sap_price['Retail Price'].apply(lambda x: float(x) * transfer_price_factor)
     df_sap_price['Active'] = config['DEFAULT']['ACTIVE']
     dfs = []
