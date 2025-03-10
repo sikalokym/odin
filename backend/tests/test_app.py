@@ -270,6 +270,33 @@ def test_customfeatures(client, mocker):
     assert response.json == {"message": "Records deleted successfully"}
 
 
+def test_options(client, mocker):
+    data = {
+        "Code": "XR1025",
+        "CustomName": "test name",
+        "model": "539"
+    }
+    response = client.post("/api/db/231/2025/write/options", json=data)
+    assert response.status_code == 200
+    assert response.text == "Options written successfully"
+
+    expected_result = {'Code': 'XR1025 (XR1025)', 'MarketText': None, 'CustomName': 'Rental WKZ', 'CustomCategory': 'Intern', 'hasFeature': True}
+    response = client.get("/api/db/231/2025/options")
+    assert response.status_code == 200
+    assert json.loads(response.data).index(expected_result) >=0
+
+    expected_result = {'Code': 'XR1025 (XR1025)', 'MarketText': None, 'CustomName': 'Rental WKZ', 'CustomCategory': 'Intern', 'hasFeature': True}
+    response = client.get("/api/db/231/2025/options?model=539")
+    assert response.status_code == 200
+    assert json.loads(response.data).index(expected_result) >=0
+
+
+def test_features(client, mocker):
+    expected_result = {'Code': 'XR1025', 'FtCode_OpCode': 'XR1025 (XR1025)', 'MarketText': None, 'CustomName': 'Rental WKZ', 'CustomCategory': 'Intern', 'ID': ''}
+    response = client.get("/api/db/231/2025/features?model=539")
+    assert response.status_code == 200
+    assert json.loads(response.data).index(expected_result) >= 0
+
 
 # visa tests ---------------------------------------------------------------------------------------------------
 def test_visa_upload(client, mocker):
