@@ -2,7 +2,7 @@ import io
 import urllib.parse
 from werkzeug.datastructures import FileStorage
 import json
-import uuid
+import openpyxl
 
 def test_supported_countries(client, mocker):
     expected_response = [
@@ -370,3 +370,14 @@ def test_visa_delete(client, mocker):
     assert response.status_code == 200
     assert response.text == "Record deleted successfully"
 # ----------------------------------------------------------------------------------------------------------------
+
+def test_variant_binder(client, mocker):
+    response = client.get(f"/api/231/export/variant_binder?date=202515&engines_category=Vollelektrisch&model=539")
+    assert 'attachment; filename=testname_VB_Vollelektrisch_2025_2025w15.xlsx' == response.headers.get('Content-Disposition')
+    assert 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' == response.headers.get('Content-Type')    
+    toread = io.BytesIO()
+    toread.write(response.data)
+    toread.seek(0)
+    workbook = openpyxl.load_workbook(toread)
+    assert workbook.sheetnames == ['Preise', 'Serienausstattung', 'Pakete', 'Polster & Farben', 'Optionen', 'Räder']
+    assert response.status_code == 200
