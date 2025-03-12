@@ -372,7 +372,8 @@ def test_visa_delete(client, mocker):
 # ----------------------------------------------------------------------------------------------------------------
 
 def test_variant_binder(client, mocker):
-    response = client.get(f"/api/231/export/variant_binder?date=202515&engines_category=Vollelektrisch&model=539")
+    response = client.get(f"/api/231/export/sap-price-list?date=202515&engines_category=Vollelektrisch&model=539")
+    assert response.status_code == 200
     assert 'attachment; filename=testname_VB_Vollelektrisch_2025_2025w15.xlsx' == response.headers.get('Content-Disposition')
     assert 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' == response.headers.get('Content-Type')    
     toread = io.BytesIO()
@@ -380,4 +381,10 @@ def test_variant_binder(client, mocker):
     toread.seek(0)
     workbook = openpyxl.load_workbook(toread)
     assert workbook.sheetnames == ['Preise', 'Serienausstattung', 'Pakete', 'Polster & Farben', 'Optionen', 'Räder']
+
+
+def test_sap_price_list(client, mocker):
+    response = client.get(f"/api/231/export/sap-price-list?date=2025-01-15&model_year=2025")
     assert response.status_code == 200
+    assert 'attachment; filename="250312 SAP Price Lists.zip"' == response.headers.get('Content-Disposition')
+    assert 'application/zip' == response.headers.get('Content-Type')    
