@@ -372,7 +372,7 @@ def test_visa_delete(client, mocker):
 # ----------------------------------------------------------------------------------------------------------------
 
 def test_variant_binder(client, mocker):
-    response = client.get(f"/api/231/export/sap-price-list?date=202515&engines_category=Vollelektrisch&model=539")
+    response = client.get(f"/api/231/export/variant_binder?date=202515&engines_category=Vollelektrisch&model=539")
     assert response.status_code == 200
     assert 'attachment; filename=testname_VB_Vollelektrisch_2025_2025w15.xlsx' == response.headers.get('Content-Disposition')
     assert 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' == response.headers.get('Content-Type')    
