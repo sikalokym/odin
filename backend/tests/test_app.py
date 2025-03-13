@@ -391,4 +391,4 @@ def test_sap_price_list(client, mocker):
     response = client.get(f"/api/231/export/sap-price-list?date=2025-01-15&model_year=2025")
     assert response.status_code == 200
     assert f'attachment; filename="{download_name}"' == response.headers.get('Content-Disposition')
-    assert 'application/zip' == response.headers.get('Content-Type')    
+    assert 'application/zip' == response.headers.get('Content-Type')
