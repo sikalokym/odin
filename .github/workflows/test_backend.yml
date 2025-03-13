@@ -1,5 +1,9 @@
 on:
   pull_request:
+    branches:
+      - 'develop'
+    paths:
+      - 'backend/**'
 
 name: CI Test Backend
 run-name: CI Test Backend
