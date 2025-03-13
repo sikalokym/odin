@@ -25,7 +25,7 @@ services:
     environment:
       DB_CONNECTION_STRING: "Driver={ODBC Driver 18 for SQL Server};Server=test_odin_database;Database=odin;Authentication=SqlPassword;Encrypt=no;TrustServerCertificate=Yes;Connection Timeout=60;"
       SQL_DB_UID: "sa"
-      SQL_DB_PWD: "M1y9k8o3l1a2a!"
+      SQL_DB_PWD: "Wdfetfvx3fer5g!"
     volumes:
       - ../../backend:/app
       - ./backend/start_backend_test.sh:/usr/start_backend_test.sh

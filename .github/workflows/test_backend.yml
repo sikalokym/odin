@@ -1,22 +1,15 @@
 on: [push]
 
+name: CI Test Backend
+
 jobs:
   job:
-    name: test backend
+    name: Test Backend
     runs-on: vcc-azure-ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # - name: Random Password Generator
-      #   id: generated-password
-      #   uses: aammirmirza/RandomPasswordGenerator@1.2
-      #   with:
-      #     length: 20
-      
-      # - run: echo "sdfgdsfg3454!" > docker/database_admin
-      #   shell: bash
-
-      - name: Create database instance
+      - name: Run Backend Test
         run: |
           DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
           mkdir -p $DOCKER_CONFIG/cli-plugins
@@ -29,12 +22,4 @@ jobs:
           docker_exit=$?
           echo $docker_exit
           docker compose -f 'docker/run_test/compose.yml' rm -s -f backend
-          docker compose -f 'docker/run_test/compose.yml' rm -s -f database
-
-          # ls -lr /usr/local/lib/docker/*
-          # docker build -f ./docker/database/database.Dockerfile . -t odin_database --secret id=sa_password,src=./docker/database_admin
-          # docker container run --rm -p 1433:1433 --name odin_database_cntr -d odin_database
-          # id
-          # sudo apt-get update
-          # sudo apt-get install docker-compose-plugin
-          
+          docker compose -f 'docker/run_test/compose.yml' rm -s -f database          
