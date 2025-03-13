@@ -1,3 +1,4 @@
 [run]
 omit =
     main.py
+    export/variant_binder/change_log.py
