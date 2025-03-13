@@ -36,4 +36,4 @@ services:
 
 secrets:
   sa_password:
-    file: database/database_admin
+    file: database/database_admin 
