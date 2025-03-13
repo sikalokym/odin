@@ -1,8 +1,9 @@
-on: [push]
+on:
+  pull_request:
 
 name: CI Test Backend
 
-run-name: CI Test Backend
+run-name: CI Test Backend ${{ github. }}
 
 jobs:
   job:
@@ -10,6 +11,11 @@ jobs:
     runs-on: vcc-azure-ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
 
       - name: Run Backend Test
         run: |
