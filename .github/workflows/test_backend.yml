@@ -2,7 +2,6 @@ on:
   pull_request:
 
 name: CI Test Backend
-
 run-name: CI Test Backend
 
 jobs:
