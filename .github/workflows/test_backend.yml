@@ -4,12 +4,12 @@ name: CI Test Backend
 
 jobs:
   job:
-    name: test backend
+    name: Test Backend
     runs-on: vcc-azure-ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create database instance
+      - name: Run Backend Test
         run: |
           DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
           mkdir -p $DOCKER_CONFIG/cli-plugins
