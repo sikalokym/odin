@@ -3,6 +3,7 @@ import urllib.parse
 from werkzeug.datastructures import FileStorage
 import json
 import openpyxl
+import pandas as pd
 
 def test_supported_countries(client, mocker):
     expected_response = [
@@ -384,7 +385,10 @@ def test_variant_binder(client, mocker):
 
 
 def test_sap_price_list(client, mocker):
+    today = pd.Timestamp.now().strftime('%Y.%m.%d')
+    today = today[2:].replace('.', '')
+    download_name = f'{today} SAP Price Lists.zip'
     response = client.get(f"/api/231/export/sap-price-list?date=2025-01-15&model_year=2025")
     assert response.status_code == 200
-    assert 'attachment; filename="250312 SAP Price Lists.zip"' == response.headers.get('Content-Disposition')
+    assert f'attachment; filename="{download_name}"' == response.headers.get('Content-Disposition')
     assert 'application/zip' == response.headers.get('Content-Type')    
