@@ -1,20 +1,20 @@
 services:
-  # database:
-  #   image: "odin_database"
-  #   build:
-  #     context: ..
-  #     dockerfile: docker/database/database.Dockerfile
-  #     secrets:
-  #       - sa_password
-  #   container_name: odin_database
-  #   ports:
-  #     - "1433:1433"
-  #   environment:
-  #     ACCEPT_EULA: Y
-  #     MSSQL_SA_PASSWORD_FILE: /run/secrets/sa_password
-  #     DOCKER_BUILDKIT: 1
-  #   secrets:
-  #     - sa_password
+  database:
+    image: "odin_database"
+    build:
+      context: ..
+      dockerfile: docker/database/database.Dockerfile
+      secrets:
+        - sa_password
+    container_name: odin_database
+    ports:
+      - "1433:1433"
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD_FILE: /run/secrets/sa_password
+      DOCKER_BUILDKIT: 1
+    secrets:
+      - sa_password
   
   backend:
     image: "odin_backend"
@@ -57,6 +57,11 @@ secrets:
 # Manual run:
 # docker compose -f docker/compose.yml build --no-cache
 # docker compose -f docker/compose.yml up -d database
+
+# docker compose -f 'docker\compose.yml' up -d --build 'database' 
+# docker build -f .\docker\database\database.Dockerfile . -t odin_database --secret id=sa_password,src=.\docker\database_admin
+# docker container run --rm -p 1433:1433 --network docker_default --name odin_database_cntr -d odin_database
+
 # docker container run -it --name odin_backend_debug -v .\backend:/app --env DB_CONNECTION_STRING="DSN=MSSQLServerDatabase;Database=odin;Uid=sa;Pwd=;Encrypt=yes;Connection Timeout=30;" --publish 5000:50505 --network docker_default odin_backend bash
 # docker container run -it --rm -p 8080:8080 --name odin_frontend_debug --network docker_default -v .\frontend:/app odin_frontend bash
 

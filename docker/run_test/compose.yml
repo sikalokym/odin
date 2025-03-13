@@ -1,0 +1,39 @@
+services:
+  database:
+    image: "test_odin_database"
+    build:
+      context: ..
+      dockerfile: run_test/database/database.Dockerfile
+      secrets:
+        - sa_password
+    container_name: test_odin_database
+    ports:
+      - "1433:1433"
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD_FILE: /run/secrets/sa_password
+      DOCKER_BUILDKIT: 1
+    secrets:
+      - sa_password
+  
+  backend:
+    image: "test_odin_backend"
+    build:
+      context: ..
+      dockerfile: run_test/backend/backend.Dockerfile
+    container_name: test_odin_backend
+    environment:
+      DB_CONNECTION_STRING: "Driver={ODBC Driver 18 for SQL Server};Server=test_odin_database;Database=odin;Authentication=SqlPassword;Encrypt=no;TrustServerCertificate=Yes;Connection Timeout=60;"
+      SQL_DB_UID: "sa"
+      SQL_DB_PWD: "Wdfetfvx3fer5g!"
+    volumes:
+      - ../../backend:/app
+      - ./backend/start_backend_test.sh:/usr/start_backend_test.sh
+      - ./backend/odin_database:/odin_database
+    secrets:
+      - sa_password
+    entrypoint: ["bash", "/usr/start_backend_test.sh" ]
+
+secrets:
+  sa_password:
+    file: database/database_admin 
