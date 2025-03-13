@@ -3,7 +3,7 @@ on:
 
 name: CI Test Backend
 
-run-name: CI Test Backend ${{ github. }}
+run-name: CI Test Backend
 
 jobs:
   job:
