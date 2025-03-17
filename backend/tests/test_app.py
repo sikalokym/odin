@@ -3,7 +3,7 @@ import urllib.parse
 from werkzeug.datastructures import FileStorage
 import json
 import openpyxl
-import pandas as pd
+import pandas as pd 
 
 def test_supported_countries(client, mocker):
     expected_response = [
@@ -372,6 +372,7 @@ def test_visa_delete(client, mocker):
     assert response.text == "Record deleted successfully"
 # ----------------------------------------------------------------------------------------------------------------
 
+
 def test_variant_binder(client, mocker):
     response = client.get(f"/api/231/export/variant_binder?date=202515&engines_category=Vollelektrisch&model=539")
     assert response.status_code == 200
@@ -391,4 +392,31 @@ def test_sap_price_list(client, mocker):
     response = client.get(f"/api/231/export/sap-price-list?date=2025-01-15&model_year=2025")
     assert response.status_code == 200
     assert f'attachment; filename="{download_name}"' == response.headers.get('Content-Disposition')
-    assert 'application/zip' == response.headers.get('Content-Type')    
+    assert 'application/zip' == response.headers.get('Content-Type')
+
+
+def test_export_features(client, mocker):
+    response = client.get(f"/api/231/export/features?model=539&model_year=2025")
+    assert response.status_code == 200
+    assert 'attachment; filename=Features.xlsx' == response.headers.get('Content-Disposition')
+    assert 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' == response.headers.get('Content-Type')
+
+
+def test_variant_binder_pnos(client, mocker):
+    expected_result = {'ID': 'F295F3B7-DA49-4A95-8CB3-10EC21CB5B89',
+                       'Code': '539EHCB0L119',
+                       'Model': '539',
+                       'Engine': 'EH',
+                       'SalesVersion': 'CB',
+                       'Steering': '1',
+                       'Gearbox': 'L',
+                       'Body': '0',
+                       'MarketCode': '19',
+                       'CountryCode': '231',
+                       'StartDate': 202417,
+                       'EndDate': 202516,
+                       'CustomName': 'test name',
+                       'SalesVersionName': 'test name'}
+    response = client.get(f"/api/231/export/variant_binder/pnos?model=539&date=202510&engines_category=Vollelektrisch")
+    assert response.status_code == 200
+    assert json.loads(response.data).index(expected_result) >= 0
