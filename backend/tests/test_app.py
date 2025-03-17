@@ -346,6 +346,14 @@ def test_visa_rename(client, mocker):
     assert response.text == "Visa file not found"
 
 
+def test_export_visa(client, mocker):
+    params = urllib.parse.urlencode({"VisaFile": "VISA C40 MY25_24w17 (24w05) test"})
+    response = client.get(f"/api/231/export/visa?{params}")
+    assert response.status_code == 200
+    assert 'attachment; filename="VISA C40 MY25_24w17 (24w05) test.xlsx"' == response.headers.get('Content-Disposition')
+    assert 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' == response.headers.get('Content-Type')    
+
+
 def test_visa_post(client, mocker):
     data = {"ID":"C3082836-FBF7-4C9A-96BB-3A7727989C2D","Active":"X","SalesOrg":"1585","DistrCh":"10","PriceList":"01","DealerGroup":"DE","Country":"DE","CarType":"539","Engine":"--","SalesVersion":"CB","Body":"-","Gearbox":"-","Steering":"-","MarketCode":"19","ModelYear":"2025","StructureWeek":"-","DateFrom":"2024-02-01","DateTo":"2025-04-20","Currency":"EUR","Color":"","Options":"","Upholstery":"","Package":"P0030","SNote":"","MSRP":"1810","TAX2":"0","VAT":"288.99","TAX1":"0","PriceBeforeTax":"1521.01","WholesalePrice":"1399.33","TransferPrice":"1034.29","VisaFile":"VISA C40 MY25_24w17 (24w05)"}
     response = client.post("/api/db/231/2025/write/visa", json=data)
