@@ -1,0 +1,1 @@
+/opt/mssql-tools18/bin/sqlcmd -U sa -P $1 -Q 'CREATE DATABASE [odin]' -C
