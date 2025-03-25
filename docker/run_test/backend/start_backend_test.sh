@@ -1,0 +1,32 @@
+#!/bin/bash
+# export DB_CONNECTION_STRING=${DB_CONNECTION_STRING}Pwd=$(cat /run/secrets/sa_password);
+pip3 install -r /app/requirements.txt -r /app/tests/requirements_test.txt
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.SupportedCountry.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.VisaFiles.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.Model.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.PNO.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.PNOCustom.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.PNOColor.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.PNOColorCustom.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.Color.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.PNOOptions.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.PNOOptionsCustom.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.Options.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.PNOUpholstery.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.PNOUpholsteryCustom.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.PNOPackage.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.PNOPackageCustom.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.Package.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.Engine.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.SalesVersion.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.Gearbox.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.Upholstery.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.SalesChannel.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.Discount.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.CustomLocalOption.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.PNOCustomFeature.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.PNOFeature.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.Feature.Table.sql
+/opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.CustomizationRules.Table.sql
+cd /app
+pytest --cov=src --cov-config=tests/.coveragerc -s -vv
