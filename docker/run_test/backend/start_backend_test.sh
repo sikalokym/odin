@@ -29,4 +29,4 @@ pip3 install -r /app/requirements.txt -r /app/tests/requirements_test.txt
 /opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.Feature.Table.sql
 /opt/mssql-tools18/bin/sqlcmd -S test_odin_database -U $SQL_DB_UID -P $SQL_DB_PWD -C -d odin -i /odin_database/dbo.CustomizationRules.Table.sql
 cd /app
-pytest --cov=src --cov-config=./tests/coveragerc -s -vv
+pytest --cov=src --cov-config=tests/.coveragerc -s -vv
