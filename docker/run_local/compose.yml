@@ -26,6 +26,8 @@ services:
       - "5000:50505"
     environment:
       DB_CONNECTION_STRING: "Driver={ODBC Driver 18 for SQL Server};Server=odin-dev-mssql-server.database.windows.net;Database=odin-dev-mssql-database;Uid=pmt_db_service;Pwd=ec1vres@bd@tmp;Authentication=SqlPassword;Encrypt=no;TrustServerCertificate=no;Connection Timeout=60;"
+      SQL_DB_UID: "pmt_db_service"
+      SQL_DB_PWD: "ec1vres@bd@tmp"
       # DB_CONNECTION_STRING: "DSN=MSSQLServerDatabase;Database=odin;Uid=sa;Encrypt=yes;Connection Timeout=30;"
     volumes:
       - ..\backend:/app

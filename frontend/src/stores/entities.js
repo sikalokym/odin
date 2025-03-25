@@ -36,7 +36,8 @@ export const useEntitiesStore = defineStore({
             return index.get(path).then((response) => {
                 let all_countries = response.data
                 console.log('User allowed countries', all_countries)
-                this.supported_countries = all_countries.filter(country => user_allowed_countries.includes(country.CountryName.toLowerCase()))
+                this.supported_countries = all_countries.filter(country => user_allowed_countries.includes(country.Code))
+                // this.supported_countries = all_countries.filter(country => user_allowed_countries.includes(country.CountryName.toLowerCase()))
                 this.country = this.supported_countries[0] || ''
                 return this.supported_countries
             }).catch((error) => {
