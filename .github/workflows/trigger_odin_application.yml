@@ -7,6 +7,7 @@ on:
     paths: 
       - 'frontend/**'
       - 'backend/**'
+      - '!backend/tests/**'
 
 concurrency: 
   group: ${{ github.ref }}
