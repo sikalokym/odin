@@ -4,6 +4,8 @@ services:
     build:
       context: ..
       dockerfile: run_test/database/database.Dockerfile
+      tags:
+        - "ghcr.io/volvo-cars/azure-pmt-portal:latest"
       secrets:
         - sa_password
     container_name: test_odin_database
@@ -17,10 +19,12 @@ services:
       - sa_password
   
   backend:
-    image: "test_odin_backend"
+    image: "test_odin_backend"    
     build:
       context: ..
       dockerfile: run_test/backend/backend.Dockerfile
+      tags:
+        - "ghcr.io/volvo-cars/azure-pmt-portal:latest"
     container_name: test_odin_backend
     environment:
       DB_CONNECTION_STRING: "Driver={ODBC Driver 18 for SQL Server};Server=test_odin_database;Database=odin;Authentication=SqlPassword;Encrypt=no;TrustServerCertificate=Yes;Connection Timeout=60;"
