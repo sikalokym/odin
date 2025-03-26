@@ -18,3 +18,4 @@ jobs:
       - name: Build the hello-docker Docker image
         run: |
           ls -l 
+          docker compose -f docker/run_test/compose.yml build --no-cache database
