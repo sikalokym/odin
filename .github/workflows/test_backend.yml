@@ -11,7 +11,7 @@ run-name: CI Test Backend
 jobs:
   job:
     name: Test Backend
-    runs-on: vcc-azure-ubuntu-latest
+    runs-on: vcc-azure-ubuntu
     steps:
       - uses: actions/checkout@v4
 

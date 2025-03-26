@@ -21,7 +21,7 @@ permissions:
 jobs:
   Backend:
     name: Backend Deployment
-    runs-on: vcc-azure-ubuntu-latest
+    runs-on: vcc-azure-ubuntu
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
     
   Frontend :
     name: Frontend Deployment
-    runs-on: vcc-azure-ubuntu-latest
+    runs-on: vcc-azure-ubuntu
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
