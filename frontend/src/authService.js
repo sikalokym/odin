@@ -33,10 +33,10 @@ export const fetchCountriesRoles = async () => {
         });
         const userRoles = tokenResponse.idTokenClaims.roles || [];
         if (tokenResponse.accessToken) {
-            let groups = await fetchAllGroups(tokenResponse);
-            let parsedGroups = parseGroupNames(groups.filter(group => group.displayName.startsWith('odin-')).map(group => group.displayName));
-            groups = parsedGroups.filter(group => userRoles.includes(group.role));
-            useAuthStore().assignCountriesRoles(groups);
+            // let groups = await fetchAllGroups(tokenResponse);
+            // let parsedGroups = parseGroupNames(groups.filter(group => group.displayName.startsWith('odin-')).map(group => group.displayName));
+            // groups = parsedGroups.filter(group => userRoles.includes(group.role));
+            useAuthStore().assignCountriesRoles(userRoles);
         }
     } catch (error) {
         console.error('Token acquisition error:', error);
@@ -101,6 +101,7 @@ export const ensureAuthenticated = async () => {
         await login();
     }
     else {
+        // await login();
         await fetchCountriesRoles();
     }
     

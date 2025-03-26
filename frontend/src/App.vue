@@ -32,7 +32,8 @@ export default {
         await new Promise(resolve => setTimeout(resolve, 200))
         continue
       }
-      user_allowed_countries = user_allowed_countries.map((country) => country.country)
+      // user_allowed_countries = user_allowed_countries.map((country) => country.country)
+      user_allowed_countries = [...new Set(user_allowed_countries.map(value => value.split(".")[0]))]
       countries = await entitiesStore.fetchSupportedCountries(user_allowed_countries)
       if (countries === null || countries === undefined || countries.length === 0) {
         continue

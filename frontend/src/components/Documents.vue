@@ -2,9 +2,10 @@
   <aside class="sidebar">
     <span class="title" style="font-size: 32px;">Specifications</span>
     <div style="margin-top: 10px;">
-      <button v-on:click="setVariantBinderFilters" :class="{ 'highlighted': showFilters === 'VariantBinder' }">Variant
-        Binder</button>
-      <button v-on:click="setPricelistFilters" style="margin-left: 10px;"
+      <button v-on:click="setVariantBinderFilters"
+        :class="{ 'highlighted': showFilters === 'VariantBinder' }">Variant Binder
+      </button>
+      <button v-show="showSapPricelist" v-on:click="setPricelistFilters" style="margin-left: 10px;"
         :class="{ 'highlighted': showFilters === 'Pricelist' }">SAP Pricelist
       </button>
     </div>
@@ -195,6 +196,7 @@
 <script>
 import { usePNOStore } from '../stores/pno.js'
 import { useEntitiesStore } from '../stores/entities.js'
+import { useAuthStore } from '../stores/auth';
 import axios from '../api/index.js'
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
@@ -223,6 +225,7 @@ export default {
       pricelistDate: [],
       draggedIndex: null,
       sortedSalesVersions: [],
+      showSapPricelist: false,
     }
   },
   created() {
@@ -231,6 +234,8 @@ export default {
     this.selectedCountry = this.pnoStore.country;
     this.variantBinderPnos = [];
     this.sortedSalesVersions = [];
+    let roles = useAuthStore().getCountriesRoles();
+    this.showSapPricelist = roles.includes(this.pnoStore.country.Code + "." + 'sappricelist');
   },
   computed: {
     filteredPnos() {
@@ -417,6 +422,10 @@ export default {
     async changeCountry(newCountry) {
       await this.pnoStore.setCountry(newCountry);
       await this.entitiesStore.setCountry(newCountry);
+      let roles = useAuthStore().getCountriesRoles();
+      this.showSapPricelist = roles.includes(this.pnoStore.country.Code + "." + 'sappricelist');
+      this.showFilters = 'VariantBinder'
+      this.setVariantBinderFilters()
     },
   }
 };
