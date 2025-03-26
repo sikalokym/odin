@@ -20,4 +20,4 @@ jobs:
           ls -l 
           cd docker
           ls -l
-          docker compose -f docker/run_test/compose.yml build --no-cache database
+          docker compose -f run_test/compose.yml build --no-cache database
