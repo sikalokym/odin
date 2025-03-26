@@ -5,7 +5,7 @@ services:
       context: ..
       dockerfile: run_test/database/database.Dockerfile
       tags:
-        - "ghcr.io/volvo-cars/azure-pmt-portal:latest"
+        - "ghcr.io/volvo-cars/test_odin_database:latest"
       secrets:
         - sa_password
     container_name: test_odin_database
