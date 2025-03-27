@@ -22,5 +22,7 @@ jobs:
 
       - name: Build the hello-docker Docker image
         run: |
-          docker compose -f docker/run_test/compose.yml build --no-cache database
+          docker compose -f docker/run_test/compose_buider.yml build --no-cache database
           docker push ghcr.io/volvo-cars/test_odin_database:latest
+          docker compose -f docker/run_test/compose_buider.yml build --no-cache backend
+          docker push ghcr.io/volvo-cars/test_odin_backend:latest
