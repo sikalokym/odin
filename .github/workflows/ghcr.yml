@@ -2,7 +2,7 @@ name: ghcr github action
 on: [push]
 jobs:
   publish-hello-docker-image:
-    runs-on: vcc-azure-ubuntu
+    runs-on: vcc-azure-ubuntu-latest
     permissions:
       contents: read
       packages: write
