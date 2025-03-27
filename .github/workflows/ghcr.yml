@@ -1,15 +1,15 @@
 name: ghcr github action
 on: [push]
 jobs:
-  publish-hello-docker-image:
-    runs-on: vcc-azure-ubuntu-latest 
+  publish-database-docker-image:
+    runs-on: vcc-azure-ubuntu
     permissions:
       contents: read
       packages: write
       id-token: write
     steps:
-      # - name: Set up Docker
-      #   uses: docker/setup-docker-action@v4
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v4
       
       - uses: actions/checkout@v2
       
@@ -22,11 +22,29 @@ jobs:
 
       - name: Build the hello-docker Docker image
         run: |
-          DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
-          mkdir -p $DOCKER_CONFIG/cli-plugins
-          curl -SL https://github.com/docker/compose/releases/download/v2.33.0/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose
-          chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
           docker compose -f docker/run_test/compose_buider.yml build --no-cache database
           docker push ghcr.io/volvo-cars/test_odin_database:latest
+
+  publish-backend-docker-image:
+    runs-on: vcc-azure-ubuntu
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v4
+      
+      - uses: actions/checkout@v2
+      
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build the hello-docker Docker image
+        run: |
           docker compose -f docker/run_test/compose_buider.yml build --no-cache backend
           docker push ghcr.io/volvo-cars/test_odin_backend:latest
