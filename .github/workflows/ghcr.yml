@@ -32,8 +32,6 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - env:
-          OUTPUT1: ${{needs.job1.outputs.output1}}
       - name: Set up Docker
         uses: docker/setup-docker-action@v4
 
