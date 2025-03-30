@@ -30,6 +30,9 @@ jobs:
       - name: Run Backend Test
         run: |
           docker compose -f 'docker/run_test/compose.yml' up -d database
+          docker compose -f 'docker/run_test/compose.yml' up backend --abort-on-container-exit --exit-code-from backend
+
+          docker compose -f 'docker/run_test/compose.yml' rm -s -f backend
           docker compose -f 'docker/run_test/compose.yml' rm -s -f database
           # DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
           # mkdir -p $DOCKER_CONFIG/cli-plugins
