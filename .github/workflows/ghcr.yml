@@ -23,6 +23,7 @@ jobs:
       - name: Build and push test_database Docker image
         run: |
           gh --version
+          gh pr list
           # docker compose -f docker/run_test/compose_builder.yml build --no-cache database
           # docker push ghcr.io/volvo-cars/test_odin_database:latest
 
