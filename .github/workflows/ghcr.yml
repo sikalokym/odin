@@ -20,13 +20,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build the hello-docker Docker image
+      - name: Build and push test_database Docker image
         run: |
-          # DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
-          # mkdir -p $DOCKER_CONFIG/cli-plugins
-          # curl -SL https://github.com/docker/compose/releases/download/v2.33.0/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose
-          # chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
-          docker compose -f docker/run_test/compose_buider.yml build --no-cache database
+          docker compose -f docker/run_test/compose_builder.yml build --no-cache database
           docker push ghcr.io/volvo-cars/test_odin_database:latest
 
   publish-backend-docker-image:
@@ -48,11 +44,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build the hello-docker Docker image
+      - name: Build and push test_backend Docker image
         run: |
-          # DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
-          # mkdir -p $DOCKER_CONFIG/cli-plugins
-          # curl -SL https://github.com/docker/compose/releases/download/v2.33.0/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose
-          # chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
-          docker compose -f docker/run_test/compose_buider.yml build --no-cache backend
+          docker compose -f docker/run_test/compose_builder.yml build --no-cache backend
           docker push ghcr.io/volvo-cars/test_odin_backend:latest

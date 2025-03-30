@@ -2,8 +2,8 @@ on:
   pull_request:
     branches:
       - 'develop'
-    paths:
-      - 'backend/**'
+    # paths:
+    #   - 'backend/**'
 
 name: CI Test Backend
 run-name: CI Test Backend
@@ -11,21 +11,35 @@ run-name: CI Test Backend
 jobs:
   job:
     name: Test Backend
-    runs-on: vcc-azure-ubuntu-latest
+    runs-on: vcc-azure-ubuntu
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v4
+      
+      - uses: actions/checkout@v2
+      
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run Backend Test
         run: |
-          DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
-          mkdir -p $DOCKER_CONFIG/cli-plugins
-          curl -SL https://github.com/docker/compose/releases/download/v2.33.0/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose
-          chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
-          docker compose version
-          docker login -u mykolakis609 -p ${{ secrets.DOCKER_TOKEN }}
-          docker compose -f 'docker/run_test/compose.yml' up -d --build database
-          docker compose -f 'docker/run_test/compose.yml' up --build backend --abort-on-container-exit --exit-code-from backend
-          docker_exit=$?
-          echo $docker_exit
-          docker compose -f 'docker/run_test/compose.yml' rm -s -f backend
-          docker compose -f 'docker/run_test/compose.yml' rm -s -f database          
+          docker compose -f 'docker/run_test/compose.yml' up -d database
+          docker compose -f 'docker/run_test/compose.yml' rm -s -f database
+          # DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
+          # mkdir -p $DOCKER_CONFIG/cli-plugins
+          # curl -SL https://github.com/docker/compose/releases/download/v2.33.0/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose
+          # chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
+          # docker compose version
+          # docker login -u mykolakis609 -p ${{ secrets.DOCKER_TOKEN }}
+          # docker compose -f 'docker/run_test/compose.yml' up -d --build database
+          # docker compose -f 'docker/run_test/compose.yml' up --build backend --abort-on-container-exit --exit-code-from backend
+          # docker_exit=$?
+          # echo $docker_exit
+          # docker compose -f 'docker/run_test/compose.yml' rm -s -f backend
+          # docker compose -f 'docker/run_test/compose.yml' rm -s -f database          
