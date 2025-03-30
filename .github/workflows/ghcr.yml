@@ -3,15 +3,15 @@ on: [push]
 jobs:
   publish-database-docker-image:
     runs-on: vcc-azure-ubuntu
-    # permissions:
-    #   contents: read
-    #   packages: write
-    #   id-token: write
-    #   pull-requests: read
-    #   repository-projects: read
-    #   statuses: read
-    #   checks: read
-    permissions: read-all
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      pull-requests: read
+      repository-projects: read
+      statuses: read
+      checks: read
+      issues: read
     steps:
       - uses: actions/checkout@v2
       
