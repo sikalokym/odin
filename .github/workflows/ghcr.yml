@@ -12,6 +12,7 @@ jobs:
       statuses: read
       checks: read
       issues: read
+      actions: read
     steps:
       - uses: actions/checkout@v2
       
