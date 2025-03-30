@@ -1,7 +1,7 @@
 name: ghcr github action
 on: [push]
 jobs:
-  publish-database-docker-image:
+  pull-request-review:
     runs-on: vcc-azure-ubuntu
     permissions:
       contents: read
@@ -13,35 +13,51 @@ jobs:
       checks: read
       issues: read
       actions: read
+    outputs:
+      output1: ${{ steps.prr.outputs.test }}
     steps:
       - uses: actions/checkout@v2
       
       - name: Pull Request Review
+        id: prr
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.number }}
         run: |
-          gh --version
-          gh pr list
-          gh pr view $PR_NUMBER --json files --jq '.files.[].path'
-        
+          echo "test=$(gh pr view $PR_NUMBER --json files --jq '.files.[].path')" >> "$GITHUB_OUTPUT"
 
+  test_job:
+    runs-on: vcc-azure-ubuntu
+    needs: pull-request-review
+    steps:
+      - env:
+          OUTPUT1: ${{needs.pull-request-review.outputs.output1}}
+        run: echo "$OUTPUT1"
+          
+  # publish-database-docker-image:
+  #   runs-on: vcc-azure-ubuntu
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #     id-token: write
+  #   steps:
+  #     - uses: actions/checkout@v2
       
-      # - name: Set up Docker
-      #   uses: docker/setup-docker-action@v4
+  #     - name: Set up Docker
+  #       uses: docker/setup-docker-action@v4
       
       
-      # - name: Login to GitHub Container Registry
-      #   uses: docker/login-action@v3.4.0
-      #   with:
-      #     registry: ghcr.io
-      #     username: ${{ github.actor }}
-      #     password: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@v3.4.0
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
 
-      # - name: Build and push test_database Docker image
-      #   run: |
-      #     docker compose -f docker/run_test/compose_builder.yml build --no-cache database
-      #     docker push ghcr.io/volvo-cars/test_odin_database:latest
+  #     - name: Build and push test_database Docker image
+  #       run: |
+  #         docker compose -f docker/run_test/compose_builder.yml build --no-cache database
+  #         docker push ghcr.io/volvo-cars/test_odin_database:latest
 
 
   # publish-backend-docker-image:
@@ -51,9 +67,11 @@ jobs:
   #     packages: write
   #     id-token: write
   #   steps:
+  #     - env:
+  #         OUTPUT1: ${{needs.job1.outputs.output1}}
   #     - name: Set up Docker
   #       uses: docker/setup-docker-action@v4
-      
+
   #     - uses: actions/checkout@v2
       
   #     - name: Login to GitHub Container Registry
