@@ -13,7 +13,6 @@ jobs:
       - name: Set up Docker
         uses: docker/setup-docker-action@v4
       
-      
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3.4.0
         with:
@@ -25,7 +24,6 @@ jobs:
         run: |
           docker compose -f docker/run_test/compose_builder.yml build --no-cache database
           docker push ghcr.io/volvo-cars/test_odin_database:latest
-
 
   publish-backend-docker-image:
     runs-on: ubuntu-latest
