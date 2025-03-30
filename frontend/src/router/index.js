@@ -16,7 +16,7 @@ const routes = [
 		name: 'Home',
 		component: Home,
 		meta: {
-			requiresRole: ['readers', 'modifiers']
+			requiresRole: ['reader', 'modifier']
 		},
 	},
 	{
@@ -24,7 +24,7 @@ const routes = [
 		name: 'Database',
 		component: Database,
 		meta: {
-			requiresRole: ['modifiers'],
+			requiresRole: ['modifier'],
 		},
 	},
 	{
@@ -32,7 +32,7 @@ const routes = [
 		name: 'Documents',
 		component: Documents,
 		meta: {
-			requiresRole: ['readers', 'modifiers']
+			requiresRole: ['reader', 'modifier']
 		},
 	},
 	{
@@ -40,7 +40,7 @@ const routes = [
 		name: 'Reports',
 		component: Reports,
 		meta: {
-			requiresRole: ['modifiers'],
+			requiresRole: ['modifier'],
 		},
 	},
 ];
@@ -65,8 +65,9 @@ router.beforeEach(async (to, from, next) => {
 		if (to.matched.some(record => record.meta.requiresRole)) {
 			const requiredRole = to.meta.requiresRole;
 			// filter roles with requiredRole
-			roles = roles.filter(role => role.country.toLowerCase() === curr_country.CountryName.toLowerCase());
-			roles = roles.map(role => role.role);
+			// roles = roles.filter(role => role.country.toLowerCase() === curr_country.CountryName.toLowerCase());
+			roles = roles.filter(role => role.split(".")[0] === curr_country.Code);
+			roles = roles.map(role => role.split(".")[1]);
 			
 			if (requiredRole.some(role => roles.includes(role))) {
 				next();
