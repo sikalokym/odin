@@ -23,7 +23,7 @@ jobs:
         run: |
           gh --version
           gh pr list
-          gh pr view 73 --json files
+          gh pr view $PR_NUMBER --json files --jq '.files.[].path'
         
 
       
