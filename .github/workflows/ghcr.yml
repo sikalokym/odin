@@ -23,7 +23,7 @@ jobs:
         run: |
           gh --version
           gh pr list
-          gh pr view 73
+          gh pr view 73 --json files
         
 
       
