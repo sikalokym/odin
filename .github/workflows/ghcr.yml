@@ -14,9 +14,10 @@ jobs:
       - name: Pull Request Review
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.number }}
         run: |
           gh --version
-          gh pr list
+          gh pr list $PR_NUMBER
         
 
       
