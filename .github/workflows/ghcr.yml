@@ -10,6 +10,7 @@ jobs:
       pull-requests: read
       repository-projects: read
       statuses: read
+      checks: read
     steps:
       - uses: actions/checkout@v2
       
