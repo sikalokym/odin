@@ -24,7 +24,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.number }}
         run: |
-          echo "test=$(gh pr view $PR_NUMBER --json files --jq '.files.[]')" >> "$GITHUB_OUTPUT"
+          echo "test=$(gh pr view $PR_NUMBER --json files --jq '.files')" >> "$GITHUB_OUTPUT"
 
   test_job:
     runs-on: vcc-azure-ubuntu
