@@ -17,7 +17,8 @@ jobs:
           PR_NUMBER: ${{ github.event.number }}
         run: |
           gh --version
-          gh pr list $PR_NUMBER
+          gh pr list
+          gh pr view $PR_NUMBER
         
 
       
