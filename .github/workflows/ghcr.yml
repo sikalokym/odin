@@ -1,23 +1,34 @@
 name: ghcr github action
 on: [push]
 jobs:
-  job1:
+  pull-request-review:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      pull-requests: read
+      repository-projects: read
+      statuses: read
+      checks: read
+      issues: read
+      actions: read
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      files: ${{ toJSON(steps.get-pullrequst-files.outputs.files) }}
     steps:
-      - id: set-matrix
+      - id: get-pullrequst-files
+        run: echo "files==$(gh pr view $PR_NUMBER --json files --jq '.files')" >> "$GITHUB_OUTPUT"
         # run: echo "matrix={\"include\":[{\"project\":\"foo\",\"config\":\"Debug\"},{\"project\":\"bar\",\"config\":\"Release\"}]}" >> $GITHUB_OUTPUT
-        run: echo "matrix=[{\"additions\":83,\"deletions\":0,\"path\":\".github/workflows/ghcr.yml\"},{\"additions\":17,\"deletions\":11,\"path\":\".github/workflows/test_backend.yml\"},{\"additions\":1,\"deletions\":1,\"path\":\"backend/requirements.txt\"},{\"additions\":2,\"deletions\":10,\"path\":\"docker/run_test/compose.yml\"},{\"additions\":25,\"deletions\":0,\"path\":\"docker/run_test/compose_builder.yml\"},{\"additions\":1,\"deletions\":1,\"path\":\"docker/run_test/database/database.Dockerfile\"}]" >> $GITHUB_OUTPUT
+        # run: echo "files=[{\"additions\":83,\"deletions\":0,\"path\":\".github/workflows/ghcr.yml\"},{\"additions\":17,\"deletions\":11,\"path\":\".github/workflows/test_backend.yml\"},{\"additions\":1,\"deletions\":1,\"path\":\"backend/requirements.txt\"},{\"additions\":2,\"deletions\":10,\"path\":\"docker/run_test/compose.yml\"},{\"additions\":25,\"deletions\":0,\"path\":\"docker/run_test/compose_builder.yml\"},{\"additions\":1,\"deletions\":1,\"path\":\"docker/run_test/database/database.Dockerfile\"}]" >> $GITHUB_OUTPUT
   job2:
-    needs: job1
+    needs: pull-request-review
     runs-on: ubuntu-latest
     # strategy:
     #   matrix: ${{ fromJSON(needs.job1.outputs.matrix) }}
     steps:
       - env:
-          matrix: ${{ contains(fromJSON(needs.job1.outputs.matrix).*.path, '.github/workflows/test_backend.yml') }}
-        run: echo "${{ env.matrix }}"
+          files: ${{ contains(fromJSON(needs.job1.outputs.files).*.path, '.github/workflows/test_backend.yml') }}
+        run: echo "${{ env.files }}"
   # pull-request-review:
   #   runs-on: vcc-azure-ubuntu
   #   permissions:
