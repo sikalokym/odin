@@ -25,7 +25,9 @@ jobs:
         run: |
           for file in $(gh pr view 73 --json files --jq '.files[].path')
           do
-            echo $file
+            if [[ $file =~ docker* ]]
+              echo $file
+            fi
           done
           echo "files=$(gh pr view 73 --json files --jq '.files')" >> "$GITHUB_OUTPUT" 
         # run: echo "files={\"include\":[{\"project\":\"foo\",\"config\":\"Debug\"},{\"project\":\"bar\",\"config\":\"Release\"}]}" >> $GITHUB_OUTPUT
