@@ -23,20 +23,21 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.number }}
         run: |
-          gh pr view 73 --json files --jq '.files[].path'
+          echo $(gh pr view 73 --json files --jq '.files[].path') > $files
+          echo $files
           # echo "files=$(gh pr view 73 --json files --jq '.files')" >> "$GITHUB_OUTPUT" 
         # run: echo "files={\"include\":[{\"project\":\"foo\",\"config\":\"Debug\"},{\"project\":\"bar\",\"config\":\"Release\"}]}" >> $GITHUB_OUTPUT
         # run: echo "files=[{\"additions\":83,\"deletions\":0,\"path\":\".github/workflows/ghcr.yml\"},{\"additions\":17,\"deletions\":11,\"path\":\".github/workflows/test_backend.yml\"},{\"additions\":1,\"deletions\":1,\"path\":\"backend/requirements.txt\"},{\"additions\":2,\"deletions\":10,\"path\":\"docker/run_test/compose.yml\"},{\"additions\":25,\"deletions\":0,\"path\":\"docker/run_test/compose_builder.yml\"},{\"additions\":1,\"deletions\":1,\"path\":\"docker/run_test/database/database.Dockerfile\"}]" >> $GITHUB_OUTPUT
-  job2:
-    needs: pull-request-review
-    runs-on: ubuntu-latest
-    # strategy:
-    #   matrix: ${{ fromJSON(needs.pull-request-review.outputs.files) }}
-    steps:
-      - env:
-          files: ${{ needs.pull-request-review.outputs.files }}
-          # files: ${{ contains(fromJSON(needs.pull-request-review.outputs.files).*.path, '.github/workflows/test_backend.yml') }}
-        run: echo "${{ env.files }}"
+  # job2:
+  #   needs: pull-request-review
+  #   runs-on: ubuntu-latest
+  #   # strategy:
+  #   #   matrix: ${{ fromJSON(needs.pull-request-review.outputs.files) }}
+  #   steps:
+  #     - env:
+  #         files: ${{ needs.pull-request-review.outputs.files }}
+  #         # files: ${{ contains(fromJSON(needs.pull-request-review.outputs.files).*.path, '.github/workflows/test_backend.yml') }}
+  #       run: echo "${{ env.files }}"
   # pull-request-review:
   #   runs-on: vcc-azure-ubuntu
   #   permissions:
