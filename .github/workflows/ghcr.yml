@@ -12,8 +12,8 @@ jobs:
   job2:
     needs: job1
     runs-on: ubuntu-latest
-    strategy:
-      matrix: ${{ fromJSON(needs.job1.outputs.matrix) }}
+    # strategy:
+    #   matrix: ${{ fromJSON(needs.job1.outputs.matrix) }}
     steps:
       - run: echo "Matrix - Project ${{ matrix.path }}, Config ${{ matrix.additions }}"
   # pull-request-review:
