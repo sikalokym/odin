@@ -7,14 +7,15 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - id: set-matrix
-        run: echo "matrix={\"include\":[{\"project\":\"foo\",\"config\":\"Debug\"},{\"project\":\"bar\",\"config\":\"Release\"}]}" >> $GITHUB_OUTPUT
+        # run: echo "matrix={\"include\":[{\"project\":\"foo\",\"config\":\"Debug\"},{\"project\":\"bar\",\"config\":\"Release\"}]}" >> $GITHUB_OUTPUT
+        run: echo "matrix={\"include\":[{\"additions\":83,\"deletions\":0,\"path\":\".github/workflows/ghcr.yml\"},{\"additions\":17,\"deletions\":11,\"path\":\".github/workflows/test_backend.yml\"},{\"additions\":1,\"deletions\":1,\"path\":\"backend/requirements.txt\"},{\"additions\":2,\"deletions\":10,\"path\":\"docker/run_test/compose.yml\"},{\"additions\":25,\"deletions\":0,\"path\":\"docker/run_test/compose_builder.yml\"},{\"additions\":1,\"deletions\":1,\"path\":\"docker/run_test/database/database.Dockerfile\"}]" >> $GITHUB_OUTPUT
   job2:
     needs: job1
     runs-on: ubuntu-latest
     strategy:
       matrix: ${{ fromJSON(needs.job1.outputs.matrix) }}
     steps:
-      - run: echo "Matrix - Project ${{ matrix.project }}, Config ${{ matrix.config }}"
+      - run: echo "Matrix - Project ${{ matrix.path }}, Config ${{ matrix.additions }}"
   # pull-request-review:
   #   runs-on: vcc-azure-ubuntu
   #   permissions:
