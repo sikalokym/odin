@@ -16,7 +16,7 @@ jobs:
     #   matrix: ${{ fromJSON(needs.job1.outputs.matrix) }}
     steps:
       - env:
-          matrix: ${{ contains(fromJSON(needs.job1.outputs.matrix), 'asdas') }}
+          matrix: ${{ contains(fromJSON(needs.job1.outputs.matrix), '.github/workflows/test_backend.yml') }}
         run: echo "${{ env.matrix }}"
   # pull-request-review:
   #   runs-on: vcc-azure-ubuntu
