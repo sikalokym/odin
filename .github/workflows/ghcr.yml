@@ -36,6 +36,7 @@ jobs:
   job2:
     needs: pull-request-review
     runs-on: ubuntu-latest
+    if: ${{ needs.pull-request-review.outputs.if_build_image }}
     # strategy:
     #   matrix: ${{ fromJSON(needs.pull-request-review.outputs.files) }}
     steps:
