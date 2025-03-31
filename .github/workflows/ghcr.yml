@@ -34,7 +34,7 @@ jobs:
     #   matrix: ${{ fromJSON(needs.pull-request-review.outputs.files) }}
     steps:
       - env:
-          files: ${{ join(fromJSON(needs.pull-request-review.outputs.files)) }}
+          files: ${{ join(needs.pull-request-review.outputs.files.*.path) }}
           # files: ${{ contains(fromJSON(needs.pull-request-review.outputs.files).*.path, '.github/workflows/test_backend.yml') }}
         run: echo "${{ env.files }}"
   # pull-request-review:
