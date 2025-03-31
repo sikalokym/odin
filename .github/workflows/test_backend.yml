@@ -3,7 +3,7 @@ on:
     branches:
       - 'develop'
     paths:
-      - 'backend/**'
+      - 'backend_kis/**'
 
 name: CI Test Backend
 run-name: CI Test Backend
