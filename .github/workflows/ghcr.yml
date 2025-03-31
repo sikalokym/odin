@@ -16,6 +16,8 @@ jobs:
     outputs:
       files: ${{ steps.get-pullrequst-files.outputs.files }}
     steps:
+      - uses: actions/checkout@v2
+      
       - id: get-pullrequst-files
         env:
           GH_TOKEN: ${{ github.token }}
