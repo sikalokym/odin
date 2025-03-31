@@ -14,7 +14,7 @@ jobs:
       issues: read
       actions: read
     outputs:
-      files: ${{ steps.get-pullrequst-files.outputs.files }}
+      files: ${{ steps.get-pullrequst-files.outputs.if_build_image }}
     steps:
       - uses: actions/checkout@v2
       
@@ -25,23 +25,24 @@ jobs:
         run: |
           for file in $(gh pr view 73 --json files --jq '.files[].path')
           do
-            if [[ $file =~ docker* ]]; then
+            if [[ $file =~ docker/run_test* ]]; then
               echo $file
+              echo "if_build_image=1" >> $GITHUB_OUTPUT
             fi
           done
           echo "files=$(gh pr view 73 --json files --jq '.files')" >> "$GITHUB_OUTPUT" 
         # run: echo "files={\"include\":[{\"project\":\"foo\",\"config\":\"Debug\"},{\"project\":\"bar\",\"config\":\"Release\"}]}" >> $GITHUB_OUTPUT
         # run: echo "files=[{\"additions\":83,\"deletions\":0,\"path\":\".github/workflows/ghcr.yml\"},{\"additions\":17,\"deletions\":11,\"path\":\".github/workflows/test_backend.yml\"},{\"additions\":1,\"deletions\":1,\"path\":\"backend/requirements.txt\"},{\"additions\":2,\"deletions\":10,\"path\":\"docker/run_test/compose.yml\"},{\"additions\":25,\"deletions\":0,\"path\":\"docker/run_test/compose_builder.yml\"},{\"additions\":1,\"deletions\":1,\"path\":\"docker/run_test/database/database.Dockerfile\"}]" >> $GITHUB_OUTPUT
-  # job2:
-  #   needs: pull-request-review
-  #   runs-on: ubuntu-latest
-  #   # strategy:
-  #   #   matrix: ${{ fromJSON(needs.pull-request-review.outputs.files) }}
-  #   steps:
-  #     - env:
-  #         files: ${{ contains(fromJSON(toJSON(needs.pull-request-review.outputs.files)).*.path, '.github/workflows/test_backend.yml') }}
-  #         # files: ${{ contains(fromJSON(needs.pull-request-review.outputs.files).*.path, '.github/workflows/test_backend.yml') }}
-  #       run: echo "${{ env.files }}"
+  job2:
+    needs: pull-request-review
+    runs-on: ubuntu-latest
+    # strategy:
+    #   matrix: ${{ fromJSON(needs.pull-request-review.outputs.files) }}
+    steps:
+      - env:
+          if_build_image: ${{ needs.pull-request-review.outputs.if_build_image }}
+          # files: ${{ contains(fromJSON(needs.pull-request-review.outputs.files).*.path, '.github/workflows/test_backend.yml') }}
+        run: echo "${{ env.if_build_image }}"
   # pull-request-review:
   #   runs-on: vcc-azure-ubuntu
   #   permissions:
