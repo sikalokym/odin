@@ -31,7 +31,7 @@ jobs:
     needs: pull-request-review
     runs-on: ubuntu-latest
     strategy:
-      matrix: ${{ fromJSON(needs.job1.outputs.matrix) }}
+      matrix: ${{ fromJSON(needs.pull-request-review.outputs.files) }}
     steps:
       - env:
           # files: ${{ toJSON(needs.pull-request-review.outputs.files) }}
