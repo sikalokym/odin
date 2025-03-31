@@ -31,7 +31,7 @@ jobs:
     needs: pull-request-review
     steps:
       - env:
-          OUTPUT1: ${{needs.pull-request-review.outputs.output1}}
+          OUTPUT1: ${{ needs.pull-request-review.outputs.output1.*.path }}
         run: echo "$OUTPUT1"
   
   # publish-database-docker-image:
