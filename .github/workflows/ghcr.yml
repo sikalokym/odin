@@ -17,7 +17,7 @@ jobs:
     steps:
       - env:
           matrix: ${{ fromJSON(needs.job1.outputs.matrix) }}
-        run: echo "Matrix - Project ${{ matrix.path }}, Config ${{ matrix.additions }}"
+        run: echo "Matrix - Project ${{ env.matrix.path }}, Config ${{ env.matrix.additions }}"
   # pull-request-review:
   #   runs-on: vcc-azure-ubuntu
   #   permissions:
