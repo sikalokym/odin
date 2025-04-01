@@ -22,6 +22,7 @@ jobs:
       actions: read
     outputs:
       if_build_image: ${{ steps.get-pullrequst-files.outputs.if_build_image }}
+      if_test_backend: ${{ steps.get-pullrequst-files.outputs.if_test_backend }}
     steps:
       - uses: actions/checkout@v2
       
@@ -31,11 +32,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.number }}
         run: |
-          for file in $(gh pr view 73 --json files --jq '.files[].path')
+          for file in $(gh pr view $PR_NUMBER --json files --jq '.files[].path')
           do
             if [[ $file =~ docker/run_test* ]]; then
               echo $file
               echo "if_build_image=1" >> $GITHUB_OUTPUT
+            fi
+            if [[ $file =~ backend* ]]; then
+              echo $file
+              echo "if_test_backend=1" >> $GITHUB_OUTPUT
             fi
           done
     
@@ -95,5 +100,6 @@ jobs:
   
   test-application:
     needs: [publish-database-docker-image, publish-backend-docker-image]
+    if: ${{ success() || needs.publish-database-docker-image.result == 'skipped' && needs.pull-request-review.outputs.if_test_backend }}
     name: Run Test Backend Application
     uses: ./.github/workflows/reusable_odin_test_backend.yml
