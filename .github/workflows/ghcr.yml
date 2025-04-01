@@ -2,6 +2,7 @@ name: ghcr github action
 on: [push]
 jobs:
   pull-request-review:
+    name: Pull Request review
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -19,6 +20,7 @@ jobs:
       - uses: actions/checkout@v2
       
       - id: get-pullrequst-files
+        name: Get Pull Request files
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.number }}
@@ -30,22 +32,9 @@ jobs:
               echo "if_build_image=1" >> $GITHUB_OUTPUT
             fi
           done
-          # echo "files=$(gh pr view 73 --json files --jq '.files')" >> "$GITHUB_OUTPUT" 
-        # run: echo "files={\"include\":[{\"project\":\"foo\",\"config\":\"Debug\"},{\"project\":\"bar\",\"config\":\"Release\"}]}" >> $GITHUB_OUTPUT
-        # run: echo "files=[{\"additions\":83,\"deletions\":0,\"path\":\".github/workflows/ghcr.yml\"},{\"additions\":17,\"deletions\":11,\"path\":\".github/workflows/test_backend.yml\"},{\"additions\":1,\"deletions\":1,\"path\":\"backend/requirements.txt\"},{\"additions\":2,\"deletions\":10,\"path\":\"docker/run_test/compose.yml\"},{\"additions\":25,\"deletions\":0,\"path\":\"docker/run_test/compose_builder.yml\"},{\"additions\":1,\"deletions\":1,\"path\":\"docker/run_test/database/database.Dockerfile\"}]" >> $GITHUB_OUTPUT
-  # job2:
-  #   needs: pull-request-review
-  #   runs-on: ubuntu-latest
-  #   if: ${{ needs.pull-request-review.outputs.if_build_image }}
-  #   # strategy:
-  #   #   matrix: ${{ fromJSON(needs.pull-request-review.outputs.files) }}
-  #   steps:
-  #     - env:
-  #         if_build_image: ${{ needs.pull-request-review.outputs.if_build_image }}
-  #         # files: ${{ contains(fromJSON(needs.pull-request-review.outputs.files).*.path, '.github/workflows/test_backend.yml') }}
-  #       run: echo "${{ env.if_build_image }}"
     
   publish-database-docker-image:
+    name: Build and Publish "Test Database" Docker image.
     needs: pull-request-review
     if: ${{ needs.pull-request-review.outputs.if_build_image }}
     runs-on: vcc-azure-ubuntu
