@@ -92,6 +92,8 @@ jobs:
         run: |
           docker compose -f docker/run_test/compose_builder.yml build --no-cache backend
           docker push ghcr.io/volvo-cars/test_odin_backend:latest
+  
   test-application:
+    needs: [publish-database-docker-image, publish-backend-docker-image]
     name: Test ODIN Application
     uses: ./.github/workflows/reusable_odin_test_backend.yml
