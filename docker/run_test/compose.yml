@@ -1,11 +1,6 @@
 services:
   database:
-    image: "test_odin_database"
-    build:
-      context: ..
-      dockerfile: run_test/database/database.Dockerfile
-      secrets:
-        - sa_password
+    image: ghcr.io/volvo-cars/test_odin_database:latest
     container_name: test_odin_database
     ports:
       - "1433:1433"
@@ -17,10 +12,7 @@ services:
       - sa_password
   
   backend:
-    image: "test_odin_backend"
-    build:
-      context: ..
-      dockerfile: run_test/backend/backend.Dockerfile
+    image: ghcr.io/volvo-cars/test_odin_backend:latest
     container_name: test_odin_backend
     environment:
       DB_CONNECTION_STRING: "Driver={ODBC Driver 18 for SQL Server};Server=test_odin_database;Database=odin;Authentication=SqlPassword;Encrypt=no;TrustServerCertificate=Yes;Connection Timeout=60;"

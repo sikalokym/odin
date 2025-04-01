@@ -1,0 +1,99 @@
+on:
+  pull_request:
+    branches:
+      - 'develop'
+      
+name: CI Test ODIN Application
+run-name: CI Test ODIN Application
+
+jobs:
+  pull-request-review:
+    name: Pull Request review
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      pull-requests: read
+      repository-projects: read
+      statuses: read
+      checks: read
+      issues: read
+      actions: read
+    outputs:
+      if_build_image: ${{ steps.get-pullrequst-files.outputs.if_build_image }}
+    steps:
+      - uses: actions/checkout@v2
+      
+      - id: get-pullrequst-files
+        name: Get Pull Request files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          for file in $(gh pr view 73 --json files --jq '.files[].path')
+          do
+            if [[ $file =~ docker/run_test* ]]; then
+              echo $file
+              echo "if_build_image=1" >> $GITHUB_OUTPUT
+            fi
+          done
+    
+  publish-database-docker-image:
+    name: B&P Test Database Docker image
+    needs: pull-request-review
+    if: ${{ needs.pull-request-review.outputs.if_build_image }}
+    runs-on: vcc-azure-ubuntu
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v4
+      
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push test_database Docker image
+        run: |
+          docker compose -f docker/run_test/compose_builder.yml build --no-cache database
+          docker push ghcr.io/volvo-cars/test_odin_database:latest
+
+  publish-backend-docker-image:
+    name: B&P Test Backend Docker Image
+    needs: pull-request-review
+    if: ${{ needs.pull-request-review.outputs.if_build_image }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v4
+
+      - uses: actions/checkout@v2
+      
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push test_backend Docker image
+        run: |
+          docker compose -f docker/run_test/compose_builder.yml build --no-cache backend
+          docker push ghcr.io/volvo-cars/test_odin_backend:latest
+  
+  test-application:
+    needs: [publish-database-docker-image, publish-backend-docker-image]
+    name: Run Test Backend Application
+    uses: ./.github/workflows/reusable_odin_test_backend.yml

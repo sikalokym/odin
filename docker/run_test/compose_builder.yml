@@ -1,0 +1,25 @@
+services:
+  database:
+    image: "test_odin_database"
+    build:
+      context: ..
+      dockerfile: run_test/database/database.Dockerfile
+      tags:
+        - "ghcr.io/volvo-cars/test_odin_database:latest"
+      secrets:
+        - sa_password
+    secrets:
+      - sa_password
+  
+  backend:
+    image: "test_odin_backend"    
+    build:
+      context: ..
+      dockerfile: run_test/backend/backend.Dockerfile
+      tags:
+        - "ghcr.io/volvo-cars/test_odin_backend:latest"
+    secrets:
+      - sa_password
+secrets:
+  sa_password:
+    file: database/database_admin
