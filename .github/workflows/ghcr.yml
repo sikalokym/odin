@@ -34,7 +34,7 @@ jobs:
           done
     
   publish-database-docker-image:
-    name: Build and Publish "Test Database" Docker image.
+    name: Test Database Docker image
     needs: pull-request-review
     if: ${{ needs.pull-request-review.outputs.if_build_image }}
     runs-on: vcc-azure-ubuntu
