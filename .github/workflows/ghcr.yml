@@ -31,7 +31,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.number }}
         run: |
-          for file in $(gh pr view 73 --json files --jq '.files[].path')
+          for file in $(gh pr view $PR_NUMBER --json files --jq '.files[].path')
           do
             if [[ $file =~ docker/run_test* ]]; then
               echo $file
