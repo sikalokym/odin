@@ -1,8 +1,7 @@
 on:
   workflow_call:
 
-name: CI Test Backend
-run-name: CI Test Backend
+name: Reusable template Test Backend
 
 jobs:
   job:
