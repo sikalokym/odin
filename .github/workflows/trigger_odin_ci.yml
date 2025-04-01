@@ -34,11 +34,11 @@ jobs:
         run: |
           for file in $(gh pr view $PR_NUMBER --json files --jq '.files[].path')
           do
-            if [[ $file =~ docker/run_test* ]]; then
+            if [[ $file =~ ^docker/run_test* ]]; then
               echo $file
               echo "if_build_image=1" >> $GITHUB_OUTPUT
             fi
-            if [[ $file =~ backend* ]]; then
+            if [[ $file =~ ^backend* ]]; then
               echo $file
               echo "if_test_backend=1" >> $GITHUB_OUTPUT
             fi
