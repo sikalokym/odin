@@ -1,6 +1,11 @@
-name: CI Docker Images
-run-name: CI Docker Images
-on: [push]
+on:
+  pull_request:
+    branches:
+      - 'develop'
+      
+name: CI Test ODIN Application
+run-name: CI Test ODIN Application
+
 jobs:
   pull-request-review:
     name: Pull Request review
