@@ -40,7 +40,7 @@ jobs:
           done
     
   publish-database-docker-image:
-    name: Test Database Docker image
+    name: B&P Test Database Docker image
     needs: pull-request-review
     if: ${{ needs.pull-request-review.outputs.if_build_image }}
     runs-on: vcc-azure-ubuntu
@@ -67,7 +67,7 @@ jobs:
           docker push ghcr.io/volvo-cars/test_odin_database:latest
 
   publish-backend-docker-image:
-    name: Test Backend Docker Image
+    name: B&P Test Backend Docker Image
     needs: pull-request-review
     if: ${{ needs.pull-request-review.outputs.if_build_image }}
     runs-on: ubuntu-latest
@@ -95,5 +95,5 @@ jobs:
   
   test-application:
     needs: [publish-database-docker-image, publish-backend-docker-image]
-    name: Test ODIN Application
+    name: Run Test Backend Application
     uses: ./.github/workflows/reusable_odin_test_backend.yml
