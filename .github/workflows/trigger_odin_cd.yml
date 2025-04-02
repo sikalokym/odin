@@ -74,7 +74,10 @@ jobs:
           # done
 
   deploy-infra:
-    name: Deploy Infrastructure to ${{ env.deploying_environment }}
+    name: Deploy Infrastructure to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+                                       github.ref == 'refs/heads/test' && 'Testing' ||
+                                       github.ref == 'refs/heads/main' && 'Production' ||
+                                       'Development' }}
     if: ${{ needs.pull-request-review.outputs.if_deploy_infra }}
     uses: ./.github/workflows/reusable_odin_infrastructure.yml
     with:
@@ -88,7 +91,10 @@ jobs:
   deploy-app:
     needs: [deploy-infra]
     if: ${{ needs.pull-request-review.outputs.if_deploy_app && success() || needs.deploy-infra.result == 'skipped' }}
-    name: Deploy Application to ${{ env.deploying_environment }}
+    name: Deploy Application to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+                                    github.ref == 'refs/heads/test' && 'Testing' ||
+                                    github.ref == 'refs/heads/main' && 'Production' ||
+                                    'Development' }}
     uses: ./.github/workflows/reusable_odin_application.yml
     with:
       environment: ${{ env.deploying_environment }}
@@ -100,7 +106,10 @@ jobs:
   deploy-db:
     needs: [deploy-infra]
     if: ${{ needs.pull-request-review.outputs.if_deploy_db && success() || needs.deploy-infra.result == 'skipped' }}
-    name: Deploy Database to ${{ env.deploying_environment }}
+    name: Deploy Database to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+                                 github.ref == 'refs/heads/test' && 'Testing' ||
+                                 github.ref == 'refs/heads/main' && 'Production' ||
+                                 'Development' }}
     uses: ./.github/workflows/reusable_odin_database.yml
     with:
       environment: ${{ env.deploying_environment }}
