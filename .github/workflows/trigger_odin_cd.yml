@@ -23,7 +23,10 @@ env:
 
 name: CD Automated Deployment ODIN Application
 
-run-name: Deploy ODIN Application to ${{ env.deploying_environment }} environment
+run-name: Deploy ODIN Application to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+                                       github.ref == 'refs/heads/test' && 'Testing' ||
+                                       github.ref == 'refs/heads/main' && 'Production' ||
+                                       'Development' }} environment
 
 jobs:
   pull-request-review:
