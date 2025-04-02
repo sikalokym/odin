@@ -20,7 +20,7 @@ name: Reusable template Database
 jobs:
   database-migrate:
     name: Database Migrate
-    runs-on: vcc-azure-ubuntu-latest
+    runs-on: vcc-azure-ubuntu
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4

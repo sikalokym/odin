@@ -32,7 +32,7 @@ permissions:
 jobs:
   terraform-plan:
     name: Terraform Plan
-    runs-on: vcc-azure-ubuntu-latest
+    runs-on: vcc-azure-ubuntu
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
@@ -73,7 +73,7 @@ jobs:
   terraform-apply:
     name: Terraform Apply
     needs: [terraform-plan, terraform-apply-approval]
-    runs-on: vcc-azure-ubuntu-latest
+    runs-on: vcc-azure-ubuntu
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
