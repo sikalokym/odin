@@ -58,7 +58,7 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           echo "$SHA"
-          for file in $(git show --pretty="format:" --name-only "$SHA");
+          for file in $(git show --pretty="format:" --name-only $SHA);
           do
             echo $file;
             # if [[ $file =~ ^terraform* ]]; then
