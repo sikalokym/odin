@@ -93,7 +93,7 @@ jobs:
 
   deploy-app:
     needs: [deploy-infra]
-    if: ${{ needs.pull-request-review.outputs.if_deploy_app && success() || needs.deploy-infra.result == 'skipped' }}
+    if: ${{ needs.pull-request-review.outputs.if_deploy_app && (success() || needs.deploy-infra.result == 'skipped') }}
     name: Deploy Application to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                                     github.ref == 'refs/heads/test' && 'Testing' ||
                                     github.ref == 'refs/heads/main' && 'Production' ||
@@ -111,7 +111,7 @@ jobs:
 
   deploy-db:
     needs: [deploy-infra]
-    if: ${{ needs.pull-request-review.outputs.if_deploy_db && success() || needs.deploy-infra.result == 'skipped' }}
+    if: ${{ needs.pull-request-review.outputs.if_deploy_db && (success() || needs.deploy-infra.result == 'skipped') }}
     name: Deploy Database to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                                  github.ref == 'refs/heads/test' && 'Testing' ||
                                  github.ref == 'refs/heads/main' && 'Production' ||
