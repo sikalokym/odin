@@ -65,7 +65,7 @@ jobs:
               echo $file;
               echo "if_deploy_infra=1" >> $GITHUB_OUTPUT;
             fi
-            if [[ $file =~ ^(backend|frontend)* ]]; then
+            if [[ $file =~ ^backend|^frontend* ]]; then
               echo $file
               echo "if_deploy_app=1" >> $GITHUB_OUTPUT
             fi
