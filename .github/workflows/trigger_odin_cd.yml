@@ -81,7 +81,10 @@ jobs:
     if: ${{ needs.pull-request-review.outputs.if_deploy_infra }}
     uses: ./.github/workflows/reusable_odin_infrastructure.yml
     with:
-      environment: ${{ env.deploying_environment }}
+      environment: ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+                       github.ref == 'refs/heads/test' && 'Testing' ||
+                       github.ref == 'refs/heads/main' && 'Production' ||
+                       'Development' }}
     secrets:
       client-id: ${{ secrets.AZURE_CLIENT_ID }}
       tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -97,7 +100,10 @@ jobs:
                                     'Development' }}
     uses: ./.github/workflows/reusable_odin_application.yml
     with:
-      environment: ${{ env.deploying_environment }}
+      environment: ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+                       github.ref == 'refs/heads/test' && 'Testing' ||
+                       github.ref == 'refs/heads/main' && 'Production' ||
+                       'Development' }}
     secrets:
       client-id: ${{ secrets.AZURE_CLIENT_ID }}
       tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -112,7 +118,10 @@ jobs:
                                  'Development' }}
     uses: ./.github/workflows/reusable_odin_database.yml
     with:
-      environment: ${{ env.deploying_environment }}
+      environment: ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+                       github.ref == 'refs/heads/test' && 'Testing' ||
+                       github.ref == 'refs/heads/main' && 'Production' ||
+                       'Development' }}
     secrets:
       db-user-name: ${{ secrets.DB_USER_NAME }}
       db-user-pass: ${{ secrets.DB_USER_PASS }}
