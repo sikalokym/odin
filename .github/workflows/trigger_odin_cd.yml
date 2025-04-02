@@ -57,6 +57,7 @@ jobs:
           PR_NUMBER: ${{ github.event.number }}
           SHA: ${{ github.sha }}
         run: |
+          git status
           echo "$SHA"
           git show --pretty="format:" --name-only $SHA
           # for file in $(git show --pretty="format:" --name-only $SHA);
