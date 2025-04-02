@@ -58,9 +58,10 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           echo "$SHA"
-          for file in $(git show --pretty="format:" --name-only $SHA);
-          do
-            echo $file;
+          git show --pretty="format:" --name-only $SHA
+          # for file in $(git show --pretty="format:" --name-only $SHA);
+          # do
+          #   echo $file;
             # if [[ $file =~ ^terraform* ]]; then
             #   echo $file;
             #   echo "if_deploy_infra=1" >> $GITHUB_OUTPUT;
@@ -73,7 +74,7 @@ jobs:
             #   echo $file
             #   echo "if_deploy_db=1" >> $GITHUB_OUTPUT
             # fi
-          done
+          # done
 
   deploy-infra:
     needs: [pull-request-review]
