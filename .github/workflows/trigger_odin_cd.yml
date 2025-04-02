@@ -57,11 +57,11 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           echo "$SHA"
-          for file in $(git show --pretty="format:" --name-only "$SHA")
+          for file in $(git show --pretty="format:" --name-only "$SHA");
           do
             if [[ $file =~ ^terraform* ]]; then
-              echo $file
-              echo "if_deploy_infra=1" >> $GITHUB_OUTPUT
+              echo $file;
+              echo "if_deploy_infra=1" >> $GITHUB_OUTPUT;
             fi
             # if [[ $file =~ ^(backend|frontend)* ]]; then
             #   echo $file
