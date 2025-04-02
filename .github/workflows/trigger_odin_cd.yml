@@ -12,8 +12,8 @@ on:
       - 'terraform/**'
       - '!backend/tests/**'
 
-concurrency: 
-  group: ${{ github.ref }}
+# concurrency: 
+#   group: ${{ github.ref }}
 
 env:
   deploying_environment: ${{ github.ref == 'refs/heads/develop' && 'Development' ||
