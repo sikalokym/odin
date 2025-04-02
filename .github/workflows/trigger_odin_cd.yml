@@ -4,6 +4,7 @@ on:
       - 'main'
       - 'test'
       - 'develop'
+      - 'cd_pullreview'
     paths: 
       - 'frontend/**'
       - 'backend/**'
