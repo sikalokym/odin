@@ -57,21 +57,21 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           echo "$SHA"
-          # for file in $(gh pr view $PR_NUMBER --json files --jq '.files[].path')
-          # do
-          #   if [[ $file =~ ^terraform* ]]; then
-          #     echo $file
-          #     echo "if_deploy_infra=1" >> $GITHUB_OUTPUT
-          #   fi
-          #   if [[ $file =~ ^(backend|frontend)* ]]; then
-          #     echo $file
-          #     echo "if_deploy_app=1" >> $GITHUB_OUTPUT
-          #   fi
-          #   if [[ $file =~ ^database* ]]; then
-          #     echo $file
-          #     echo "if_deploy_db=1" >> $GITHUB_OUTPUT
-          #   fi
-          # done
+          for file in $(git show --pretty="format:" --name-only "$SHA")
+          do
+            if [[ $file =~ ^terraform* ]]; then
+              echo $file
+              echo "if_deploy_infra=1" >> $GITHUB_OUTPUT
+            fi
+            # if [[ $file =~ ^(backend|frontend)* ]]; then
+            #   echo $file
+            #   echo "if_deploy_app=1" >> $GITHUB_OUTPUT
+            # fi
+            # if [[ $file =~ ^database* ]]; then
+            #   echo $file
+            #   echo "if_deploy_db=1" >> $GITHUB_OUTPUT
+            # fi
+          done
 
   deploy-infra:
     name: Deploy Infrastructure to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
