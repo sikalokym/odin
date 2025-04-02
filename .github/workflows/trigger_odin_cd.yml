@@ -50,22 +50,24 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.number }}
+          SHA: ${{ github.sha }}
         run: |
-          for file in $(gh pr view $PR_NUMBER --json files --jq '.files[].path')
-          do
-            if [[ $file =~ ^terraform* ]]; then
-              echo $file
-              echo "if_deploy_infra=1" >> $GITHUB_OUTPUT
-            fi
-            if [[ $file =~ ^(backend|frontend)* ]]; then
-              echo $file
-              echo "if_deploy_app=1" >> $GITHUB_OUTPUT
-            fi
-            if [[ $file =~ ^database* ]]; then
-              echo $file
-              echo "if_deploy_db=1" >> $GITHUB_OUTPUT
-            fi
-          done
+          echo "$SHA"
+          # for file in $(gh pr view $PR_NUMBER --json files --jq '.files[].path')
+          # do
+          #   if [[ $file =~ ^terraform* ]]; then
+          #     echo $file
+          #     echo "if_deploy_infra=1" >> $GITHUB_OUTPUT
+          #   fi
+          #   if [[ $file =~ ^(backend|frontend)* ]]; then
+          #     echo $file
+          #     echo "if_deploy_app=1" >> $GITHUB_OUTPUT
+          #   fi
+          #   if [[ $file =~ ^database* ]]; then
+          #     echo $file
+          #     echo "if_deploy_db=1" >> $GITHUB_OUTPUT
+          #   fi
+          # done
 
   deploy-infra:
     name: Deploy Infrastructure to ${{ env.deploying_environment }}
