@@ -59,25 +59,21 @@ jobs:
           PR_NUMBER: ${{ github.event.number }}
           SHA: ${{ github.sha }}
         run: |
-          git status
-          echo "$SHA"
-          git show --pretty="format:" --name-only $SHA
-          # for file in $(git show --pretty="format:" --name-only $SHA);
-          # do
-          #   echo $file;
-            # if [[ $file =~ ^terraform* ]]; then
-            #   echo $file;
-            #   echo "if_deploy_infra=1" >> $GITHUB_OUTPUT;
-            # fi
-            # if [[ $file =~ ^(backend|frontend)* ]]; then
-            #   echo $file
-            #   echo "if_deploy_app=1" >> $GITHUB_OUTPUT
-            # fi
-            # if [[ $file =~ ^database* ]]; then
-            #   echo $file
-            #   echo "if_deploy_db=1" >> $GITHUB_OUTPUT
-            # fi
-          # done
+          for file in $(git show --pretty="format:" --name-only $SHA);
+          do
+            if [[ $file =~ ^terraform* ]]; then
+              echo $file;
+              echo "if_deploy_infra=1" >> $GITHUB_OUTPUT;
+            fi
+            if [[ $file =~ ^(backend|frontend)* ]]; then
+              echo $file
+              echo "if_deploy_app=1" >> $GITHUB_OUTPUT
+            fi
+            if [[ $file =~ ^database* ]]; then
+              echo $file
+              echo "if_deploy_db=1" >> $GITHUB_OUTPUT
+            fi
+          done
 
   deploy-infra:
     needs: [pull-request-review]
