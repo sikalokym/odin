@@ -4,14 +4,12 @@ on:
       - 'main'
       - 'test'
       - 'develop'
-      - 'cd_pullreview'
     paths: 
       - 'frontend/**'
       - 'backend/**'
       - 'database/**'
       - 'terraform/**'
       - '!backend/tests/**'
-      - '.github/**'
 
 # concurrency: 
 #   group: ${{ github.ref }}
