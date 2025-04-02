@@ -64,7 +64,7 @@ jobs:
             # if [[ $file =~ ^terraform* ]]; then
             #   echo $file;
             #   echo "if_deploy_infra=1" >> $GITHUB_OUTPUT;
-            fi
+            # fi
             # if [[ $file =~ ^(backend|frontend)* ]]; then
             #   echo $file
             #   echo "if_deploy_app=1" >> $GITHUB_OUTPUT
