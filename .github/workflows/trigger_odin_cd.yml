@@ -74,6 +74,7 @@ jobs:
           done
 
   deploy-infra:
+    needs: [pull-request-review]
     name: Deploy Infrastructure to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
                                        github.ref == 'refs/heads/test' && 'Testing' ||
                                        github.ref == 'refs/heads/main' && 'Production' ||
