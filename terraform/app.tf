@@ -1,4 +1,4 @@
-# resource "random_uuid" "example_administrator" {}  
+# resource "random_uuid" "example_administrator" {}
 
 # resource "azuread_application_app_role" "germany_reader" {
 #   application_id = data.azuread_application.spn_app_6255.id
