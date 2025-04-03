@@ -1,0 +1,130 @@
+on:
+  push:
+    branches: 
+      - 'main'
+      - 'test'
+      - 'develop'
+    paths: 
+      - 'frontend/**'
+      - 'backend/**'
+      - 'database/**'
+      - 'terraform/**'
+      - '!backend/tests/**'
+
+# concurrency: 
+#   group: ${{ github.ref }}
+
+env:
+  deploying_environment: ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+                             github.ref == 'refs/heads/test' && 'Testing' ||
+                             github.ref == 'refs/heads/main' && 'Production' ||
+                             'Development' }}
+
+name: CD Automated Deployment ODIN Application
+
+run-name: Deploy ODIN Application to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+                                       github.ref == 'refs/heads/test' && 'Testing' ||
+                                       github.ref == 'refs/heads/main' && 'Production' ||
+                                       'Development' }} environment
+
+jobs:
+  pull-request-review:
+    name: Pull Request review
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      pull-requests: read
+      repository-projects: read
+      statuses: read
+      checks: read
+      issues: read
+      actions: read
+    outputs:
+      if_deploy_infra: ${{ steps.get-pullrequst-files.outputs.if_deploy_infra }}
+      if_deploy_app: ${{ steps.get-pullrequst-files.outputs.if_deploy_app }}
+      if_deploy_db: ${{ steps.get-pullrequst-files.outputs.if_deploy_db }}
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 2
+      
+      - id: get-pullrequst-files
+        name: Get Pull Request files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.number }}
+          SHA: ${{ github.sha }}
+        run: |
+          for file in $(git show --pretty="format:" --name-only $SHA);
+          do
+            if [[ $file =~ ^terraform* ]]; then
+              echo $file;
+              echo "if_deploy_infra=1" >> $GITHUB_OUTPUT;
+            fi
+            if [[ $file =~ ^backend|^frontend* ]]; then
+              echo $file
+              echo "if_deploy_app=1" >> $GITHUB_OUTPUT
+            fi
+            if [[ $file =~ ^database* ]]; then
+              echo $file
+              echo "if_deploy_db=1" >> $GITHUB_OUTPUT
+            fi
+          done
+
+  deploy-infra:
+    needs: [pull-request-review]
+    name: Deploy Infrastructure to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+                                       github.ref == 'refs/heads/test' && 'Testing' ||
+                                       github.ref == 'refs/heads/main' && 'Production' ||
+                                       'Development' }}
+    if: ${{ needs.pull-request-review.outputs.if_deploy_infra }}
+    uses: ./.github/workflows/reusable_odin_infrastructure.yml
+    with:
+      environment: ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+                       github.ref == 'refs/heads/test' && 'Testing' ||
+                       github.ref == 'refs/heads/main' && 'Production' ||
+                       'Development' }}
+    secrets:
+      client-id: ${{ secrets.AZURE_CLIENT_ID }}
+      tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+      subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      terraform-token: ${{ secrets.TERRAFORM_TOKEN }}
+
+  deploy-app:
+    needs: [deploy-infra]
+    if: ${{ needs.pull-request-review.outputs.if_deploy_app && (success() || needs.deploy-infra.result == 'skipped') }}
+    name: Deploy Application to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+                                    github.ref == 'refs/heads/test' && 'Testing' ||
+                                    github.ref == 'refs/heads/main' && 'Production' ||
+                                    'Development' }}
+    uses: ./.github/workflows/reusable_odin_application.yml
+    with:
+      environment: ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+                       github.ref == 'refs/heads/test' && 'Testing' ||
+                       github.ref == 'refs/heads/main' && 'Production' ||
+                       'Development' }}
+    secrets:
+      client-id: ${{ secrets.AZURE_CLIENT_ID }}
+      tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+      subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  deploy-db:
+    needs: [deploy-infra]
+    if: ${{ needs.pull-request-review.outputs.if_deploy_db && (success() || needs.deploy-infra.result == 'skipped') }}
+    name: Deploy Database to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+                                 github.ref == 'refs/heads/test' && 'Testing' ||
+                                 github.ref == 'refs/heads/main' && 'Production' ||
+                                 'Development' }}
+    uses: ./.github/workflows/reusable_odin_database.yml
+    with:
+      environment: ${{ github.ref == 'refs/heads/develop' && 'Development' ||
+                       github.ref == 'refs/heads/test' && 'Testing' ||
+                       github.ref == 'refs/heads/main' && 'Production' ||
+                       'Development' }}
+    secrets:
+      db-user-name: ${{ secrets.DB_USER_NAME }}
+      db-user-pass: ${{ secrets.DB_USER_PASS }}
+      db-name: ${{ secrets.DB_NAME }}
+      db-server: ${{ secrets.DB_SERVER }}
