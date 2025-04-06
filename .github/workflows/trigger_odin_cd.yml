@@ -119,4 +119,4 @@ jobs:
       db-user-name: ${{ secrets.DB_USER_NAME }}
       db-user-pass: ${{ secrets.DB_USER_PASS }}
       db-name: ${{ secrets.DB_NAME }}
-      db-server: ${{ secrets.DB_SERVER }} 
+      db-server: ${{ secrets.DB_SERVER }}
