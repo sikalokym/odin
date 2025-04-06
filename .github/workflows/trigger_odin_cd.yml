@@ -57,7 +57,8 @@ jobs:
           PR_NUMBER: ${{ github.event.number }}
           SHA: ${{ github.sha }}
         run: |
-          for file in $(git show --pretty="format:" --name-only $SHA);
+          parent_commits=($(git show --pretty=format:"%P" $SHA))
+          for file in $(git diff --name-only ${parent_commits[0]}..$SHA);
           do
             if [[ $file =~ ^terraform* ]]; then
               echo $file;
