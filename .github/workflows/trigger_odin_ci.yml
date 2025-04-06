@@ -100,7 +100,7 @@ jobs:
           docker push ghcr.io/volvo-cars/test_odin_backend:latest
   
   test-application:
-    needs: [publish-database-docker-image, publish-backend-docker-image]
+    needs: [publish-database-docker-image, publish-backend-docker-image, pull-request-review]
     if: ${{ success() || needs.publish-database-docker-image.result == 'skipped' }}
     name: Run Test Backend Application
     uses: ./.github/workflows/reusable_odin_test_backend.yml
