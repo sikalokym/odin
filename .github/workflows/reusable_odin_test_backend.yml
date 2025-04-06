@@ -11,7 +11,7 @@ name: Reusable template Test Backend
 
 jobs:
   job:
-    if: 
+    if: ${{ inputs.if_test_backend }}
     name: Test Backend
     runs-on: vcc-azure-ubuntu
     steps:
