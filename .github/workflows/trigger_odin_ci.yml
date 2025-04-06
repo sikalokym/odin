@@ -2,6 +2,7 @@ on:
   pull_request:
     branches:
       - 'develop'
+  merge_group:
       
 name: CI Test ODIN Application
 run-name: CI Test ODIN Application
