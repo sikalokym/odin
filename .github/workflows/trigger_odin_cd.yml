@@ -76,10 +76,7 @@ jobs:
 
   deploy-infra:
     needs: [pull-request-review]
-    name: Deploy Infrastructure to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
-                                       github.ref == 'refs/heads/test' && 'Testing' ||
-                                       github.ref == 'refs/heads/main' && 'Production' ||
-                                       'Development' }}
+    name: Deploy Infrastructure
     if: ${{ needs.pull-request-review.outputs.if_deploy_infra }}
     uses: ./.github/workflows/reusable_odin_infrastructure.yml
     with:
@@ -96,10 +93,7 @@ jobs:
   deploy-app:
     needs: [deploy-infra]
     if: ${{ needs.pull-request-review.outputs.if_deploy_app && (success() || needs.deploy-infra.result == 'skipped') }}
-    name: Deploy Application to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
-                                    github.ref == 'refs/heads/test' && 'Testing' ||
-                                    github.ref == 'refs/heads/main' && 'Production' ||
-                                    'Development' }}
+    name: Deploy Application
     uses: ./.github/workflows/reusable_odin_application.yml
     with:
       environment: ${{ github.ref == 'refs/heads/develop' && 'Development' ||
@@ -114,10 +108,7 @@ jobs:
   deploy-db:
     needs: [deploy-infra]
     if: ${{ needs.pull-request-review.outputs.if_deploy_db && (success() || needs.deploy-infra.result == 'skipped') }}
-    name: Deploy Database to ${{ github.ref == 'refs/heads/develop' && 'Development' ||
-                                 github.ref == 'refs/heads/test' && 'Testing' ||
-                                 github.ref == 'refs/heads/main' && 'Production' ||
-                                 'Development' }}
+    name: Deploy Database
     uses: ./.github/workflows/reusable_odin_database.yml
     with:
       environment: ${{ github.ref == 'refs/heads/develop' && 'Development' ||
@@ -128,4 +119,4 @@ jobs:
       db-user-name: ${{ secrets.DB_USER_NAME }}
       db-user-pass: ${{ secrets.DB_USER_PASS }}
       db-name: ${{ secrets.DB_NAME }}
-      db-server: ${{ secrets.DB_SERVER }}
+      db-server: ${{ secrets.DB_SERVER }} 
