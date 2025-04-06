@@ -101,6 +101,8 @@ jobs:
   
   test-application:
     needs: [publish-database-docker-image, publish-backend-docker-image]
-    if: ${{ success() || needs.publish-database-docker-image.result == 'skipped' && needs.pull-request-review.outputs.if_test_backend }}
+    if: ${{ success() || needs.publish-database-docker-image.result == 'skipped' }}
     name: Run Test Backend Application
     uses: ./.github/workflows/reusable_odin_test_backend.yml
+    with:
+      if_test_backend: ${{ needs.pull-request-review.outputs.if_test_backend }}
