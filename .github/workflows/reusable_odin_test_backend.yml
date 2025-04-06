@@ -1,10 +1,17 @@
 on:
   workflow_call:
+    inputs:
+        if_test_backend:
+          required: true
+          type: string
+          default: 0
+  merge_group:
 
 name: Reusable template Test Backend
 
 jobs:
   job:
+    if: ${{ inputs.if_test_backend }}
     name: Test Backend
     runs-on: vcc-azure-ubuntu
     steps:
