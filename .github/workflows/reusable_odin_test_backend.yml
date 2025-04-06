@@ -1,5 +1,6 @@
 on:
   workflow_call:
+  merge_group:
 
 name: Reusable template Test Backend
 
