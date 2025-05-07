@@ -2,10 +2,10 @@
   <aside class="sidebar">
     <span class="title" style="font-size: 32px;">Specifications</span>
     <div style="margin-top: 10px;">
-      <button v-on:click="setVariantBinderFilters"
+      <button style="width: 180px;" v-on:click="setVariantBinderFilters"
         :class="{ 'highlighted': showFilters === 'VariantBinder' }">Variant Binder
-      </button>
-      <button v-show="showSapPricelist" v-on:click="setPricelistFilters" style="margin-left: 10px;"
+      </button><br>
+      <button style="width: 180px;" v-show="showSapPricelist" v-on:click="setPricelistFilters"
         :class="{ 'highlighted': showFilters === 'Pricelist' }">SAP Pricelist
       </button>
     </div>
@@ -27,29 +27,37 @@
       <!-- Filter for engine categories -->
       <label class="engine" style="width: 180px;">Engine Category</label><br>
       <select name="engine" id="engine" v-model="engine" @change="getPnosVariantBinder"
-        style="width:180px; height:30px; position: absolute; margin-left: -90px;">
+        style="width:180px; height:30px; position: absolute">
         <option disabled value="">Please Select Engine...</option>
         <option value="all">All</option>
         <option v-for="engine in engine_cats.sort()" :key="engine" :value="engine">{{ engine }}</option>
       </select>
-      <br><br>
       <!-- Filter for validity date of the Variant Binder export -->
-      <label class="validity_date" style="width: 180px;">Validity Date</label>
-      <div class="validity"
-        style="display: flex; gap: 10px; position:absolute; left: 50%; transform: translateX(-50%);">
-        <select name="validity_year" id="validity_year" v-model="validity_year" @change="getPnosVariantBinder"
-          style="width:85px; height:30px;">
-          <option disabled value="">Year</option>
-          <option v-for="validity_year in validity_years" :key="validity_year" :value="validity_year">{{ validity_year
-            }}</option>
-        </select>
-        <select name="validity_week" id="validity_week" v-model="validity_week" @change="getPnosVariantBinder"
-          style="width:85px; height:30px;">
-          <option disabled value="">Week</option>
-          <option v-for="n in validity_weeks" :key="n" :value="String(n).padStart(2, '0')">{{ String(n).padStart(2, '0')
-            }}</option>
-        </select>
-      </div>
+      <label class="comparison_period">Comparison period</label><br>
+      <label class="start_date" style="text-align: left; display: inline-block; width: 180px; font-style: italic;">Start date of interval</label><br>
+      <select name="comparison_year" id="comparison_year" v-model="comparison_year"
+        style="width:90px; height:30px; position: absolute">
+        <option disabled value="">Year</option>
+        <!-- <option v-for="validity_year in validity_years" :key="validity_year" :value="validity_year">{{ validity_year }}</option> -->
+      </select>
+      <select name="comparison_week" id="comparison_week" v-model="comparison_week"
+        style="width:90px; height:30px; position: absolute; margin-left: 90px;">
+        <option disabled value="">Week</option>
+                <!-- <option v-for="n in validity_weeks" :key="n" :value="String(n).padStart(2, '0')">{{ String(n).padStart(2, '0')  }}</option> -->
+      </select>
+      <label class="validity_date" style="text-align: left; display: inline-block; width: 180px; font-style: italic;">End date of interval (Validity Date)</label><br>
+      <select name="validity_year" id="validity_year" v-model="validity_year" @change="getPnosVariantBinder"
+        style="width:90px; height:30px; position: absolute">
+        <option disabled value="">Year</option>
+        <option v-for="validity_year in validity_years" :key="validity_year" :value="validity_year">{{ validity_year }}</option>
+      </select>
+      <select name="validity_week" id="validity_week" v-model="validity_week" @change="getPnosVariantBinder"
+        style="width:90px; height:30px; position: absolute; margin-left: 90px;">
+        <option disabled value="">Week</option>
+        <option v-for="n in validity_weeks" :key="n" :value="String(n).padStart(2, '0')">{{ String(n).padStart(2, '0') }}</option>
+      </select>
+      <label class="help" style="text-align: left; display: inline-block; width: 180px; margin-top: 70px; font-style: italic;"></label><br>
+
 
       <!-- Export Variant Binder Button -->
       <button
@@ -482,16 +490,18 @@ th {
 
 .model,
 .engine,
-.sales_channel {
+.sales_channel,
+.validity_date,
+.comparison_period {
   text-align: left;
   display: inline-block;
   width: 180px;
   margin-top: 42px;
 }
 
-.validity_date {
+/* .validity_date {
   margin-left: -91px;
-}
+} */
 
 .countrylabel {
   margin-right: 10px;

@@ -39,6 +39,35 @@ class DBOperations:
             raise e
         finally:
             cursor.close()
+
+    
+    def get_change_log(self, calendar_week: int, country_code: int, model: int):
+        attempts = 3  # Define the number of retry attempts
+        while attempts > 0:
+            try:
+                with self.get_cursor() as cursor:
+                    cursor.execute("{CALL get_engine_change_log(?, ?, ?)}", (calendar_week, country_code, model))
+                    data = cursor.fetchall()
+    #                 if not data:
+    #                     columns_list = [column.strip() for column in columns.split(',')]
+    #                     return pd.DataFrame([], columns=columns_list if columns_list != ['*'] else [])
+                    
+    #                 df_columns = [column[0] for column in data[0].cursor_description]
+    #                 df_data = [list(row) for row in data]
+    #                 return pd.DataFrame(df_data, columns=df_columns)
+                
+            except Exception as e:
+                self.logger.error(f'Attempt failed with error: {e}', exc_info=True)
+                # self.logger.error(f'Query: SELECT {columns} FROM {table_name} WHERE {conditions};')
+    #             attempts -= 1
+    #             if attempts > 0:
+    #                 self.conn = DatabaseConnection.reconnect()
+    #                 self.logger.info(f'Retrying... {attempts} attempts left')
+    #                 time.sleep(2)
+    #             else:
+    #                 self.logger.error('All attempts to execute the query have failed.')
+    #                 raise
+    
     
     def get_table_df(self, table_name, columns=None, conditions=None):
         if columns is None:
