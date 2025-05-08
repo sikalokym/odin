@@ -44,3 +44,19 @@ variable "odin_sqlserver_name" {
 variable "odin_sqldatabase_name" {
   type = string
 }
+
+variable "identity_id" {
+  type = string
+}
+
+variable "identity_resource_id" {
+  type = string
+}
+
+variable "target_resource_id" {
+  type = string
+}
+
+variable "subscription_id" {
+  type = string
+}

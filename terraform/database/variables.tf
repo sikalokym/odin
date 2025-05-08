@@ -34,3 +34,7 @@ variable "administrator_login_password" {
 variable "inbound_subnet_id" {
   type = string
 }
+
+variable "identity_object_id" {
+  type = string
+}

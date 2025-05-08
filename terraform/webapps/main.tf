@@ -25,7 +25,7 @@ resource "azurerm_linux_web_app" "odin_backend_app" {
     app_settings = {
         "SCM_DO_BUILD_DURING_DEPLOYMENT": true,
         "minTlsVersion": "1.2",
-        "DB_CONNECTION_STRING": "Driver={ODBC Driver 18 for SQL Server};Server=${var.odin_sqlserver_name}.database.windows.net;Database=${var.odin_sqldatabase_name};Authentication=SqlPassword;Encrypt=no;TrustServerCertificate=no;Connection Timeout=60;",
+        # "DB_CONNECTION_STRING": "Driver={ODBC Driver 18 for SQL Server};Server=${var.odin_sqlserver_name}.database.windows.net;Database=${var.odin_sqldatabase_name};Authentication=SqlPassword;Encrypt=no;TrustServerCertificate=no;Connection Timeout=60;",
         "SQL_DB_UID": "pmt_db_service",
         "SQL_DB_PWD": "ec1vres@bd@tmp",
         "CPAM_API_URL": "https://se-api.volvocars.biz/cpam/service/ProductDataGet",
@@ -41,6 +41,11 @@ resource "azurerm_linux_web_app" "odin_backend_app" {
         }
         app_command_line = "gunicorn --workers 2 --bind=0.0.0.0 --timeout 600 app:app --preload"
         always_on = false
+    }
+
+    identity {
+      type = "UserAssigned"
+      identity_ids = [var.identity_resource_id]
     }
 
     lifecycle {
@@ -60,6 +65,18 @@ module "backend_networking" {
   resource_group_name = var.resource_group_name
   subresource_name = "sites"
   subnet_id =  var.subnets.inbound_subnet_id
+}
+
+resource "azurerm_app_service_connection" "db_service_connection" {
+  name = "db_service_connection"
+  app_service_id = azurerm_linux_web_app.odin_backend_app.id
+  target_resource_id = var.target_resource_id
+  client_type = "python"
+  authentication {
+    type = "userAssignedIdentity"
+    client_id = var.identity_id
+    subscription_id = var.subscription_id
+  }
 }
 
 resource "azurerm_linux_web_app" "odin_frontend_app" {

@@ -23,6 +23,20 @@ resource "azurerm_resource_group" "rg_odin" {
     }
 }
 
+resource "azurerm_user_assigned_identity" "odin_service" {
+  location = var.location
+  name = "odin_service"
+  resource_group_name = azurerm_resource_group.rg_odin.name
+  
+  lifecycle {
+      ignore_changes = [
+        tags["AppID"],
+        tags["EnvType"],
+        tags["owner-appid"]
+       ]
+    }
+}
+
 resource "random_password" "password" {
     length = 12
     min_lower = 1
@@ -119,4 +133,8 @@ module "webapps" {
   odin_sqlserver_name = module.databases.odin_sqlserver_name
   odin_sqldatabase_name = module.databases.odin_sqldatabase_name
   depends_on = [ module.databases ]
+  identity_id = azurerm_user_assigned_identity.odin_service.client_id
+  identity_resource_id = azurerm_user_assigned_identity.odin_service.id
+  target_resource_id = module.databases.odin_sqldatabase_resource_id
+  subscription_id = data.azurerm_subscription.current.subscription_id
 }
