@@ -4,9 +4,5 @@ provider "azurerm" {
 }
 
 provider "azuread" {
-  # Configuration options
-}
-
-provider "mssql" {
-  # Configuration options
+  # Configuration options  
 }

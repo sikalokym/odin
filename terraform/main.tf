@@ -117,6 +117,10 @@ module "databases" {
   purpose = var.purpose
   resource_group_name = azurerm_resource_group.rg_odin.name
   inbound_subnet_id = data.azurerm_subnet.odin_subnet_inbound.id
+  odin_user_assigned_identity = {
+    name = local.odin_user_assigned_identity
+    client_id = azurerm_user_assigned_identity.odin_service.client_id
+  }
 }
 
 module "webapps" {

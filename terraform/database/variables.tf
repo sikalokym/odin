@@ -35,6 +35,9 @@ variable "inbound_subnet_id" {
   type = string
 }
 
-variable "identity_object_id" {
-  type = string
+variable "odin_user_assigned_identity" {
+  type = object({
+    name = string
+    client_id = string
+  })
 }

@@ -77,16 +77,18 @@ resource "azurerm_mssql_database" "odin-mssql-database-dev" {
     }
 }
 
-resource "mssql_user" "example" {
+resource "mssql_user" "odin_service" {
   server {
     host = azurerm_mssql_server.odin_mssql_server.fully_qualified_domain_name
-    azure_login {
+    login {
+      username = local.administrator_login
+      password = var.administrator_login_password
     }
   }
 
-  database  = "my-database"
-  username  = azurerm_user_assigned_identity.example.name
-  object_id = azurerm_user_assigned_identity.example.client_id
+  database  = one(concat(azurerm_mssql_database.odin-mssql-database-dev[*].name, azurerm_mssql_database.odin-mssql-database[*].name))
+  username  = var.odin_user_assigned_identity.name
+  object_id = var.odin_user_assigned_identity.client_id
 
-  roles     = ["db_datareader"]
+  roles     = ["db_datareader", "db_datawriter"]
 }

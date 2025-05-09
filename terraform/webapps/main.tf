@@ -25,7 +25,7 @@ resource "azurerm_linux_web_app" "odin_backend_app" {
     app_settings = {
         "SCM_DO_BUILD_DURING_DEPLOYMENT": true,
         "minTlsVersion": "1.2",
-        # "DB_CONNECTION_STRING": "Driver={ODBC Driver 18 for SQL Server};Server=${var.odin_sqlserver_name}.database.windows.net;Database=${var.odin_sqldatabase_name};Authentication=SqlPassword;Encrypt=no;TrustServerCertificate=no;Connection Timeout=60;",
+        "DB_CONNECTION_STRING": "Driver={ODBC Driver 18 for SQL Server};Server=tcp:odin-dev-mssql-server.database.windows.net,1433;Database=odin-dev-mssql-database;UID=7bc9381a-d208-4273-b1ba-1fe570264f43;Authentication=ActiveDirectoryMsi;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30",
         "SQL_DB_UID": "pmt_db_service",
         "SQL_DB_PWD": "ec1vres@bd@tmp",
         "CPAM_API_URL": "https://se-api.volvocars.biz/cpam/service/ProductDataGet",

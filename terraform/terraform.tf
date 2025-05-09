@@ -11,9 +11,5 @@ terraform {
       source = "hashicorp/azuread"
       version = "3.2.0"
     }
-    mssql = {
-      source = "betr-io/mssql"
-      version = "0.3.1"
-    }
   }
 }

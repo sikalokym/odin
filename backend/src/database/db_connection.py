@@ -27,7 +27,8 @@ class DatabaseConnection:
         for attempt in range(max_attempts):
             try:
                 if self.connection is None or self.connection.closed:
-                    connection_string = f"{os.environ.get('DB_CONNECTION_STRING')}Uid={os.environ.get('SQL_DB_UID')};Pwd={os.environ.get('SQL_DB_PWD')};"
+                    # connection_string = f"{os.environ.get('DB_CONNECTION_STRING')}Uid={os.environ.get('SQL_DB_UID')};Pwd={os.environ.get('SQL_DB_PWD')};"
+                    connection_string = "Driver={ODBC Driver 18 for SQL Server};Server=tcp:odin-dev-mssql-server.database.windows.net,1433;Database=odin-dev-mssql-database;UID=7bc9381a-d208-4273-b1ba-1fe570264f43;Authentication=ActiveDirectoryMsi;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30"
                     self.connection = pyodbc.connect(connection_string)
                 return self.connection
             except pyodbc.Error as e:
