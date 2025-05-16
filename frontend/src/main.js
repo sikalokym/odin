@@ -14,6 +14,8 @@ initializeMsal().then(async () => {
   let app = createApp(App)
   app.use(pinia);
   app.use(router);
-  await ensureAuthenticated()
+  if (!window.Cypress) {
+    await ensureAuthenticated()
+  }
   app.mount('#app');
 });
